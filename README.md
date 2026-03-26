@@ -174,17 +174,6 @@ hubspot-admin-skills/
 
 ---
 
-## Where to Get It
-
-| Source | Link |
-|--------|------|
-| Claude Code Plugin Marketplace | `/plugin marketplace add tomgranot/hubspot-admin-skills` |
-| ClawHub | [clawhub.ai](https://clawhub.ai) |
-| awesome-claude-skills | Listed in the HubSpot / CRM category |
-| SkillsMP | [skillsmp.com](https://skillsmp.com) |
-
----
-
 ## Community-Driven: Help Build the Skill Set
 
 Every HubSpot portal is different. The audit skill will automatically detect issues that aren't covered by existing skills and **offer to create new ones on the spot**. When it does, it will ask:

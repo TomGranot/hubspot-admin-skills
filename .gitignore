@@ -1,0 +1,17 @@
+# Environment and secrets
+.env
+.env.*
+
+# Audit data (may contain PII)
+data/
+reports/
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db

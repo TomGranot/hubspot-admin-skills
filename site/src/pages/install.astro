@@ -1,0 +1,114 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { getSkills, GITHUB_REPO_URL, MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+const skills = await getSkills();
+
+const agentPrompt = `Install the HubSpot Admin Skills plugin and audit my HubSpot portal.
+
+1. Run: ${MARKETPLACE_ADD_COMMAND}
+2. Run: ${PLUGIN_INSTALL_COMMAND}
+3. I'll provide a HubSpot private app token as HUBSPOT_API_TOKEN.
+4. Run /hubspot-audit and walk me through the findings.
+
+Skill catalog (machine-readable): https://hubspot.granot.io/api/skills.json
+Full skill documentation: https://hubspot.granot.io/llms-full.txt`;
+
+const metadata = {
+  title: 'Install',
+  description: `Install ${skills.length} HubSpot admin skills for Claude Code in two commands — plus a copy-paste prompt for AI agents.`,
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Install', path: '/install' },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText tagline="Get started" title="Install in two commands" subtitle="Free and open source under MIT." />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-16">
+    <h2 class="text-2xl font-bold mb-4 dark:text-white">1. Prerequisites</h2>
+    <ul class="list-disc pl-6 space-y-2 text-muted">
+      <li>
+        <a href="https://claude.com/claude-code" class="text-primary hover:underline">Claude Code</a> installed and configured
+      </li>
+      <li>
+        A HubSpot account with a <strong>private app token</strong> — create one under Settings → Integrations → Private Apps,
+        with CRM read/write scopes for the objects you want to manage
+      </li>
+      <li>
+        Python 3.10+ with <a href="https://github.com/astral-sh/uv" class="text-primary hover:underline">uv</a> for the scripted
+        skills
+      </li>
+      <li>HubSpot Marketing Professional or higher for the workflow-building skills</li>
+    </ul>
+
+    <h2 class="text-2xl font-bold mt-10 mb-4 dark:text-white">2. Install the plugin</h2>
+    <p class="text-muted mb-3">In Claude Code:</p>
+    <pre
+      class="bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 text-sm overflow-x-auto"><code>{MARKETPLACE_ADD_COMMAND}
+{PLUGIN_INSTALL_COMMAND}</code></pre>
+    <p class="text-muted mt-3">
+      Or clone directly: <code>git clone {GITHUB_REPO_URL}.git</code>
+    </p>
+
+    <h2 class="text-2xl font-bold mt-10 mb-4 dark:text-white">3. Run your first audit</h2>
+    <pre
+      class="bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 text-sm overflow-x-auto"><code>/hubspot-audit</code></pre>
+    <p class="text-muted mt-3">
+      The audit scans your entire portal, grades every finding A–F, and maps each one to the skill that fixes it. Then
+      <code>/hubspot-implementation-plan</code> turns the findings into a phased roadmap.
+    </p>
+
+    <h2 id="agents" class="text-2xl font-bold mt-14 mb-4 dark:text-white scroll-mt-24">For AI agents</h2>
+    <p class="text-muted mb-4">
+      This entire site is built to be consumed by agents. If you're an agent (or driving one), these are your entry
+      points:
+    </p>
+    <ul class="list-disc pl-6 space-y-2 text-muted">
+      <li>
+        <a href="/llms.txt" class="text-primary hover:underline"><code>/llms.txt</code></a> — spec-compliant index of every
+        skill's raw markdown
+      </li>
+      <li>
+        <a href="/llms-full.txt" class="text-primary hover:underline"><code>/llms-full.txt</code></a> — all {
+          skills.length
+        } skills concatenated for single-fetch ingestion
+      </li>
+      <li>
+        <a href="/api/skills.json" class="text-primary hover:underline"><code>/api/skills.json</code></a> — machine-readable
+        catalog: slugs, categories, script availability, install commands
+      </li>
+      <li>
+        Every skill page has a raw markdown twin at <code>/skills/&lt;slug&gt;.md</code> and raw scripts at <code
+          >/skills/&lt;slug&gt;/scripts/&lt;stage&gt;.py</code>
+      </li>
+    </ul>
+
+    <h3 class="text-lg font-bold mt-8 mb-3 dark:text-white">Copy-paste prompt for your agent</h3>
+    <p class="text-muted mb-3">Paste this into Claude Code (or any agent with shell access):</p>
+    <pre
+      class="bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 text-sm overflow-x-auto whitespace-pre-wrap"><code>{agentPrompt}</code></pre>
+
+    <div
+      class="mt-10 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 p-4 text-sm"
+    >
+      <p class="font-semibold text-amber-900 dark:text-amber-200">A note on safety</p>
+      <p class="text-amber-800 dark:text-amber-300 mt-1">
+        Several skills modify or delete CRM records. Every destructive skill exports a CSV baseline first, shows what
+        will change, and asks for confirmation — but you should still test against a HubSpot sandbox portal before
+        running anything against production.
+      </p>
+    </div>
+  </section>
+</Layout>

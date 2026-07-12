@@ -1,0 +1,35 @@
+---
+import { Icon } from 'astro-icon/components';
+
+import type { Skill } from '~/lib/skills';
+import { skillPath } from '~/lib/skills';
+
+export interface Props {
+  skill: Skill;
+  showCategory?: boolean;
+}
+
+const { skill, showCategory = false } = Astro.props;
+---
+
+<a
+  href={skillPath(skill.slug)}
+  class="group flex flex-col h-full rounded-lg border border-gray-200 dark:border-slate-800 p-5 hover:border-primary dark:hover:border-blue-700 hover:shadow-md transition"
+>
+  <div class="flex items-center gap-2 mb-2">
+    <Icon name={skill.category.icon} class="w-5 h-5 text-primary" />
+    <code class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-primary">/{skill.slug}</code>
+  </div>
+  <p class="text-sm text-muted flex-grow">{skill.description}</p>
+  <div class="flex items-center gap-2 mt-3 text-xs text-muted">
+    {showCategory && <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5">{skill.category.title}</span>}
+    {
+      skill.scripts.length > 0 && (
+        <span class="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 px-2 py-0.5 inline-flex items-center gap-1">
+          <Icon name="tabler:brand-python" class="w-3.5 h-3.5" />
+          scripted
+        </span>
+      )
+    }
+  </div>
+</a>

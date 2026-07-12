@@ -1,0 +1,115 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { CATEGORIES } from '~/data/categories';
+import { GITHUB_REPO_URL } from '~/lib/skills';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+import heroImage from '~/assets/images/hero.png';
+
+const metadata = {
+  title: 'Contributing',
+  description:
+    'Every HubSpot portal is different. Contribute new skills to the community — automatically via the audit skill, or manually with a pull request.',
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Contributing', path: '/contributing' },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText
+    tagline="Community"
+    title="Help build the skill set"
+    subtitle="Every HubSpot portal is different. When the audit finds an issue no existing skill covers, it offers to create a new skill on the spot — and contribute it back."
+  />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-8">
+    <h2 class="text-2xl font-bold mb-4 dark:text-white">The automatic way</h2>
+    <p class="text-muted">
+      Run <code>/hubspot-audit</code>. When it detects an issue that isn't covered by an existing skill, it will offer
+      to create one — and ask:
+    </p>
+    <blockquote class="mt-4 border-l-4 border-primary pl-4 text-muted italic">
+      "Would you like to contribute this new skill back to the community? It will help other HubSpot admins facing the
+      same issue."
+    </blockquote>
+    <p class="text-muted mt-4">
+      Say yes, and Claude Code creates the skill, pushes it to your fork, and opens a pull request — automatically. You
+      don't need to know git or write markdown. And once the PR merges, the skill gets its own pages on this site,
+      automatically.
+    </p>
+  </section>
+
+  <Steps
+    title="The manual way"
+    items={[
+      {
+        title: 'Fork & branch',
+        description: `Fork <a class="text-primary hover:underline" href="${GITHUB_REPO_URL}">the repo</a> and create a branch: <code>skill/your-skill-name</code>`,
+        icon: 'tabler:git-fork',
+      },
+      {
+        title: 'Create the skill',
+        description:
+          'Add <code>skills/&lt;your-skill&gt;/SKILL.md</code> with YAML frontmatter (name, description, license, metadata) and the 4-stage pattern: Plan → Before → Execute → After. Include safety mechanisms and rollback instructions.',
+        icon: 'tabler:file-plus',
+      },
+      {
+        title: 'Test against a sandbox',
+        description: 'Run the skill end-to-end against a HubSpot sandbox portal before submitting.',
+        icon: 'tabler:flask',
+      },
+      {
+        title: 'Open a pull request',
+        description:
+          'The site build validates your frontmatter automatically — a malformed skill fails the deploy preview, so you get fast feedback.',
+        icon: 'tabler:git-pull-request',
+      },
+    ]}
+    image={{ src: heroImage, alt: 'Contributing workflow' }}
+  />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-16">
+    <h2 class="text-2xl font-bold mb-4 dark:text-white">Skill categories</h2>
+    <p class="text-muted mb-4">
+      Assign your skill to one of these categories in the <code>metadata.category</code> frontmatter field:
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-slate-800">
+            <th class="py-2 pr-4 dark:text-white">Category</th>
+            <th class="py-2 pr-4 dark:text-white">Slug</th>
+            <th class="py-2 dark:text-white">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            CATEGORIES.map((category) => (
+              <tr class="border-b border-gray-100 dark:border-slate-800/50">
+                <td class="py-2 pr-4 font-medium dark:text-white">{category.title}</td>
+                <td class="py-2 pr-4">
+                  <code>{category.slug}</code>
+                </td>
+                <td class="py-2 text-muted">{category.description}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted mt-6">
+      Please keep skills generic and company-agnostic — no customer data, API keys, or proprietary information.
+    </p>
+  </section>
+</Layout>

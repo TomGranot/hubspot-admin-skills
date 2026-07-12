@@ -1,0 +1,17 @@
+# Netlify configuration for the programmatic SEO site in site/.
+# The site is generated from skills/*/SKILL.md — merging a skill PR to main
+# is the only publishing action.
+
+[build]
+  base = "site"
+  publish = "dist"
+  command = "npm run build"
+  # Skip builds for commits that touch neither the site nor the skills content.
+  # Runs from the base directory (site/), hence the relative paths.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ../skills ../netlify.toml"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[build.processing.html]
+  pretty_urls = false

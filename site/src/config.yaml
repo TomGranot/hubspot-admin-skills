@@ -1,0 +1,70 @@
+site:
+  name: HubSpot Admin Skills
+  site: 'https://hubspot.granot.io'
+  base: '/'
+  trailingSlash: false
+
+  googleSiteVerificationId: null
+
+# Default SEO metadata
+metadata:
+  title:
+    default: HubSpot Admin Skills — audit, clean & automate HubSpot CRM with Claude Code
+    template: '%s — HubSpot Admin Skills'
+  description: '30+ open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating your HubSpot CRM. Built for humans and AI agents.'
+  robots:
+    index: true
+    follow: true
+  openGraph:
+    site_name: HubSpot Admin Skills
+    images:
+      - url: '~/assets/images/default.png'
+        width: 1200
+        height: 628
+    type: website
+  twitter:
+    cardType: summary_large_image
+
+i18n:
+  language: en
+  textDirection: ltr
+
+apps:
+  blog:
+    isEnabled: false
+    postsPerPage: 6
+
+    post:
+      isEnabled: false
+      permalink: '/%slug%'
+      robots:
+        index: false
+
+    list:
+      isEnabled: false
+      pathname: 'blog'
+      robots:
+        index: false
+
+    category:
+      isEnabled: false
+      pathname: 'category'
+      robots:
+        index: false
+
+    tag:
+      isEnabled: false
+      pathname: 'tag'
+      robots:
+        index: false
+
+    isRelatedPostsEnabled: false
+    relatedPostsCount: 4
+
+analytics:
+  vendors:
+    googleAnalytics:
+      id: null
+
+ui:
+  theme: 'system' # Values: "system" | "light" | "dark" | "light:only" | "dark:only"

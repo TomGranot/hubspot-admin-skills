@@ -27,30 +27,37 @@ No frontmatter changes are required to launch. **Optional later**: add `keywords
 
 ### Tech stack
 
-- **Astro** static site generator, living in a `site/` directory of this repo (monorepo — keeps the auto-rebuild trivial and lets skill PRs and site PRs share CI).
-  - Content collections with a loader that reads `../skills/*/SKILL.md` — no copying, no sync step.
-  - Zero client-side JS by default; pages are plain HTML. Fast, crawlable, cheap.
-- **GitHub Pages** for hosting, deployed by GitHub Actions. Free, no new accounts, first-class custom-domain support for `hubspot.granot.io`. (Cloudflare Pages is the fallback if we later need redirects/headers/edge logic; the Astro build output is host-agnostic so switching is cheap.)
-- **No client analytics at launch.** Add Plausible/Cloudflare analytics later if wanted; keep pages script-free for agent friendliness.
+- **Astro 6** static site generator, living in a `site/` directory of this repo (monorepo — keeps the auto-rebuild trivial and lets skill PRs and site PRs share CI).
+  - Based on the **AstroWind** template (Tailwind CSS v4) — the most popular Astro theme, with production-grade SEO plumbing (astro-seo metadata, sitemap, image optimization, dark mode) and reusable marketing widgets. Demo content stripped; layout, widgets, and SEO components kept.
+  - Content collection with a `glob()` loader reading `../skills/*/SKILL.md` — no copying, no sync step. The zod schema doubles as a frontmatter lint gate: a malformed community skill fails the build (and therefore the deploy preview).
+  - Zero client-side JS beyond the theme's small UI scripts; pages are plain HTML. Fast, crawlable, cheap.
+- **Netlify** for hosting, auto-deployed from GitHub. `netlify.toml` at the repo root sets `base = "site"`, and an `ignore` rule skips builds for commits that touch neither `site/` nor `skills/`. Deploy previews on PRs act as the CI gate for community skills.
+- **No client analytics at launch.** Add Plausible/Netlify analytics later if wanted; keep pages script-free for agent friendliness.
 
 ### Repo layout
 
 ```
 hubspot-admin-skills/
 ├── skills/                  # unchanged — single source of truth
+├── netlify.toml             # base=site, ignore rule, Node version
 ├── site/
-│   ├── astro.config.mjs
+│   ├── astro.config.ts
 │   ├── package.json
+│   ├── scripts/
+│   │   └── postbuild-headers.mjs  # generates dist/_headers (content types, canonical Links)
 │   ├── src/
-│   │   ├── content.config.ts    # loader over ../skills/*/SKILL.md
+│   │   ├── content.config.ts    # glob loader over ../skills/*/SKILL.md + frontmatter schema
+│   │   ├── config.yaml          # site name/URL, default metadata (AstroWind)
 │   │   ├── data/
 │   │   │   ├── categories.ts    # 6 category slugs → titles, intros, ordering
-│   │   │   └── problems.ts      # problem-page definitions (see below)
-│   │   ├── layouts/
-│   │   └── pages/
-│   └── public/              # robots.txt, favicon, hero
-└── .github/workflows/
-    └── deploy-site.yml
+│   │   │   └── problems.ts      # 33 problem-page definitions (see below)
+│   │   ├── lib/
+│   │   │   ├── skills.ts        # skill model: slugs, scripts detection, excerpts, URLs
+│   │   │   └── structuredData.ts # JSON-LD builders
+│   │   ├── layouts/ | components/ | pages/
+│   │   └── ...
+│   └── public/              # robots.txt, favicons
+└── docs/seo-site-plan.md    # this plan
 ```
 
 ## Page inventory (URL map)
@@ -98,43 +105,52 @@ The honest constraint: 32 skills ≈ 32 core pages, which is small for classic p
 - Canonicals on problem pages pointing to themselves (they're distinct intents, not duplicates), skill `.md` twins marked `noindex` via `X-Robots-Tag`-equivalent meta on the HTML side only (raw `.md` files served as text don't compete).
 - OG images: one static branded template at launch; per-page generated OG images (satori/astro-og) in phase 2.
 
-## CI/CD
+## CI/CD (Netlify)
 
-`.github/workflows/deploy-site.yml`:
+No GitHub Actions needed — Netlify handles the whole pipeline:
 
-- **Triggers**: push to `main` touching `skills/**` or `site/**`; manual `workflow_dispatch`.
-- **Steps**: checkout → setup node → `npm ci && npm run build` in `site/` → validate step (fails the build if any SKILL.md has missing/invalid frontmatter — doubles as a lint gate for skill PRs) → deploy to GitHub Pages via `actions/deploy-pages`.
-- **PR previews**: on PRs touching `skills/**`, run build-only (no deploy) as a required check, so malformed community skills can't break the site.
+- **Production deploys**: every push to `main` touching `site/**`, `skills/**`, or `netlify.toml` triggers a build (`npm run build` with `base = "site"`, publishing `site/dist`). Other commits are skipped via the `ignore` rule in `netlify.toml`.
+- **Deploy previews**: every PR gets a preview URL automatically. Because the content-collection schema validates SKILL.md frontmatter at build time, a malformed community skill fails its deploy preview — that's the lint gate.
+- **Headers**: `site/scripts/postbuild-headers.mjs` generates `dist/_headers` after each build — long-cache for hashed assets, CORS for everything, `text/markdown` content-type plus a canonical `Link` header for every `.md` twin (Netlify's `_headers` syntax can't pattern-match `*.md` mid-path, so exact paths are generated from `skills/`).
 - Build is deterministic from repo content — no external data sources, no tokens.
+
+### One-time Netlify dashboard setup (manual)
+
+1. Netlify → **Add new site → Import an existing project** → pick `TomGranot/hubspot-admin-skills`. Build settings are read from `netlify.toml` automatically; just confirm and deploy.
+2. Verify the first deploy on the generated `*.netlify.app` URL.
 
 ## Domain
 
-1. Launch on `tomgranot.github.io/hubspot-admin-skills` (or straight to the custom domain if DNS is ready).
-2. Connect `hubspot.granot.io`: CNAME record → `tomgranot.github.io`, set custom domain in repo Pages settings, enforce HTTPS. `site/public/CNAME` checked in so deploys don't drop it.
-3. Set `site:` in `astro.config.mjs` to the final domain so sitemap/canonical/OG URLs are absolute and correct.
-4. Register the property in Google Search Console + Bing Webmaster Tools, submit sitemap.
+1. Netlify site settings → **Domain management → Add custom domain** → `hubspot.granot.io`.
+2. In DNS for `granot.io`: `CNAME hubspot → <site-name>.netlify.app`. Netlify provisions Let's Encrypt HTTPS automatically.
+3. `site:` in `src/config.yaml` is already `https://hubspot.granot.io`, so sitemap/canonical/OG URLs are correct from the first deploy.
+4. Register the property in Google Search Console + Bing Webmaster Tools, submit `sitemap-index.xml`.
 
 ## Phases
 
-### Phase 1 — Foundation (ship first)
-- Scaffold Astro in `site/`, content loader over `skills/`, base layout + design.
-- Homepage, `/skills/` index, 32 skill pages, 6 category hubs, `/install/`.
-- `.md` twins, `/llms.txt`, `/llms-full.txt`, `/api/skills.json`, sitemap, robots.
-- Deploy workflow + GitHub Pages live.
+### Phase 1 — Foundation ✅ (built)
+- AstroWind-based site in `site/`, content loader over `skills/`.
+- Homepage, `/skills/` index, 32 skill pages, 6 category hubs, `/install/`, `/contributing/`.
+- `.md` twins, raw script endpoints, `/llms.txt`, `/llms-full.txt`, `/api/skills.json`, sitemap, agent-welcoming robots.txt.
+- `netlify.toml` + generated `_headers`; deploy is connect-the-repo away.
 
-### Phase 2 — Programmatic depth
-- `/problems/` pages (~30), JSON-LD everywhere, related-skills cross-linking.
-- Frontmatter linter as a required PR check; per-page OG images.
-- Connect `hubspot.granot.io`, Search Console, submit sitemap.
+### Phase 2 — Programmatic depth ✅ (built)
+- 33 `/problems/` intent pages with FAQ content, cross-linked from skill pages.
+- JSON-LD everywhere: TechArticle + HowTo (+ SoftwareSourceCode for scripted skills) on skill pages, FAQPage on problem pages, BreadcrumbList throughout, WebSite/Organization on the homepage.
+- Frontmatter validation as part of the build (fails deploy previews on malformed skills).
+- Per-page generated OG images (SVG → PNG via sharp at build time) for all skill and problem pages.
+- Remaining (manual): connect `hubspot.granot.io`, register Search Console + Bing Webmaster Tools, submit sitemap.
 
-### Phase 3 — Growth (data-driven)
+### Phase 3 — Growth (data-driven, not started)
 - Expand problem pages from Search Console query data.
+- A recurring (daily/weekly) agent routine that reviews Search Console/Bing data and site state, then proposes/creates new problem pages and improvements.
 - Optional: HubSpot admin glossary (`/glossary/<term>/`) for another long-tail surface.
-- Optional: lightweight analytics (Plausible).
+- Optional: lightweight analytics (Plausible/Netlify).
 - Optional: an MCP server / `.well-known` discovery endpoint exposing the skills manifest, once agent-side conventions settle.
 
-## Open questions
+## Resolved decisions
 
-1. **Hosting**: GitHub Pages assumed. Fine, or prefer Cloudflare Pages/Vercel from day one?
-2. **Branding**: reuse the hero/visual identity from `assets/hero.png` and consume.granot.io, or a fresh look for the site?
-3. **Problem-page copy**: generated excerpts from SKILL.md are the default; any appetite for hand-written intros on the top ~10 pages for quality?
+1. **Hosting**: Netlify (repo-root `netlify.toml`, base `site/`, deploy previews as the PR gate).
+2. **Theme**: AstroWind template (Astro 6 + Tailwind v4), demo content stripped.
+3. **Branding**: reuses `assets/hero.png` and the repo's visual identity.
+4. **Problem-page copy**: hand-written intros + FAQs for all 33 launch pages (in `site/src/data/problems.ts`), with excerpts pulled from each skill's "Why This Matters" section.

@@ -1,0 +1,186 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+
+import Hero from '~/components/widgets/Hero.astro';
+import Note from '~/components/widgets/Note.astro';
+import Features from '~/components/widgets/Features.astro';
+import Steps from '~/components/widgets/Steps.astro';
+import Content from '~/components/widgets/Content.astro';
+import FAQs from '~/components/widgets/FAQs.astro';
+import Stats from '~/components/widgets/Stats.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { CATEGORIES } from '~/data/categories';
+import { PROBLEMS } from '~/data/problems';
+import { getSkills, GITHUB_REPO_URL, MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
+import { organizationSchema, websiteSchema } from '~/lib/structuredData';
+
+import heroImage from '~/assets/images/hero.png';
+
+const skills = await getSkills();
+const scriptedCount = skills.filter((s) => s.scripts.length > 0).length;
+
+const metadata = {
+  title: 'HubSpot Admin Skills — audit, clean & automate HubSpot CRM with Claude Code',
+  ignoreTitleTemplate: true,
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData schema={[websiteSchema(), organizationSchema()]} />
+  </Fragment>
+
+  <Hero
+    actions={[
+      { variant: 'primary', text: 'Install the plugin', href: '/install', icon: 'tabler:terminal-2' },
+      { text: 'Browse all skills', href: '/skills' },
+    ]}
+    image={{ src: heroImage, alt: 'CRM Autopilot — HubSpot Admin Skills' }}
+  >
+    <Fragment slot="title">
+      Your HubSpot CRM, cleaned and automated by <span class="text-accent dark:text-white">Claude Code</span>
+    </Fragment>
+
+    <Fragment slot="subtitle">
+      <span class="font-semibold">{skills.length} open-source skills</span> that audit your portal, fix what's broken, and
+      keep it clean — duplicates, bounces, missing lifecycle stages, unowned contacts, stale deals, and everything else that
+      quietly rots a CRM. Built for humans <em>and</em> AI agents.
+    </Fragment>
+  </Hero>
+
+  <Note title="How it works:" description="Audit your portal → get a phased plan → execute skill by skill → maintain" />
+
+  <Steps
+    id="workflow"
+    title="From messy portal to maintained system in four moves"
+    items={[
+      {
+        title: 'Step 1: <span class="font-medium">Audit</span>',
+        description:
+          'Run <code>/hubspot-audit</code>. It scans contacts, companies, deals, engagement, deliverability, duplicates, owners, lists, and workflows — and grades every finding A–F, mapped to the skill that fixes it.',
+        icon: 'tabler:report-search',
+      },
+      {
+        title: 'Step 2: <span class="font-medium">Plan</span>',
+        description:
+          "Run <code>/hubspot-implementation-plan</code>. It reads the audit and produces a phased roadmap ordered by dependency — because you can't score leads before enriching company data.",
+        icon: 'tabler:route',
+      },
+      {
+        title: 'Step 3: <span class="font-medium">Execute</span>',
+        description:
+          'Each skill follows the same safe pattern: Plan → Before (CSV baseline) → Execute (API scripts or guided UI work) → After (verification). Rollback guidance included.',
+        icon: 'tabler:player-play',
+      },
+      {
+        title: 'Step 4: <span class="font-medium">Maintain</span>',
+        description:
+          'Prevention workflows plus <code>/weekly-cleanup-routine</code> and <code>/quarterly-database-cleanup</code> keep entropy from winning it all back.',
+        icon: 'tabler:calendar-repeat',
+      },
+    ]}
+    image={{ src: heroImage, alt: 'HubSpot Admin Skills workflow' }}
+  />
+
+  <Features
+    id="categories"
+    tagline="Skill categories"
+    title="Skills for every phase of the CRM lifecycle"
+    subtitle={`${skills.length} skills across six categories — ${scriptedCount} of them ship with ready-to-run Python scripts.`}
+    columns={3}
+    items={CATEGORIES.map((category) => ({
+      title: category.title,
+      description: category.description,
+      icon: category.icon,
+      callToAction: { text: 'View skills', href: `/categories/${category.slug}` },
+    }))}
+  />
+
+  <Content
+    isReversed
+    tagline="For AI agents"
+    title="A skills library your agent can read natively"
+    items={[
+      {
+        title: 'llms.txt + llms-full.txt',
+        description: 'A spec-compliant index and a single-fetch concatenation of every skill.',
+      },
+      {
+        title: 'Raw markdown twins',
+        description: 'Every skill page has a .md URL serving the verbatim SKILL.md — frontmatter, code, and all.',
+      },
+      {
+        title: 'skills.json manifest',
+        description: 'A machine-readable catalog with categories, script availability, and install commands.',
+      },
+    ]}
+    image={{ src: heroImage, alt: 'Agent-readable surfaces' }}
+  >
+    <Fragment slot="content">
+      <h3 class="text-2xl font-bold tracking-tight dark:text-white sm:text-3xl mb-2">Point your agent at this site</h3>
+      Every page here is designed to be consumed by coding agents as easily as by people — no scraping required.
+      <a class="text-primary hover:underline" href="/install#agents">See the agent install guide →</a>
+    </Fragment>
+
+    <Fragment slot="bg">
+      <div class="absolute inset-0 bg-blue-50 dark:bg-transparent"></div>
+    </Fragment>
+  </Content>
+
+  <Stats
+    stats={[
+      { title: 'Skills', amount: `${skills.length}` },
+      { title: 'With Python scripts', amount: `${scriptedCount}` },
+      { title: 'Common problems solved', amount: `${PROBLEMS.length}` },
+      { title: 'License', amount: 'MIT' },
+    ]}
+  />
+
+  <FAQs
+    title="Frequently asked questions"
+    tagline="FAQs"
+    classes={{ container: 'max-w-6xl' }}
+    items={[
+      {
+        title: 'What do I need to run these skills?',
+        description:
+          'Claude Code, a HubSpot account with a private app token (appropriate scopes), and Python 3.10+ with uv for the scripted skills. Workflow-building skills need Marketing Professional or higher.',
+      },
+      {
+        title: 'Is this safe to run against a production portal?',
+        description:
+          'Every destructive skill follows the same safety pattern: it audits first, exports a CSV baseline, shows you exactly what will change, asks for confirmation, and documents rollback. That said — test against a sandbox portal first, like you would any admin tooling.',
+      },
+      {
+        title: 'Do the skills send my CRM data anywhere?',
+        description:
+          'The skills are markdown instructions plus Python scripts that run on your machine against the HubSpot API with your own token. The repo is open source — you can read every line before running it.',
+      },
+      {
+        title: "What if my problem isn't covered by an existing skill?",
+        description:
+          'The audit skill detects issues that no existing skill covers and offers to create a new skill on the spot — and to contribute it back to the community as a pull request.',
+      },
+      {
+        title: 'Is this affiliated with HubSpot?',
+        description:
+          'No. This is an independent open-source project built from hands-on experience administering HubSpot CRM at scale. HubSpot is a trademark of HubSpot, Inc.',
+      },
+    ]}
+  />
+
+  <CallToAction
+    actions={[
+      { variant: 'primary', text: 'Install the plugin', href: '/install', icon: 'tabler:terminal-2' },
+      { text: 'Star on GitHub', href: GITHUB_REPO_URL, target: '_blank', icon: 'tabler:brand-github' },
+    ]}
+  >
+    <Fragment slot="title">Two commands and you're auditing</Fragment>
+    <Fragment slot="subtitle">
+      <code class="block text-sm">{MARKETPLACE_ADD_COMMAND}</code>
+      <code class="block text-sm mt-1">{PLUGIN_INSTALL_COMMAND}</code>
+    </Fragment>
+  </CallToAction>
+</Layout>

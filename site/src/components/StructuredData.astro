@@ -1,0 +1,11 @@
+---
+export interface Props {
+  /** One or more schema.org objects, rendered as JSON-LD. */
+  schema: object | object[];
+}
+
+const { schema } = Astro.props;
+const items = Array.isArray(schema) ? schema : [schema];
+---
+
+{items.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}

@@ -1,0 +1,144 @@
+---
+import { Icon } from 'astro-icon/components';
+
+import Layout from '~/layouts/PageLayout.astro';
+import SkillCard from '~/components/SkillCard.astro';
+import StructuredData from '~/components/StructuredData.astro';
+import Button from '~/components/ui/Button.astro';
+
+import { PROBLEMS, getProblemsForSkill, type Problem } from '~/data/problems';
+import {
+  getSkill,
+  getRelatedSkills,
+  skillPath,
+  firstParagraph,
+  MARKETPLACE_ADD_COMMAND,
+  PLUGIN_INSTALL_COMMAND,
+} from '~/lib/skills';
+import { breadcrumbSchema, problemFaqSchema } from '~/lib/structuredData';
+
+export function getStaticPaths() {
+  return PROBLEMS.map((problem) => ({ params: { slug: problem.slug }, props: { problem } }));
+}
+
+const { problem } = Astro.props as { problem: Problem };
+const skill = await getSkill(problem.skill);
+const whyExcerpt = firstParagraph(skill.whyItMatters);
+const related = await getRelatedSkills(skill, 3);
+const siblingProblems = getProblemsForSkill(skill.slug).filter((p) => p.slug !== problem.slug);
+
+const schema = [
+  problemFaqSchema(problem),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Problems', path: '/problems' },
+    { name: problem.title, path: `/problems/${problem.slug}` },
+  ]),
+];
+
+const metadata = {
+  title: problem.title,
+  description: problem.description,
+  openGraph: {
+    type: 'article',
+    images: [{ url: `/og/problems/${problem.slug}.png`, width: 1200, height: 630 }],
+  },
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData schema={schema} />
+  </Fragment>
+
+  <section class="px-4 py-12 sm:px-6 mx-auto lg:px-8 lg:py-16 max-w-3xl">
+    <nav class="text-sm text-muted mb-6" aria-label="Breadcrumb">
+      <a href="/problems" class="hover:text-primary">Problems</a>
+      <span class="mx-1">/</span>
+      <span class="text-default">{problem.slug}</span>
+    </nav>
+
+    <h1 class="font-bold font-heading text-3xl md:text-4xl leading-tighter tracking-tighter dark:text-white">
+      {problem.title}
+    </h1>
+
+    <p class="mt-5 text-lg text-muted">{problem.intro}</p>
+
+    {
+      whyExcerpt && (
+        <blockquote class="mt-6 border-l-4 border-primary pl-4 text-muted italic">
+          {whyExcerpt}
+          <cite class="block not-italic text-sm mt-2">
+            — from the{' '}
+            <a href={skillPath(skill.slug)} class="text-primary hover:underline">
+              {skill.title}
+            </a>{' '}
+            skill
+          </cite>
+        </blockquote>
+      )
+    }
+
+    <div class="mt-8 rounded-lg border-2 border-primary p-5">
+      <p class="font-semibold dark:text-white mb-1 inline-flex items-center gap-2">
+        <Icon name="tabler:wand" class="w-5 h-5 text-primary" /> Fix it with one command
+      </p>
+      <p class="text-sm text-muted mb-3">
+        The <a href={skillPath(skill.slug)} class="text-primary hover:underline font-medium">{skill.slug}</a> skill walks
+        Claude Code through the entire fix — audit, CSV baseline, execution, and verification.
+        {skill.scripts.length > 0 && ' Ready-to-run Python scripts included.'}
+      </p>
+      <pre
+        class="text-sm overflow-x-auto bg-gray-50 dark:bg-slate-900 rounded p-3"><code>{MARKETPLACE_ADD_COMMAND}
+{PLUGIN_INSTALL_COMMAND}
+/{skill.slug}</code></pre>
+      <div class="mt-4">
+        <Button variant="primary" href={skillPath(skill.slug)} text={`See the full ${skill.slug} skill`} />
+      </div>
+    </div>
+
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold mb-4 dark:text-white">Frequently asked questions</h2>
+      <div class="space-y-6">
+        {
+          problem.faqs.map((faq) => (
+            <div>
+              <h3 class="font-semibold text-lg dark:text-white">{faq.question}</h3>
+              <p class="text-muted mt-1">{faq.answer}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    {
+      siblingProblems.length > 0 && (
+        <div class="mt-10">
+          <h2 class="text-lg font-bold mb-2 dark:text-white">Related problems</h2>
+          <ul class="space-y-1">
+            {siblingProblems.map((sibling) => (
+              <li>
+                <a href={`/problems/${sibling.slug}`} class="text-primary hover:underline">
+                  {sibling.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </section>
+
+  {
+    related.length > 0 && (
+      <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-6xl pb-16">
+        <h2 class="text-2xl font-bold mb-5 dark:text-white">More {skill.category.title.toLowerCase()} skills</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {related.map((relatedSkill) => (
+            <SkillCard skill={relatedSkill} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+</Layout>

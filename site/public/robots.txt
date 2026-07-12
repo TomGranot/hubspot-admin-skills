@@ -1,0 +1,30 @@
+# hubspot.granot.io — open to all crawlers, including AI agents.
+# Agent-friendly surfaces: /llms.txt, /llms-full.txt, /api/skills.json,
+# and raw markdown twins at /skills/<slug>.md
+
+User-agent: *
+Disallow:
+
+# Explicitly welcome AI crawlers
+User-agent: GPTBot
+Disallow:
+
+User-agent: ClaudeBot
+Disallow:
+
+User-agent: Claude-Web
+Disallow:
+
+User-agent: anthropic-ai
+Disallow:
+
+User-agent: PerplexityBot
+Disallow:
+
+User-agent: Google-Extended
+Disallow:
+
+User-agent: CCBot
+Disallow:
+
+Sitemap: https://hubspot.granot.io/sitemap-index.xml

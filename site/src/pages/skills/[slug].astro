@@ -1,0 +1,160 @@
+---
+import { render } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+
+import Layout from '~/layouts/PageLayout.astro';
+import SkillCard from '~/components/SkillCard.astro';
+import StructuredData from '~/components/StructuredData.astro';
+import Button from '~/components/ui/Button.astro';
+
+import { getProblemsForSkill } from '~/data/problems';
+import {
+  getSkills,
+  getRelatedSkills,
+  skillMdPath,
+  skillPath,
+  scriptPath,
+  categoryPath,
+  skillGithubUrl,
+  MARKETPLACE_ADD_COMMAND,
+  PLUGIN_INSTALL_COMMAND,
+  type Skill,
+} from '~/lib/skills';
+import { breadcrumbSchema, skillArticleSchema, skillHowToSchema, skillSourceCodeSchema } from '~/lib/structuredData';
+
+export async function getStaticPaths() {
+  const skills = await getSkills();
+  return skills.map((skill) => ({ params: { slug: skill.slug }, props: { skill } }));
+}
+
+const { skill } = Astro.props as { skill: Skill };
+const { Content } = await render(skill.entry);
+
+const related = await getRelatedSkills(skill);
+const problems = getProblemsForSkill(skill.slug);
+
+const schema = [
+  skillArticleSchema(skill),
+  skillHowToSchema(skill),
+  skillSourceCodeSchema(skill),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Skills', path: '/skills' },
+    { name: skill.title, path: skillPath(skill.slug) },
+  ]),
+].filter(Boolean) as object[];
+
+const metadata = {
+  title: skill.title,
+  description: skill.description,
+  openGraph: {
+    type: 'article',
+    images: [{ url: `/og/skills/${skill.slug}.png`, width: 1200, height: 630 }],
+  },
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <link rel="alternate" type="text/markdown" href={skillMdPath(skill.slug)} title={`${skill.title} (Markdown)`} />
+    <StructuredData schema={schema} />
+  </Fragment>
+
+  <section class="px-4 py-12 sm:px-6 mx-auto lg:px-8 lg:py-16 max-w-4xl">
+    <nav class="text-sm text-muted mb-6" aria-label="Breadcrumb">
+      <a href="/skills" class="hover:text-primary">Skills</a>
+      <span class="mx-1">/</span>
+      <a href={categoryPath(skill.category.slug)} class="hover:text-primary">{skill.category.title}</a>
+      <span class="mx-1">/</span>
+      <span class="text-default">{skill.slug}</span>
+    </nav>
+
+    <h1 class="font-bold font-heading text-4xl md:text-5xl leading-tighter tracking-tighter dark:text-white">
+      {skill.title}
+    </h1>
+    <p class="mt-4 text-xl text-muted">{skill.description}</p>
+
+    <div class="flex flex-wrap items-center gap-2 mt-5 text-sm">
+      <a
+        href={categoryPath(skill.category.slug)}
+        class="rounded-full bg-gray-100 dark:bg-slate-800 px-3 py-1 hover:text-primary inline-flex items-center gap-1"
+      >
+        <Icon name={skill.category.icon} class="w-4 h-4" />
+        {skill.category.title}
+      </a>
+      {
+        skill.scripts.length > 0 && (
+          <span class="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 px-3 py-1 inline-flex items-center gap-1">
+            <Icon name="tabler:brand-python" class="w-4 h-4" />
+            {skill.scripts.length} Python script{skill.scripts.length > 1 ? 's' : ''}
+          </span>
+        )
+      }
+      <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-3 py-1">v{skill.version}</span>
+      <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-3 py-1">{skill.license}</span>
+    </div>
+
+    <div class="mt-6 rounded-lg border border-gray-200 dark:border-slate-800 p-4 bg-gray-50 dark:bg-slate-900">
+      <p class="text-sm font-semibold mb-2 dark:text-white">Run this skill in Claude Code:</p>
+      <pre
+        class="text-sm overflow-x-auto"><code>{MARKETPLACE_ADD_COMMAND}
+{PLUGIN_INSTALL_COMMAND}
+/{skill.slug}</code></pre>
+    </div>
+
+    <div class="flex flex-wrap gap-4 mt-4 text-sm">
+      <a href={skillMdPath(skill.slug)} class="text-primary hover:underline inline-flex items-center gap-1">
+        <Icon name="tabler:markdown" class="w-4 h-4" /> View as Markdown (for agents)
+      </a>
+      <a href={skillGithubUrl(skill.slug)} class="text-primary hover:underline inline-flex items-center gap-1">
+        <Icon name="tabler:brand-github" class="w-4 h-4" /> Source on GitHub
+      </a>
+      {
+        skill.scripts.map((stage) => (
+          <a href={scriptPath(skill.slug, stage)} class="text-primary hover:underline inline-flex items-center gap-1">
+            <Icon name="tabler:file-code" class="w-4 h-4" /> {stage}.py
+          </a>
+        ))
+      }
+    </div>
+
+    <div
+      class="mx-auto prose prose-lg max-w-4xl dark:prose-invert dark:prose-headings:text-slate-300 prose-md prose-headings:font-heading prose-headings:leading-tighter prose-headings:tracking-tighter prose-headings:font-bold prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-md prose-img:shadow-lg mt-10 border-t border-gray-200 dark:border-slate-800 pt-8 [&>h1:first-child]:hidden"
+    >
+      <Content />
+    </div>
+  </section>
+
+  {
+    problems.length > 0 && (
+      <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-4xl pb-8">
+        <h2 class="text-2xl font-bold mb-4 dark:text-white">Problems this skill solves</h2>
+        <ul class="space-y-2">
+          {problems.map((problem) => (
+            <li>
+              <a href={`/problems/${problem.slug}`} class="text-primary hover:underline">
+                {problem.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    related.length > 0 && (
+      <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-6xl pb-16">
+        <h2 class="text-2xl font-bold mb-5 dark:text-white">Related skills in {skill.category.title}</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {related.map((relatedSkill) => (
+            <SkillCard skill={relatedSkill} />
+          ))}
+        </div>
+        <div class="mt-8 text-center">
+          <Button variant="secondary" href="/skills" text="Browse all skills" />
+        </div>
+      </section>
+    )
+  }
+</Layout>

@@ -1,0 +1,64 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { PROBLEMS } from '~/data/problems';
+import { getSkills } from '~/lib/skills';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+const skills = await getSkills();
+const skillBySlug = new Map(skills.map((s) => [s.slug, s]));
+
+// Group problems by the category of the skill that solves them.
+const groups = new Map<string, { title: string; items: typeof PROBLEMS }>();
+for (const problem of PROBLEMS) {
+  const skill = skillBySlug.get(problem.skill);
+  if (!skill) continue;
+  const group = groups.get(skill.category.slug) ?? { title: skill.category.title, items: [] };
+  group.items.push(problem);
+  groups.set(skill.category.slug, group);
+}
+
+const metadata = {
+  title: 'Common HubSpot admin problems, solved',
+  description: `${PROBLEMS.length} common HubSpot CRM problems — duplicates, bounces, missing lifecycle stages, dirty data — each mapped to the open-source skill that fixes it.`,
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Problems', path: '/problems' },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText
+    tagline="Problem index"
+    title="What's broken in your HubSpot portal?"
+    subtitle="Every entry below is a problem HubSpot admins actually search for — mapped to the skill that fixes it, with the exact steps and scripts."
+  />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-4xl pb-16">
+    {
+      [...groups.values()].map((group) => (
+        <div class="mb-10">
+          <h2 class="text-xl font-bold mb-4 dark:text-white">{group.title}</h2>
+          <ul class="space-y-3">
+            {group.items.map((problem) => (
+              <li>
+                <a href={`/problems/${problem.slug}`} class="text-primary hover:underline font-medium">
+                  {problem.title}
+                </a>
+                <p class="text-sm text-muted mt-0.5">{problem.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </section>
+</Layout>

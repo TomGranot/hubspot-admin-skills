@@ -1,0 +1,70 @@
+---
+import { Icon } from 'astro-icon/components';
+
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import SkillCard from '~/components/SkillCard.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { CATEGORIES, type Category } from '~/data/categories';
+import { getSkillsByCategory, categoryPath } from '~/lib/skills';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+export function getStaticPaths() {
+  return CATEGORIES.map((category) => ({ params: { slug: category.slug }, props: { category } }));
+}
+
+const { category } = Astro.props as { category: Category };
+const skills = await getSkillsByCategory(category.slug);
+const otherCategories = CATEGORIES.filter((c) => c.slug !== category.slug);
+
+const metadata = {
+  title: `${category.title} skills for HubSpot`,
+  description: `${category.description} ${skills.length} Claude Code skills in this category.`,
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Skills', path: '/skills' },
+        { name: category.title, path: categoryPath(category.slug) },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText tagline="Skill category" title={category.title} subtitle={category.intro} />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-7xl pb-16">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {skills.map((skill) => <SkillCard skill={skill} />)}
+    </div>
+
+    <div class="mt-14 border-t border-gray-200 dark:border-slate-800 pt-8">
+      <h2 class="text-lg font-bold mb-4 dark:text-white">Other categories</h2>
+      <div class="flex flex-wrap gap-3">
+        {
+          otherCategories.map((other) => (
+            <a
+              href={categoryPath(other.slug)}
+              class="rounded-full border border-gray-200 dark:border-slate-800 px-4 py-2 text-sm hover:border-primary hover:text-primary inline-flex items-center gap-2"
+            >
+              <Icon name={other.icon} class="w-4 h-4" />
+              {other.title}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CallToAction
+    actions={[{ variant: 'primary', text: 'Install the plugin', href: '/install', icon: 'tabler:terminal-2' }]}
+  >
+    <Fragment slot="title">Run these skills on your portal</Fragment>
+    <Fragment slot="subtitle">Free, open source, and safe by design — every skill audits before it acts.</Fragment>
+  </CallToAction>
+</Layout>

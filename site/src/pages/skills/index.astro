@@ -1,0 +1,74 @@
+---
+import { Icon } from 'astro-icon/components';
+
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import SkillCard from '~/components/SkillCard.astro';
+import CallToAction from '~/components/widgets/CallToAction.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { CATEGORIES } from '~/data/categories';
+import { getSkills, categoryPath } from '~/lib/skills';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+const skills = await getSkills();
+const scriptedCount = skills.filter((s) => s.scripts.length > 0).length;
+
+const metadata = {
+  title: 'All skills',
+  description: `Browse all ${skills.length} HubSpot admin skills for Claude Code — audit, hygiene, enrichment, segmentation, automation, and maintenance. ${scriptedCount} ship with ready-to-run Python scripts.`,
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Skills', path: '/skills' },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText
+    tagline="Skills reference"
+    title={`All ${skills.length} skills`}
+    subtitle="Every skill follows the same safe pattern: Plan → Before (CSV baseline) → Execute → After (verification). Skills marked <em>scripted</em> include ready-to-run Python."
+  />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-7xl pb-16">
+    {
+      CATEGORIES.map((category) => {
+        const categorySkills = skills.filter((s) => s.category.slug === category.slug);
+        return (
+          <div class="mb-12">
+            <div class="flex items-center gap-3 mb-1">
+              <Icon name={category.icon} class="w-7 h-7 text-primary" />
+              <h2 class="text-2xl font-bold dark:text-white">
+                <a href={categoryPath(category.slug)} class="hover:text-primary">
+                  {category.title}
+                </a>
+                <span class="text-muted font-normal text-lg ml-1">({categorySkills.length})</span>
+              </h2>
+            </div>
+            <p class="text-muted mb-5">{category.description}</p>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {categorySkills.map((skill) => (
+                <SkillCard skill={skill} />
+              ))}
+            </div>
+          </div>
+        );
+      })
+    }
+  </section>
+
+  <CallToAction
+    actions={[{ variant: 'primary', text: 'Install the plugin', href: '/install', icon: 'tabler:terminal-2' }]}
+  >
+    <Fragment slot="title">Not sure where to start?</Fragment>
+    <Fragment slot="subtitle">
+      Run <code>/hubspot-audit</code> first — it grades your portal and points you at exactly the skills you need.
+    </Fragment>
+  </CallToAction>
+</Layout>

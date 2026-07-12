@@ -55,7 +55,7 @@ The plan tells you exactly which slash command to run next. Each skill follows a
 | **Execute** | Makes the changes (API scripts or step-by-step UI instructions) |
 | **After** | Verifies the fix, compares before/after, confirms success |
 
-Skills that can be scripted include ready-to-run Python scripts. Skills that require HubSpot UI work (workflows, lead scoring) provide precise build instructions — with options for HubSpot Breeze AI or the Claude Chrome extension.
+Skills that can be scripted include ready-to-run Python scripts (plain `requests`, run with `uv run` — no project setup needed). Skills that require HubSpot UI work (lead scoring, some workflow options) provide precise build instructions.
 
 ### 5. Maintain
 
@@ -144,6 +144,8 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 hubspot-admin-skills/
 ├── README.md
 ├── CLAUDE.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
 ├── LICENSE
 ├── .gitignore
 ├── assets/
@@ -184,31 +186,13 @@ If you say yes, Claude Code will create the skill, push it to your fork, and ope
 
 ### Manual Contributing
 
-If you prefer to contribute manually:
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full skill template, frontmatter spec, Python house style, safety-mechanism requirements, and category list. The short version:
 
-1. **Fork**: `gh repo fork tomgranot/hubspot-admin-skills --clone`
+1. **Fork**: `gh repo fork TomGranot/hubspot-admin-skills --clone`
 2. **Branch**: `git checkout -b skill/your-skill-name`
-3. **Create**: Add `skills/<your-skill>/SKILL.md` following the existing format:
-   - YAML frontmatter: `name`, `description`, `license`, `metadata` (author, version, category)
-   - 4-stage execution pattern: **Plan** → **Before State** → **Execute** → **After State**
-   - API code examples using `hubspot-api-client` where applicable
-   - Safety mechanisms (thresholds, CSV exports, confirmation prompts)
-   - Rollback instructions
+3. **Create**: Add `skills/<your-skill>/SKILL.md` following the 4-stage pattern (**Plan** → **Before** → **Execute** → **After**, plus **Rollback**)
 4. **Test**: Run the skill against a HubSpot sandbox portal
-5. **PR**: `gh pr create --repo tomgranot/hubspot-admin-skills`
-
-### Skill Categories
-
-When creating a skill, assign it to one of these categories in the `metadata.category` field:
-
-| Category | Slug | Description |
-|----------|------|-------------|
-| Audit & Planning | `audit-planning` | Portal assessment and implementation planning |
-| Database Hygiene | `database-hygiene` | Removing bad data, suppressing contacts, deduplication |
-| Data Enrichment | `data-enrichment` | Filling gaps in contact/company data |
-| Segmentation & Scoring | `segmentation-scoring` | ICP tiers, lead scoring, smart lists |
-| Automation Workflows | `automation-workflows` | HubSpot workflows for ongoing hygiene |
-| Ongoing Maintenance | `ongoing-maintenance` | Recurring cleanup and health checks |
+5. **PR**: `gh pr create --repo TomGranot/hubspot-admin-skills`
 
 Please keep skills generic and company-agnostic. No customer data, API keys, or proprietary information.
 

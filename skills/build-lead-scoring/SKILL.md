@@ -4,7 +4,7 @@ description: "Create a comprehensive lead scoring model with separate Fit and En
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: segmentation-scoring
 ---
 

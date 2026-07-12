@@ -4,7 +4,7 @@ description: "Classify companies into Ideal Customer Profile (ICP) tiers based o
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: segmentation-scoring
 ---
 
@@ -19,6 +19,8 @@ Without ICP classification, every inbound lead looks the same regardless of whet
 ## Prerequisites
 
 - Super Admin permissions in HubSpot
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with company read/write and `crm.schemas.companies.write` scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Automation > Workflows (Marketing Hub Professional or higher)
 - Data enrichment processes completed (company name, industry, geo values) so company data is as complete as possible
 - Company properties **Number of Employees** and **Industry** should be well-populated. Check coverage:
@@ -42,6 +44,16 @@ Before executing, collect the following information from the user:
 - Examples: Annual revenue thresholds, geographic restrictions (US-only, EMEA, etc.), specific technologies used, funding stage
 - Default: None -- industry and employee count are the primary classification axes
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/create-icp-tiers/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/create-icp-tiers/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/create-icp-tiers/scripts/after.py` |
+
+`before.py` checks whether the tier property exists and audits industry/employee-count coverage. `execute.py` creates the ICP Tier property (review its configuration block first). `after.py` verifies coverage and tier distribution. The classification workflows themselves are built in the UI (see Execute).
+
 ## Plan
 
 1. Define your ICP tier criteria (industry verticals + employee count thresholds)
@@ -50,7 +62,7 @@ Before executing, collect the following information from the user:
 4. Activate workflows in staggered sequence
 5. Verify classification results (after state)
 
-## Before State
+## Before
 
 ### Define Your ICP Tiers
 
@@ -72,39 +84,25 @@ This ensures ICP-relevant companies are never lost due to size alone.
 
 ### Audit Current State
 
+Run `uv run skills/create-icp-tiers/scripts/before.py`. The core queries:
+
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
-
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# Check if ICP Tier property already exists
+# Check if the ICP Tier property already exists
 # Use your chosen property name (e.g., "company_segment", "buyer_tier", "icp_tier")
 PROPERTY_NAME = "company_segment"
-try:
-    prop = api_client.crm.properties.core_api.get_by_name(
-        object_type="companies", property_name=PROPERTY_NAME
-    )
-    print(f"ICP Tier property exists: {prop.label}")
-except Exception:
-    print(f"ICP Tier property '{PROPERTY_NAME}' does not exist yet")
+resp = requests.get(f"{BASE}/crm/v3/properties/companies/{PROPERTY_NAME}",
+                    headers=HEADERS)
+print("Property exists" if resp.status_code == 200 else "Property does not exist yet")
 
 # Check data coverage for classification
 for prop_name in ["industry", "numberofemployees"]:
-    result = api_client.crm.companies.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": prop_name,
-                    "operator": "NOT_HAS_PROPERTY"
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    print(f"Companies missing {prop_name}: {result.total}")
+    resp = requests.post(f"{BASE}/crm/v3/objects/companies/search", headers=HEADERS, json={
+        "filterGroups": [{"filters": [
+            {"propertyName": prop_name, "operator": "NOT_HAS_PROPERTY"},
+        ]}],
+        "limit": 1,
+    })
+    print(f"Companies missing {prop_name}: {resp.json()['total']}")
 ```
 
 ## Execute
@@ -113,31 +111,28 @@ for prop_name in ["industry", "numberofemployees"]:
 
 Choose a property name that fits your CRM conventions (e.g., `company_segment`, `buyer_tier`, or `icp_tier`). The name is configurable -- just be consistent across workflows and lists.
 
-**Via API (recommended):**
+**Via API (recommended):** run `uv run skills/create-icp-tiers/scripts/execute.py`, which posts:
 
 ```python
-from hubspot.crm.properties import ModelProperty, PropertyCreate
-
 # Configure your property name here
 PROPERTY_NAME = "company_segment"
 
-api_client.crm.properties.core_api.create(
-    object_type="companies",
-    property_create=PropertyCreate(
-        name=PROPERTY_NAME,
-        label="ICP Tier",
-        type="enumeration",
-        field_type="select",
-        group_name="companyinformation",
-        description="Automated ICP classification based on industry and employee count. Set by workflow - do not edit manually.",
-        options=[
-            {"label": "Tier 1 - Primary ICP", "value": "tier_1_primary", "displayOrder": 0},
-            {"label": "Tier 2 - Secondary ICP", "value": "tier_2_secondary", "displayOrder": 1},
-            {"label": "Tier 3 - Tertiary ICP", "value": "tier_3_tertiary", "displayOrder": 2},
-            {"label": "Not ICP", "value": "not_icp", "displayOrder": 3},
-        ]
-    )
-)
+resp = requests.post(f"{BASE}/crm/v3/properties/companies", headers=HEADERS, json={
+    "name": PROPERTY_NAME,
+    "label": "ICP Tier",
+    "type": "enumeration",
+    "fieldType": "select",
+    "groupName": "companyinformation",
+    "description": "Automated ICP classification based on industry and employee count. "
+                   "Set by workflow - do not edit manually.",
+    "options": [
+        {"label": "Tier 1 - Primary ICP", "value": "tier_1_primary_icp", "displayOrder": 0},
+        {"label": "Tier 2 - Secondary ICP", "value": "tier_2_secondary_icp", "displayOrder": 1},
+        {"label": "Tier 3 - Tertiary ICP", "value": "tier_3_tertiary_icp", "displayOrder": 2},
+        {"label": "Not ICP", "value": "not_icp", "displayOrder": 3},
+    ],
+})
+resp.raise_for_status()
 ```
 
 **Via UI:** Settings > Properties > Company properties > Create property > Dropdown select with the four tier options.
@@ -179,11 +174,6 @@ Additional Breeze limitations:
 - Breeze **cannot** create multiple filter groups with OR between groups and AND within groups (needed for Tier 2 and Tier 3 demotion logic)
 
 **Option 3: Claude Anthropic Chrome Extension.** The Claude Chrome extension lets Claude see and interact with the HubSpot workflow builder UI directly. You can describe each workflow's logic in natural language and Claude will click through the UI to build it. This is often more accurate than Breeze for the ICP workflows because of their complex multi-group filter logic and the critical requirement for AND-based triggers. Build the four workflows one at a time, activating in the staggered sequence described in Step 3.
-
-> **Note on Fast Mode**: If you're using Claude Code's Fast Mode to speed up workflow creation,
-> be aware of the billing model: Haiku usage is included in your subscription, but Opus in
-> Fast Mode consumes extra credits. For workflow building tasks (which are UI-heavy and may
-> require many interactions), consider whether the speed tradeoff is worth the credit cost.
 
 #### Workflow Specifications
 
@@ -252,44 +242,9 @@ Additional Breeze limitations:
 
 The stagger ensures higher-priority tiers process first. The "ICP Tier is unknown" filter on Tiers 2-4 prevents overwriting, and the delay on Not ICP provides additional buffer.
 
-## After State
+## After
 
-Wait 2-4 hours for all workflows to process, then verify.
-
-```python
-# Use the same property name you chose in Step 1
-PROPERTY_NAME = "company_segment"
-
-# Check coverage
-result = api_client.crm.companies.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": PROPERTY_NAME,
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Companies without ICP Tier: {result.total} (should be 0)")
-
-# Check distribution
-for tier_value in ["tier_1_primary", "tier_2_secondary", "tier_3_tertiary", "not_icp"]:
-    result = api_client.crm.companies.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": PROPERTY_NAME,
-                    "operator": "EQ",
-                    "value": tier_value
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    print(f"  {tier_value}: {result.total}")
-```
+Wait 2-4 hours for all workflows to process, then verify: `uv run skills/create-icp-tiers/scripts/after.py` (checks that 0 companies lack a tier and prints the distribution per tier value).
 
 **Verification checklist:**
 
@@ -299,6 +254,11 @@ for tier_value in ["tier_1_primary", "tier_2_secondary", "tier_3_tertiary", "not
 4. **Spot-check demotions:** Find Tier 2 companies in primary ICP industries. Confirm they have employee counts below the Tier 1 threshold but above the Tier 2 threshold.
 5. **Spot-check Not ICP:** Open 5-10 Not ICP companies. Confirm each has at least one disqualifying factor (low employee count, non-ICP industry, or missing data).
 6. **Check workflow errors:** Review each workflow's history for failures.
+
+## Rollback
+
+- Turn off the four classification workflows to stop further tier assignment.
+- To remove classification entirely: archive the ICP Tier property (`DELETE /crm/v3/properties/companies/{name}` archives it; values are recoverable by unarchiving). Check that no lists, reports, or scoring models reference it first.
 
 ## Key Technical Learnings
 

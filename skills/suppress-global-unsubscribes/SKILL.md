@@ -1,13 +1,10 @@
 ---
 name: suppress-global-unsubscribes
-description: >
-  Identify and suppress globally unsubscribed contacts to ensure legal
-  compliance and reduce billing. Hybrid approach: API for discovery and
-  audit, manual UI for suppression (hs_marketable_status is read-only).
+description: "Identify and suppress globally unsubscribed contacts to ensure legal compliance and reduce billing. Hybrid approach: API for discovery and audit, manual UI for suppression (hs_marketable_status is read-only)."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -24,13 +21,22 @@ Contacts who have globally unsubscribed cannot legally be sent marketing emails 
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin or Marketing Hub Admin permissions for the manual UI suppression step
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/suppress-global-unsubscribes/scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/suppress-global-unsubscribes/scripts/after.py` |
+
+There is no execute script: the marketing-status change itself must happen via a HubSpot workflow or the UI (see Key Constraint and Stage 3).
+
 ## Key Constraint
 
 **`hs_marketable_status` is read-only via the API.** The API handles discovery and audit. Actual suppression must happen in the HubSpot UI.
 
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -40,7 +46,7 @@ Before writing any code, confirm with the user:
 2. **Billing impact**: Non-marketing status changes take effect at the start of the next billing cycle.
 3. **Investigate uniform patterns**: If all subscription types show nearly identical unsubscribe counts, this suggests a batch event (migration, import error, compliance sweep) rather than organic opt-outs. Understanding the origin prevents recurrence.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Count globally unsubscribed contacts, break down by lifecycle stage, and generate an audit CSV.
 
@@ -296,7 +302,7 @@ Do NOT delete this list. It is DYNAMIC and will automatically capture future uns
 - Trigger: `Unsubscribed from all email` is equal to `True`
 - Action: Set marketing contact status to non-marketing
 
-### Stage 4: After State
+### Stage 4: After
 
 Re-run the Before State marketing status query. The `still_marketing` count should be zero.
 
@@ -344,15 +350,21 @@ else:
 
 6. **`hs_marketable_status` is read-only via API.** Same constraint as suppress-hard-bounced. See that skill's gotchas for the custom-property-flag workaround.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- Setting contacts back to marketing status is possible in the UI, but a globally unsubscribed contact must re-opt-in before receiving marketing email — do not circumvent consent.
+- The before CSV records every affected contact.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/suppress-global-unsubscribes/scripts/before.py
 ```

@@ -4,7 +4,7 @@ description: "Audit and remove inactive, test, or deprecated workflows from HubS
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,8 +14,8 @@ Audit HubSpot workflows to remove dead weight. Unused workflows clutter the auto
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`)
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Note: The Workflows API may return 403 on some plan tiers. If so, audit manually in HubSpot UI under Automation > Workflows.
 
 ## Step-by-Step Instructions
@@ -27,7 +27,7 @@ Pull all workflows. The Automation API endpoint for workflows:
 ```python
 import requests
 
-headers = {"Authorization": f"Bearer {os.getenv('HUBSPOT_API_TOKEN')}"}
+headers = {"Authorization": f"Bearer {os.getenv('HUBSPOT_ACCESS_TOKEN')}"}
 response = requests.get(
     "https://api.hubapi.com/automation/v4/flows",
     headers=headers,

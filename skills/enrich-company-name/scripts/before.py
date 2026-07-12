@@ -25,6 +25,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -37,7 +38,7 @@ HEADERS = {
 SEARCH_URL = f"{BASE}/crm/v3/objects/contacts/search"
 SAMPLE_SIZE = 500          # contacts to sample for association check
 RATE_LIMIT_PAUSE = 0.15    # seconds between paginated requests
-CSV_FILE = os.path.join(os.path.dirname(__file__), "before_enrich_company_name.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "before_enrich_company_name.csv")
 
 # ── Helpers ──────────────────────────────────────────────────────
 
@@ -160,6 +161,7 @@ rows = [
     {"metric": "est_fixable", "value": est_fixable},
     {"metric": "est_unfixable", "value": est_unfixable},
 ]
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["metric", "value"])
     writer.writeheader()

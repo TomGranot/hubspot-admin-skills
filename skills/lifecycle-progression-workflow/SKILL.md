@@ -4,7 +4,7 @@ description: "Build workflows to automate contact progression through the sales 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 

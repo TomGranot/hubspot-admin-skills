@@ -25,6 +25,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -35,15 +36,16 @@ HEADERS = {
 }
 
 SEARCH_URL = f"{BASE}/crm/v3/objects/companies/search"
-CSV_FILE = os.path.join(os.path.dirname(__file__), "after_create_icp_tiers.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "after_create_icp_tiers.csv")
 
 # Configurable property name — match whatever you chose in execute.py
 PROPERTY_NAME = "company_segment"
 
 # Load before-state baseline
-BEFORE_CSV = os.path.join(os.path.dirname(__file__), "before_create_icp_tiers.csv")
+BEFORE_CSV = os.path.join("data", "audit-logs", "before_create_icp_tiers.csv")
 before_data = {}
 if os.path.exists(BEFORE_CSV):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(BEFORE_CSV) as f:
         for row in csv.DictReader(f):
             before_data[row["metric"]] = int(row["value"])

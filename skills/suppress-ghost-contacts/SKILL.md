@@ -1,14 +1,10 @@
 ---
 name: suppress-ghost-contacts
-description: >
-  Identify and suppress ghost contacts who received marketing emails but
-  never opened any. These contacts destroy sender reputation and
-  deliverability. Hybrid approach: API for discovery, manual UI for
-  suppression.
+description: "Identify and suppress ghost contacts who received marketing emails but never opened any. These contacts destroy sender reputation and deliverability. Hybrid approach: API for discovery, manual UI for suppression."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -24,6 +20,15 @@ Ghost contacts have received marketing emails but have never opened a single one
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin or Marketing Hub Admin permissions for the manual UI suppression step
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/suppress-ghost-contacts/scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/suppress-ghost-contacts/scripts/after.py` |
+
+There is no execute script: the marketing-status change itself must happen via a HubSpot workflow or the UI (see Key Constraint and Stage 3).
 
 ## Key Constraint
 
@@ -45,7 +50,7 @@ The same applies to `hs_email_bounce` -- "never bounced" is also null.
 
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -56,7 +61,7 @@ Before writing any code, confirm with the user:
 3. **Open tracking caveat**: Some email clients block tracking pixels. However, at the scale of thousands of contacts with zero opens across multiple sends, the overwhelming majority are genuinely unengaged.
 4. **Apple Mail Privacy Protection**: Introduced in iOS 15 / macOS Monterey, it pre-loads tracking pixels, which can create false-positive opens. Contacts who do NOT show opens despite this feature are almost certainly truly unengaged.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Discover all ghost contacts, break down by delivery volume, and generate an audit CSV.
 
@@ -383,7 +388,7 @@ Instruct the user:
 - The review list grows as contacts accumulate more delivered emails with no engagement
 - Run suppression monthly; review for deletion quarterly
 
-### Stage 4: After State
+### Stage 4: After
 
 Re-run the Before State queries and compare.
 
@@ -436,15 +441,21 @@ else:
 
 7. **Overlap with hard-bounce and unsubscribe processes**: Some ghost contacts may have already been suppressed. The Before State overlap detection prevents double-counting the billing impact.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- Suppression is reversible: restore contacts to marketing status via the UI or a workflow.
+- If ghosts were deleted rather than suppressed, deleted contacts are recoverable for 90 days via Settings > Data Management > Deleted Objects.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/suppress-ghost-contacts/scripts/before.py
 ```

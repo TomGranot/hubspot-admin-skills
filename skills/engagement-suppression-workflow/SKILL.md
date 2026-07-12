@@ -4,7 +4,7 @@ description: "Build a two-tier sunset workflow that re-engages dormant contacts 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 

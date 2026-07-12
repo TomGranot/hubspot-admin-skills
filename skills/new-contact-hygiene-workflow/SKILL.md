@@ -4,7 +4,7 @@ description: "Build a HubSpot workflow that auto-enriches and stages new contact
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 

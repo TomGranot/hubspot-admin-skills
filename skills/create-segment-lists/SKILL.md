@@ -4,7 +4,7 @@ description: "Create business segment lists in HubSpot for customers, partners, 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,8 +14,8 @@ Build a library of segment lists that enable targeted marketing, accurate report
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.lists.read` and `crm.lists.write` scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - ICP tier property created (run `/create-icp-tiers` first)
 - Lifecycle stages cleaned up (run `/fix-lifecycle-stages` first)
 
@@ -69,54 +69,66 @@ Before executing, collect the following information from the user:
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Plan Your Segments
+### Stage 1: Plan
 
-1. Review the segments above and decide which are relevant to your business.
-2. Confirm the properties these lists depend on are populated (ICP tier, lifecycle stage, industry).
-3. Check for existing lists that overlap — merge or rename rather than creating duplicates.
+1. Run the requirements interview above and decide which segments are relevant to the business.
+2. Check for existing lists that overlap — merge or rename rather than creating duplicates.
 
-### Stage 2: Execute — Create Lists
+### Stage 2: Before
 
-Use the Lists API to create active (smart) lists:
+1. Confirm the properties these lists depend on are populated (ICP tier, lifecycle stage, industry).
+2. Inventory existing lists (`POST /crm/v3/lists/search`) and record the baseline count.
+
+### Stage 3: Execute — Create Lists
+
+Use the Lists API (v3) to create active (smart) lists:
 
 ```python
-from hubspot import HubSpot
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
 # Example: Create "All Customers" list
-api_client.crm.lists.lists_api.create(
-    list_create_request={
-        "name": "All Customers",
-        "objectTypeId": "0-1",  # contacts
-        "processingType": "DYNAMIC",
-        "filterBranch": {
-            "filterBranchType": "OR",
+resp = requests.post(f"{BASE}/crm/v3/lists", headers=HEADERS, json={
+    "name": "All Customers",
+    "objectTypeId": "0-1",  # contacts
+    "processingType": "DYNAMIC",
+    "filterBranch": {
+        "filterBranchType": "OR",
+        "filterBranches": [{
+            "filterBranchType": "AND",
+            "filterBranches": [],
             "filters": [{
                 "filterType": "PROPERTY",
                 "property": "lifecyclestage",
                 "operation": {
                     "operationType": "ENUMERATION",
-                    "operator": "IS_EQUAL_TO",
-                    "value": "customer"
-                }
-            }]
-        }
-    }
-)
+                    "operator": "IS_ANY_OF",
+                    "values": ["customer"],
+                },
+            }],
+        }],
+        "filters": [],
+    },
+})
+resp.raise_for_status()
 ```
 
 Create each list, verify member count, and document the list ID.
 
 For static lists (Competitors), create the list and manually add contacts or import from a CSV.
 
-### Stage 3: After — Verify
+### Stage 4: After
 
 1. Check member counts for each list — do they match expectations?
 2. Verify no contacts appear in mutually exclusive lists (e.g., both Customer and Competitor).
 3. Confirm lists are visible to the appropriate teams.
 
-### Stage 4: Rollback
+## Rollback
 
 - Lists can be deleted via the API or UI.
 - Deleting a list does not affect the contacts in it — only the list definition is removed.

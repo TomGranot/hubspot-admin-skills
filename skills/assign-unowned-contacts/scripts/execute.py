@@ -25,6 +25,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -44,7 +45,7 @@ MAX_RETRIES = 5
 SAFETY_THRESHOLD = 50_000  # abort if more than this many contacts
 PAGINATE_DELAY = 0.15      # seconds between paginated requests
 BATCH_DELAY = 0.5          # seconds between batch operations
-CSV_FILE = os.path.join(os.path.dirname(__file__), "execute_assign_unowned.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "execute_assign_unowned.csv")
 
 # ── Helpers ──────────────────────────────────────────────────────
 
@@ -170,6 +171,7 @@ print(f"Assigning {len(ids):,} contacts to owner {TARGET_OWNER_ID}...")
 success, failed = batch_update(ids, {"hubspot_owner_id": TARGET_OWNER_ID})
 
 # ── CSV audit trail ──────────────────────────────────────────────
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["contact_id", "status"])
     writer.writeheader()

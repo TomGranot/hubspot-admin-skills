@@ -36,6 +36,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -47,7 +48,7 @@ HEADERS = {
 
 MAX_RETRIES = 5
 BATCH_DELAY = 0.5  # seconds between batch operations (list creations)
-CSV_FILE = os.path.join(os.path.dirname(__file__), "execute_build_smart_lists.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "execute_build_smart_lists.csv")
 TIMEZONE = os.environ.get("HUBSPOT_TIMEZONE", "UTC")
 
 # ── Configurable engagement windows ─────────────────────────────
@@ -368,6 +369,7 @@ for i, list_def in enumerate(LISTS, 1):
     time.sleep(BATCH_DELAY)
 
 # ── CSV audit trail ──────────────────────────────────────────────
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["name", "list_id", "status"])
     writer.writeheader()

@@ -23,6 +23,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -234,7 +235,7 @@ def main():
         print(f"    Total for {o['name']}: {owner_success} reassigned, {owner_failed} failed")
 
     # Save execution log
-    output_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    output_dir = "data/audit-logs"
     os.makedirs(output_dir, exist_ok=True)
 
     log_path = os.path.join(output_dir, "deactivated-owners-reassignment-log.csv")

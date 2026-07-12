@@ -30,6 +30,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -40,7 +41,7 @@ HEADERS = {
 }
 
 SEARCH_URL = f"{BASE}/crm/v3/objects/companies/search"
-CSV_FILE = os.path.join(os.path.dirname(__file__), "before_create_icp_tiers.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "before_create_icp_tiers.csv")
 
 # Configurable property name — match whatever you chose in execute.py
 PROPERTY_NAME = "company_segment"
@@ -215,6 +216,8 @@ summary_rows = [
     {"metric": "missing_both", "value": missing_both, "tier": ""},
 ]
 all_rows = summary_rows + audit_rows
+
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["metric", "value", "tier"])

@@ -17,6 +17,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -124,7 +125,7 @@ while True:
     time.sleep(PAGINATE_DELAY)
 
 # Save CSV
-output_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+output_dir = "data/audit-logs"
 os.makedirs(output_dir, exist_ok=True)
 
 csv_path = os.path.join(output_dir, "no-email-contacts-before.csv")

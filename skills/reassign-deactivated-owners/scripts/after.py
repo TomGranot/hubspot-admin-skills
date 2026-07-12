@@ -16,6 +16,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -84,10 +85,9 @@ unassigned = resp_no_owner.json().get("total", 0)
 print(f"  Unassigned contacts: {unassigned}")
 
 # --- Compare with before state ---
-before_csv = os.path.join(
-    os.path.dirname(__file__), "..", "data", "deactivated-owners-before.csv"
-)
+before_csv = os.path.join("data", "audit-logs", "deactivated-owners-before.csv")
 if os.path.exists(before_csv):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(before_csv, "r") as f:
         reader = csv.DictReader(f)
         before_data = [r for r in reader if r.get("status") == "deactivated"]

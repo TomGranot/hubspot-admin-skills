@@ -4,7 +4,7 @@ description: "Build a workflow to protect sender reputation through automated bo
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 

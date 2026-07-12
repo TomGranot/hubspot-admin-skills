@@ -1,13 +1,10 @@
 ---
 name: delete-no-email-contacts
-description: >
-  Delete contacts with no email address from a HubSpot CRM instance.
-  These contacts cannot receive any communication and inflate billing.
-  Fully automated via the HubSpot CRM Search and Batch Archive APIs.
+description: "Delete contacts with no email address from a HubSpot CRM instance. These contacts cannot receive any communication and inflate billing. Fully automated via the HubSpot CRM Search and Batch Archive APIs."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -23,9 +20,19 @@ Contacts without an email address serve no functional purpose in a HubSpot Marke
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/delete-no-email-contacts/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/delete-no-email-contacts/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/delete-no-email-contacts/scripts/after.py` |
+
+`before.py` counts contacts with no email and exports the CSV baseline. `execute.py` collects IDs, exports the audit CSV, and batch-archives (typed confirmation + safety threshold). `after.py` verifies zero remain.
+
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -35,7 +42,7 @@ Before writing any code, confirm these items with the user:
 2. **Threshold**: The default safety abort threshold is 500 contacts. If the user expects more, adjust the threshold in the execute script.
 3. **Recovery window**: Confirm the user understands that deleted contacts are recoverable for 90 days via HubSpot Settings > Data Management > Deleted Objects.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Run a count query to establish the baseline. Save results for comparison.
 
@@ -220,7 +227,7 @@ print(f"\nDeleted: {deleted_count}, Failed: {len(failed_ids)}")
 - `POST /crm/v3/objects/contacts/batch/archive` accepts up to 100 IDs per call
 - Successful archive returns HTTP 204 (no content)
 
-### Stage 4: After State
+### Stage 4: After
 
 Re-run the before-state query to confirm zero contacts remain.
 
@@ -264,15 +271,21 @@ else:
 
 5. **Contacts may reappear**: If an integration or form is creating contacts without email, new ones will appear after deletion. Always investigate the root cause.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- Deleted contacts are recoverable for 90 days via HubSpot Settings > Data Management > Deleted Objects.
+- The execute script's CSV audit trail lists every deleted contact ID for selective restoration.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/delete-no-email-contacts/scripts/before.py
 ```

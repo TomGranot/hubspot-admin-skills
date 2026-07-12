@@ -19,6 +19,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -202,7 +203,7 @@ for label, gt_val, lte_val in SEGMENTS:
     print(f"  {label}: {len(seg_contacts)} contacts")
     all_contacts.extend(seg_contacts)
 
-output_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+output_dir = "data/audit-logs"
 os.makedirs(output_dir, exist_ok=True)
 csv_path = os.path.join(output_dir, "ghost-contacts-before.csv")
 

@@ -4,7 +4,7 @@ description: "A lightweight 5-minute weekly health check covering bounce monitor
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 

@@ -4,7 +4,7 @@ description: "Audit and consolidate HubSpot reporting dashboards. Identifies unu
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 

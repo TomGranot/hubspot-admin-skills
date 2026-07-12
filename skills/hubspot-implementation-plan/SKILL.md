@@ -4,7 +4,7 @@ description: "Generate a phased implementation plan from a HubSpot audit report.
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: audit-planning
 ---
 

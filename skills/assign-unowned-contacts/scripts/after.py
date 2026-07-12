@@ -19,6 +19,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -29,12 +30,13 @@ HEADERS = {
 }
 
 SEARCH_URL = f"{BASE}/crm/v3/objects/contacts/search"
-CSV_FILE = os.path.join(os.path.dirname(__file__), "after_assign_unowned.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "after_assign_unowned.csv")
 
 # Load before-state baseline
-BEFORE_CSV = os.path.join(os.path.dirname(__file__), "before_assign_unowned.csv")
+BEFORE_CSV = os.path.join("data", "audit-logs", "before_assign_unowned.csv")
 before_unowned = None
 if os.path.exists(BEFORE_CSV):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(BEFORE_CSV) as f:
         for row in csv.DictReader(f):
             if row["metric"] == "unowned_marketing_contacts":

@@ -4,7 +4,7 @@ description: "Remove non-employee users from HubSpot and reassign their orphaned
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,25 +14,37 @@ Remove departed employees from HubSpot and reassign their CRM records. Orphaned 
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.objects.owners.read` and contact/company/deal write scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A list of current employees (to compare against HubSpot users)
 - A default owner or round-robin assignment rule for orphaned records
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Identify Non-Employee Owners
+### Stage 1: Plan
+
+Confirm with the user before starting:
+
+1. Who receives reassigned records — a single default owner, or territory/round-robin rules?
+2. Which flagged users should be deactivated vs merely stripped of records?
+
+### Stage 2: Before
+
+Identify non-employee owners via the Owners API:
 
 ```python
-from hubspot import HubSpot
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
-# Get all owners including deactivated
-active_owners = api_client.crm.owners.owners_api.get_page(limit=100)
-deactivated_owners = api_client.crm.owners.owners_api.get_page(
-    limit=100, archived=True
-)
+active = requests.get(f"{BASE}/crm/v3/owners", headers=HEADERS,
+                      params={"limit": 100, "archived": "false"}).json()["results"]
+deactivated = requests.get(f"{BASE}/crm/v3/owners", headers=HEADERS,
+                           params={"limit": 100, "archived": "true"}).json()["results"]
 ```
 
 Cross-reference with your current employee list. Flag:
@@ -42,7 +54,7 @@ Cross-reference with your current employee list. Flag:
 
 For each flagged owner, count how many contacts, companies, and deals they own.
 
-### Stage 2: Execute — Reassign and Deactivate
+### Stage 3: Execute
 
 1. **Reassign records** owned by non-employees:
    - Use the batch update API to reassign contacts to the appropriate active owner
@@ -53,13 +65,13 @@ For each flagged owner, count how many contacts, companies, and deals they own.
 
 3. **Run `/assign-unowned-contacts`** after reassignment to catch any records that ended up without an owner.
 
-### Stage 3: After — Verify
+### Stage 4: After
 
 1. Search for contacts where `hubspot_owner_id` matches any deactivated owner ID — count should be zero.
 2. Confirm all reassigned contacts have an active owner.
 3. Check that no workflows broke due to owner changes (some workflows may filter by specific owners).
 
-### Stage 4: Rollback
+## Rollback
 
 - Owner reassignments can be reversed by batch-updating the `hubspot_owner_id` back to the original value.
 - Keep a log of original owner assignments before making changes.

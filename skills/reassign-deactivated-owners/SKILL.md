@@ -1,13 +1,10 @@
 ---
 name: reassign-deactivated-owners
-description: >
-  Reassign contacts and companies from deactivated team members to active
-  owners. Fully automated via the HubSpot Owners API and Batch Update API.
-  Includes territory analysis for informed reassignment decisions.
+description: "Reassign contacts and companies from deactivated team members to active owners. Fully automated via the HubSpot Owners API and Batch Update API. Includes territory analysis for informed reassignment decisions."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -23,6 +20,16 @@ When team members leave an organization, their HubSpot-owned contacts and compan
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - A decision from team leadership on the reassignment strategy (see Plan stage)
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/reassign-deactivated-owners/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/reassign-deactivated-owners/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/reassign-deactivated-owners/scripts/after.py` |
+
+`before.py` lists deactivated owners and counts their records, exporting the CSV baseline. `execute.py` batch-reassigns to the configured target owner. `after.py` verifies zero records remain with deactivated owners.
 
 ## CRITICAL: Retrieving Deactivated Owners
 
@@ -55,7 +62,7 @@ Before executing, collect the following information from the user:
 
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -72,7 +79,7 @@ Before writing any code, confirm with the user:
 
 4. **Preserve historical ownership**: Ask whether to create a "Previous Owner" custom property to retain a record of the original assignment.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Discover all deactivated owners and analyze their contact/company portfolios.
 
@@ -417,7 +424,7 @@ resp = requests.post(
 )
 ```
 
-### Stage 4: After State
+### Stage 4: After
 
 Verify that no contacts or companies remain assigned to deactivated owners.
 
@@ -489,15 +496,21 @@ for o in deactivated_owners:
 
 8. **Workflow cleanup after reassignment**: Check for any active workflows or sequences that reference deactivated users by name or ID. Update them to reference active users.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- Owner reassignment is fully reversible: the before CSV records each record's original owner; batch-update `hubspot_owner_id` back to restore.
+- Individual changes can be reverted from each record's property history.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/reassign-deactivated-owners/scripts/before.py
 ```

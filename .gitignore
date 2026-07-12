@@ -2,9 +2,9 @@
 .env
 .env.*
 
-# Audit data (may contain PII)
-data/
-reports/
+# Audit data (may contain PII) — repo root only; site/src/data is source code
+/data/
+/reports/
 *.csv
 
 # Python

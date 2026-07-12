@@ -15,9 +15,11 @@ This creates an enumeration (dropdown) property with four tiers:
   - Tier 3 - Tertiary ICP
   - Not ICP
 
-The property is created via API. The classification WORKFLOWS must be
-built manually in HubSpot UI because the Workflows API (v4) is
-beta/unstable. See the skill instructions for workflow setup guidance.
+The property is created via API. The classification WORKFLOWS are built
+in the HubSpot UI: the v4 Automation API is stable and could create them,
+but their multi-group size-demotion filter logic is easier to build and
+verify visually. See the skill instructions for workflow setup guidance
+(and the automation-workflows skills for API-created workflow patterns).
 
 Generic industry tier examples:
   Tier 1: Manufacturing, Professional Services, Logistics

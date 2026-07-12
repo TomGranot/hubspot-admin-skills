@@ -24,7 +24,7 @@ export const GET: APIRoute = async () => {
 
   const body = `# HubSpot Admin Skills
 
-> ${skills.length} open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating HubSpot CRM. Each skill is a markdown playbook (SKILL.md) following a safe 4-stage pattern — Plan, Before (CSV baseline), Execute, After (verification) — and ${skills.filter((s) => s.scripts.length > 0).length} skills include ready-to-run Python scripts (plain \`requests\` against HubSpot REST endpoints, PEP 723 inline metadata, run via \`uv run\`).
+> ${skills.length} open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating HubSpot CRM. Each skill is a markdown playbook (SKILL.md) following a safe 4-stage pattern — Plan, Before (CSV baseline), Execute, After (verification) — and ${skills.filter((s) => s.scriptFiles.length > 0).length} skills include ready-to-run Python scripts (plain \`requests\` against HubSpot REST endpoints, PEP 723 inline metadata, run via \`uv run\`).
 
 Install in Claude Code:
 

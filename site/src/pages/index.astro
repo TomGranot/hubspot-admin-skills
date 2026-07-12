@@ -19,7 +19,7 @@ import { organizationSchema, websiteSchema } from '~/lib/structuredData';
 import heroImage from '~/assets/images/hero.png';
 
 const skills = await getSkills();
-const scriptedCount = skills.filter((s) => s.scripts.length > 0).length;
+const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
 
 const metadata = {
   title: 'HubSpot Admin Skills — audit, clean & automate HubSpot CRM with Claude Code',

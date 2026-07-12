@@ -12,7 +12,7 @@ import { getSkills, categoryPath } from '~/lib/skills';
 import { breadcrumbSchema } from '~/lib/structuredData';
 
 const skills = await getSkills();
-const scriptedCount = skills.filter((s) => s.scripts.length > 0).length;
+const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
 
 const metadata = {
   title: 'All skills',

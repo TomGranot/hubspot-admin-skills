@@ -95,7 +95,7 @@ export const skillArticleSchema = (skill: Skill) => ({
 });
 
 export const skillSourceCodeSchema = (skill: Skill) =>
-  skill.scripts.length === 0
+  skill.scriptFiles.length === 0
     ? undefined
     : {
         '@context': 'https://schema.org',

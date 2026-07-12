@@ -83,10 +83,10 @@ const metadata = {
         {skill.category.title}
       </a>
       {
-        skill.scripts.length > 0 && (
+        skill.scriptFiles.length > 0 && (
           <span class="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 px-3 py-1 inline-flex items-center gap-1">
             <Icon name="tabler:brand-python" class="w-4 h-4" />
-            {skill.scripts.length} Python script{skill.scripts.length > 1 ? 's' : ''}
+            {skill.scriptFiles.length} Python script{skill.scriptFiles.length > 1 ? 's' : ''}
           </span>
         )
       }

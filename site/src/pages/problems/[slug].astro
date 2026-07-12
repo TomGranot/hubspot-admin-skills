@@ -86,7 +86,7 @@ const metadata = {
       <p class="text-sm text-muted mb-3">
         The <a href={skillPath(skill.slug)} class="text-primary hover:underline font-medium">{skill.slug}</a> skill walks
         Claude Code through the entire fix — audit, CSV baseline, execution, and verification.
-        {skill.scripts.length > 0 && ' Ready-to-run Python scripts included.'}
+        {skill.scriptFiles.length > 0 && ' Ready-to-run Python scripts included.'}
       </p>
       <pre
         class="text-sm overflow-x-auto bg-gray-50 dark:bg-slate-900 rounded p-3"><code>{MARKETPLACE_ADD_COMMAND}

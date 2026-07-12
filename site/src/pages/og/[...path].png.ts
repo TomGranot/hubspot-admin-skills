@@ -22,7 +22,7 @@ export async function getStaticPaths() {
       props: {
         title: skill.title,
         kicker: skill.category.title,
-        badge: skill.scripts.length > 0 ? 'Python scripts included' : undefined,
+        badge: skill.scriptFiles.length > 0 ? 'Python scripts included' : undefined,
       } satisfies OgProps,
     })),
     ...PROBLEMS.map((problem) => ({

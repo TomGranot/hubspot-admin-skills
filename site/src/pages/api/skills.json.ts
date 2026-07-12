@@ -46,7 +46,7 @@ export const GET: APIRoute = async () => {
       category: skill.category.slug,
       version: skill.version,
       license: skill.license,
-      scripted: skill.scripts.length > 0,
+      scripted: skill.scriptFiles.length > 0,
       scripts: skill.scriptFiles.map((relPath) => ({
         path: relPath,
         url: abs(`/skills/${skill.slug}/scripts/${relPath}`),

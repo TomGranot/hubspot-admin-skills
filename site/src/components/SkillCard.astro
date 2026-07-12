@@ -24,7 +24,7 @@ const { skill, showCategory = false } = Astro.props;
   <div class="flex items-center gap-2 mt-3 text-xs text-muted">
     {showCategory && <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5">{skill.category.title}</span>}
     {
-      skill.scripts.length > 0 && (
+      skill.scriptFiles.length > 0 && (
         <span class="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 px-2 py-0.5 inline-flex items-center gap-1">
           <Icon name="tabler:brand-python" class="w-3.5 h-3.5" />
           scripted

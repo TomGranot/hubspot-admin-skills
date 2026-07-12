@@ -15,7 +15,7 @@
       "source": "./",
       "description": "Complete HubSpot CRM administration toolkit — audit, clean, enrich, segment, automate, and maintain your database",
       "category": "enterprise",
-      "homepage": "https://consume.granot.io",
+      "homepage": "https://hubspot.granot.io",
       "author": { "name": "Tom Granot" }
     }
   ]

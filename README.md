@@ -6,9 +6,12 @@
 
 **30+ Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
 
+[![Website](https://img.shields.io/badge/site-hubspot.granot.io-ff7a59)](https://hubspot.granot.io)
 [![Skills](https://img.shields.io/badge/skills-32-blue)](./skills/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)](https://claude.com/claude-code)
+
+📖 **Browse every skill with full docs at [hubspot.granot.io](https://hubspot.granot.io)** — including [common problems mapped to fixes](https://hubspot.granot.io/problems) and [agent-readable endpoints](https://hubspot.granot.io/install#agents) (`llms.txt`, `skills.json`).
 
 Built by [Tom Granot](https://consume.granot.io) — from deep experience with enterprise HubSpot CRM administration.
 
@@ -69,63 +72,63 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 | Skill | Description |
 |-------|-------------|
-| `hubspot-audit` | Run a comprehensive audit of your HubSpot portal — contacts, companies, deals, properties, lists, workflows, and forms |
-| `hubspot-implementation-plan` | Generate a phased implementation plan from audit findings with prioritized action items |
+| [`hubspot-audit`](https://hubspot.granot.io/skills/hubspot-audit) | Run a comprehensive audit of your HubSpot portal — contacts, companies, deals, properties, lists, workflows, and forms |
+| [`hubspot-implementation-plan`](https://hubspot.granot.io/skills/hubspot-implementation-plan) | Generate a phased implementation plan from audit findings with prioritized action items |
 
 ### Database Hygiene (6)
 
 | Skill | Description |
 |-------|-------------|
-| `delete-no-email-contacts` | Identify and delete contacts that have no email address — unusable records that inflate your database |
-| `suppress-hard-bounced` | Suppress contacts with hard-bounced email addresses to protect sender reputation |
-| `suppress-global-unsubscribes` | Suppress globally unsubscribed contacts to ensure compliance and reduce wasted marketing spend |
-| `suppress-ghost-contacts` | Find and suppress ghost contacts — records with no activity, no engagement, and no business value |
-| `merge-duplicate-companies` | Detect and merge duplicate company records using domain matching and fuzzy name comparison |
-| `reassign-deactivated-owners` | Reassign contacts and deals owned by deactivated HubSpot users to active team members |
+| [`delete-no-email-contacts`](https://hubspot.granot.io/skills/delete-no-email-contacts) | Identify and delete contacts that have no email address — unusable records that inflate your database |
+| [`suppress-hard-bounced`](https://hubspot.granot.io/skills/suppress-hard-bounced) | Suppress contacts with hard-bounced email addresses to protect sender reputation |
+| [`suppress-global-unsubscribes`](https://hubspot.granot.io/skills/suppress-global-unsubscribes) | Suppress globally unsubscribed contacts to ensure compliance and reduce wasted marketing spend |
+| [`suppress-ghost-contacts`](https://hubspot.granot.io/skills/suppress-ghost-contacts) | Find and suppress ghost contacts — records with no activity, no engagement, and no business value |
+| [`merge-duplicate-companies`](https://hubspot.granot.io/skills/merge-duplicate-companies) | Detect and merge duplicate company records using domain matching and fuzzy name comparison |
+| [`reassign-deactivated-owners`](https://hubspot.granot.io/skills/reassign-deactivated-owners) | Reassign contacts and deals owned by deactivated HubSpot users to active team members |
 
 ### Data Enrichment (5)
 
 | Skill | Description |
 |-------|-------------|
-| `enrich-company-name` | Populate missing company names on contacts by pulling from their associated company records |
-| `enrich-industry` | Backfill contact industry values from associated company industry data |
-| `standardize-geo-values` | Normalize country and state/region values to consistent formats across your database |
-| `assign-unowned-contacts` | Assign marketing contacts that have no owner to the appropriate team members based on territory or segment rules |
-| `fix-lifecycle-stages` | Detect and correct lifecycle stage violations — contacts stuck in the wrong stage or regressed backwards |
+| [`enrich-company-name`](https://hubspot.granot.io/skills/enrich-company-name) | Populate missing company names on contacts by pulling from their associated company records |
+| [`enrich-industry`](https://hubspot.granot.io/skills/enrich-industry) | Backfill contact industry values from associated company industry data |
+| [`standardize-geo-values`](https://hubspot.granot.io/skills/standardize-geo-values) | Normalize country and state/region values to consistent formats across your database |
+| [`assign-unowned-contacts`](https://hubspot.granot.io/skills/assign-unowned-contacts) | Assign marketing contacts that have no owner to the appropriate team members based on territory or segment rules |
+| [`fix-lifecycle-stages`](https://hubspot.granot.io/skills/fix-lifecycle-stages) | Detect and correct lifecycle stage violations — contacts stuck in the wrong stage or regressed backwards |
 
 ### Segmentation & Scoring (3)
 
 | Skill | Description |
 |-------|-------------|
-| `create-icp-tiers` | Create an ICP (Ideal Customer Profile) tier property and assign tier values based on firmographic criteria |
-| `build-lead-scoring` | Design and implement a lead scoring model using HubSpot's scoring properties and behavioral signals |
-| `build-smart-lists` | Build active smart lists for key segments — ICP tiers, lifecycle stages, engagement levels, and suppression groups |
+| [`create-icp-tiers`](https://hubspot.granot.io/skills/create-icp-tiers) | Create an ICP (Ideal Customer Profile) tier property and assign tier values based on firmographic criteria |
+| [`build-lead-scoring`](https://hubspot.granot.io/skills/build-lead-scoring) | Design and implement a lead scoring model using HubSpot's scoring properties and behavioral signals |
+| [`build-smart-lists`](https://hubspot.granot.io/skills/build-smart-lists) | Build active smart lists for key segments — ICP tiers, lifecycle stages, engagement levels, and suppression groups |
 
 ### Automation Workflows (4)
 
 | Skill | Description |
 |-------|-------------|
-| `new-contact-hygiene-workflow` | Build a workflow that screens new contacts on creation — validates email, enriches data, and assigns owners |
-| `engagement-suppression-workflow` | Create a workflow that automatically suppresses contacts after prolonged disengagement |
-| `lifecycle-progression-workflow` | Set up automated lifecycle stage progression based on engagement thresholds and sales activity |
-| `bounce-monitoring-workflow` | Build a workflow that monitors bounce events and auto-suppresses contacts exceeding bounce thresholds |
+| [`new-contact-hygiene-workflow`](https://hubspot.granot.io/skills/new-contact-hygiene-workflow) | Build a workflow that screens new contacts on creation — validates email, enriches data, and assigns owners |
+| [`engagement-suppression-workflow`](https://hubspot.granot.io/skills/engagement-suppression-workflow) | Create a workflow that automatically suppresses contacts after prolonged disengagement |
+| [`lifecycle-progression-workflow`](https://hubspot.granot.io/skills/lifecycle-progression-workflow) | Set up automated lifecycle stage progression based on engagement thresholds and sales activity |
+| [`bounce-monitoring-workflow`](https://hubspot.granot.io/skills/bounce-monitoring-workflow) | Build a workflow that monitors bounce events and auto-suppresses contacts exceeding bounce thresholds |
 
 ### Ongoing Maintenance (12)
 
 | Skill | Description |
 |-------|-------------|
-| `quarterly-database-cleanup` | Run a quarterly hygiene sweep — re-audit contacts, prune stale records, and refresh suppression lists |
-| `review-bounced-contacts` | Review contacts with 3+ bounces and decide on suppression or re-verification |
-| `cleanup-lists` | Audit and archive unused, redundant, or stale lists cluttering your portal |
-| `cleanup-forms` | Review forms for unused, broken, or duplicate entries and recommend consolidation |
-| `cleanup-workflows` | Identify workflows that are off, broken, or redundant and recommend which to archive or fix |
-| `weekly-cleanup-routine` | A repeatable weekly checklist covering the highest-impact maintenance tasks |
-| `cleanup-dashboards` | Audit dashboards for unused, duplicate, or outdated reports and recommend consolidation |
-| `cleanup-deals` | Review deal pipeline hygiene — stale deals, missing properties, and stage violations |
-| `cleanup-properties` | Find unused, duplicate, or poorly named contact/company/deal properties and recommend cleanup |
-| `cleanup-lead-owners` | Audit lead owner assignments for imbalances, orphaned records, and routing issues |
-| `backfill-geo-data` | Backfill missing country and state values using IP geolocation, form submissions, and company data |
-| `create-segment-lists` | Create a standard set of segment lists for reporting, targeting, and suppression |
+| [`quarterly-database-cleanup`](https://hubspot.granot.io/skills/quarterly-database-cleanup) | Run a quarterly hygiene sweep — re-audit contacts, prune stale records, and refresh suppression lists |
+| [`review-bounced-contacts`](https://hubspot.granot.io/skills/review-bounced-contacts) | Review contacts with 3+ bounces and decide on suppression or re-verification |
+| [`cleanup-lists`](https://hubspot.granot.io/skills/cleanup-lists) | Audit and archive unused, redundant, or stale lists cluttering your portal |
+| [`cleanup-forms`](https://hubspot.granot.io/skills/cleanup-forms) | Review forms for unused, broken, or duplicate entries and recommend consolidation |
+| [`cleanup-workflows`](https://hubspot.granot.io/skills/cleanup-workflows) | Identify workflows that are off, broken, or redundant and recommend which to archive or fix |
+| [`weekly-cleanup-routine`](https://hubspot.granot.io/skills/weekly-cleanup-routine) | A repeatable weekly checklist covering the highest-impact maintenance tasks |
+| [`cleanup-dashboards`](https://hubspot.granot.io/skills/cleanup-dashboards) | Audit dashboards for unused, duplicate, or outdated reports and recommend consolidation |
+| [`cleanup-deals`](https://hubspot.granot.io/skills/cleanup-deals) | Review deal pipeline hygiene — stale deals, missing properties, and stage violations |
+| [`cleanup-properties`](https://hubspot.granot.io/skills/cleanup-properties) | Find unused, duplicate, or poorly named contact/company/deal properties and recommend cleanup |
+| [`cleanup-lead-owners`](https://hubspot.granot.io/skills/cleanup-lead-owners) | Audit lead owner assignments for imbalances, orphaned records, and routing issues |
+| [`backfill-geo-data`](https://hubspot.granot.io/skills/backfill-geo-data) | Backfill missing country and state values using IP geolocation, form submissions, and company data |
+| [`create-segment-lists`](https://hubspot.granot.io/skills/create-segment-lists) | Create a standard set of segment lists for reporting, targeting, and suppression |
 
 ---
 

@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build && node scripts/postbuild-headers.mjs",
+    "build": "astro build && node scripts/postbuild-headers.mjs && node scripts/indexnow-ping.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check": "npm run check:astro && npm run check:eslint && npm run check:prettier",

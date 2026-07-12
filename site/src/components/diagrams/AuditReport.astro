@@ -1,0 +1,75 @@
+---
+// The artifact /hubspot-audit actually produces: a graded report where every
+// finding maps to a skill. Sample values are illustrative.
+---
+
+<svg
+  viewBox="0 0 640 460"
+  role="img"
+  aria-label="Sample output of the hubspot-audit skill: portal dimensions graded A to F, each mapped to the skill that fixes it"
+  class="w-full h-auto font-sans"
+>
+  <!-- terminal window -->
+  <rect
+    x="8"
+    y="8"
+    width="624"
+    height="444"
+    rx="14"
+    class="fill-white dark:fill-slate-900 stroke-gray-200 dark:stroke-slate-700"
+    stroke-width="1.5"></rect>
+  <!-- title bar -->
+  <line x1="8" y1="52" x2="632" y2="52" class="stroke-gray-200 dark:stroke-slate-700" stroke-width="1.5"></line>
+  <circle cx="34" cy="30" r="6" class="fill-red-400"></circle>
+  <circle cx="56" cy="30" r="6" class="fill-amber-400"></circle>
+  <circle cx="78" cy="30" r="6" class="fill-emerald-400"></circle>
+  <text x="320" y="35" text-anchor="middle" font-size="14" class="fill-gray-400 dark:fill-slate-500 font-mono"
+    >claude code</text
+  >
+
+  <!-- command -->
+  <text x="36" y="90" font-size="17" class="font-mono">
+    <tspan class="fill-gray-400 dark:fill-slate-500">$</tspan>
+    <tspan dx="8" class="fill-gray-900 dark:fill-slate-200 font-semibold">/hubspot-audit</tspan>
+  </text>
+
+  <!-- report rows: label, dotted leader, grade chip, finding -->
+  <g font-size="16" class="font-mono">
+    <text x="36" y="136" class="fill-gray-700 dark:fill-slate-300">Contacts</text>
+    <rect x="200" y="120" width="26" height="24" rx="6" class="fill-emerald-100 dark:fill-emerald-900"></rect>
+    <text x="213" y="137" text-anchor="middle" class="fill-emerald-700 dark:fill-emerald-300 font-bold">B</text>
+    <text x="244" y="136" font-size="14" class="fill-gray-500 dark:fill-slate-400">2,140 unowned</text>
+
+    <text x="36" y="176" class="fill-gray-700 dark:fill-slate-300">Deliverability</text>
+    <rect x="200" y="160" width="26" height="24" rx="6" class="fill-red-100 dark:fill-red-950"></rect>
+    <text x="213" y="177" text-anchor="middle" class="fill-red-700 dark:fill-red-300 font-bold">D</text>
+    <text x="244" y="176" font-size="14" class="fill-gray-500 dark:fill-slate-400">hard bounces still marketable</text>
+
+    <text x="36" y="216" class="fill-gray-700 dark:fill-slate-300">Duplicates</text>
+    <rect x="200" y="200" width="26" height="24" rx="6" class="fill-amber-100 dark:fill-amber-950"></rect>
+    <text x="213" y="217" text-anchor="middle" class="fill-amber-700 dark:fill-amber-300 font-bold">C</text>
+    <text x="244" y="216" font-size="14" class="fill-gray-500 dark:fill-slate-400">87 companies share a domain</text>
+
+    <text x="36" y="256" class="fill-gray-700 dark:fill-slate-300">Lifecycle</text>
+    <rect x="200" y="240" width="26" height="24" rx="6" class="fill-red-100 dark:fill-red-950"></rect>
+    <text x="213" y="257" text-anchor="middle" class="fill-red-700 dark:fill-red-300 font-bold">F</text>
+    <text x="244" y="256" font-size="14" class="fill-gray-500 dark:fill-slate-400">31% of contacts have no stage</text>
+
+    <text x="36" y="296" class="fill-gray-700 dark:fill-slate-300">Workflows</text>
+    <rect x="200" y="280" width="26" height="24" rx="6" class="fill-emerald-100 dark:fill-emerald-900"></rect>
+    <text x="213" y="297" text-anchor="middle" class="fill-emerald-700 dark:fill-emerald-300 font-bold">B</text>
+    <text x="244" y="296" font-size="14" class="fill-gray-500 dark:fill-slate-400">2 reference deleted lists</text>
+  </g>
+
+  <line x1="36" y1="322" x2="604" y2="322" class="stroke-gray-200 dark:stroke-slate-700" stroke-width="1"></line>
+
+  <!-- prescription -->
+  <text x="36" y="352" font-size="15" class="fill-gray-500 dark:fill-slate-400 font-mono">Fix in this order:</text>
+  <g font-size="15" class="font-mono">
+    <text x="56" y="382" class="fill-primary font-semibold">1. /suppress-hard-bounced</text>
+    <text x="330" y="382" font-size="13" class="fill-gray-400 dark:fill-slate-500">← protects sender reputation</text>
+    <text x="56" y="410" class="fill-primary font-semibold">2. /fix-lifecycle-stages</text>
+    <text x="330" y="410" font-size="13" class="fill-gray-400 dark:fill-slate-500">← unblocks funnel reporting</text>
+    <text x="56" y="438" class="fill-primary font-semibold">3. /merge-duplicate-companies</text>
+  </g>
+</svg>

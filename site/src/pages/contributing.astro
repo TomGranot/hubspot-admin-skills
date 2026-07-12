@@ -3,12 +3,11 @@ import Layout from '~/layouts/PageLayout.astro';
 import HeroText from '~/components/widgets/HeroText.astro';
 import Steps from '~/components/widgets/Steps.astro';
 import StructuredData from '~/components/StructuredData.astro';
+import ContributionLoop from '~/components/diagrams/ContributionLoop.astro';
 
 import { CATEGORIES } from '~/data/categories';
 import { GITHUB_REPO_URL } from '~/lib/skills';
 import { breadcrumbSchema } from '~/lib/structuredData';
-
-import heroImage from '~/assets/images/hero.png';
 
 const metadata = {
   title: 'Contributing',
@@ -30,23 +29,22 @@ const metadata = {
   <HeroText
     tagline="Community"
     title="Help build the skill set"
-    subtitle="Every HubSpot portal is different. When the audit finds an issue no existing skill covers, it offers to create a new skill on the spot — and contribute it back."
+    subtitle="Every portal breaks differently. When the audit finds an issue no skill covers, it can write the skill and contribute it back."
   />
 
   <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-8">
     <h2 class="text-2xl font-bold mb-4 dark:text-white">The automatic way</h2>
     <p class="text-muted">
-      Run <code>/hubspot-audit</code>. When it detects an issue that isn't covered by an existing skill, it will offer
-      to create one — and ask:
+      Run <code>/hubspot-audit</code>. When it detects an issue no existing skill covers, it offers to create one and
+      asks:
     </p>
     <blockquote class="mt-4 border-l-4 border-primary pl-4 text-muted italic">
       "Would you like to contribute this new skill back to the community? It will help other HubSpot admins facing the
       same issue."
     </blockquote>
     <p class="text-muted mt-4">
-      Say yes, and Claude Code creates the skill, pushes it to your fork, and opens a pull request — automatically. You
-      don't need to know git or write markdown. And once the PR merges, the skill gets its own pages on this site,
-      automatically.
+      Say yes and Claude Code writes the skill, pushes it to your fork, and opens the pull request. You never touch git
+      or markdown. When the PR merges, the skill gets its pages on this site without anyone lifting a finger.
     </p>
   </section>
 
@@ -72,12 +70,15 @@ const metadata = {
       {
         title: 'Open a pull request',
         description:
-          'The site build validates your frontmatter automatically — a malformed skill fails the deploy preview, so you get fast feedback.',
+          'The site build validates your frontmatter. A malformed skill fails the deploy preview, so you find out in minutes, not in review.',
         icon: 'tabler:git-pull-request',
       },
     ]}
-    image={{ src: heroImage, alt: 'Contributing workflow' }}
-  />
+  >
+    <Fragment slot="image">
+      <ContributionLoop />
+    </Fragment>
+  </Steps>
 
   <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-16">
     <h2 class="text-2xl font-bold mb-4 dark:text-white">Skill categories</h2>

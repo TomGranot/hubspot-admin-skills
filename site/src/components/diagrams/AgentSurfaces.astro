@@ -1,0 +1,57 @@
+---
+// How an agent consumes this site: fetch the machine-readable surfaces, pick a
+// skill, run it against the portal with the user's own token.
+---
+
+<svg
+  viewBox="0 0 560 420"
+  role="img"
+  aria-label="An agent fetches llms.txt, skills.json, or a skill's raw markdown from this site, then runs the skill against the user's HubSpot portal"
+  class="w-full h-auto font-sans"
+>
+  <defs>
+    <marker id="as-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+      ></path>
+    </marker>
+  </defs>
+
+  <!-- agent node -->
+  <rect x="16" y="164" width="140" height="92" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+  <text x="86" y="204" text-anchor="middle" font-size="17" class="fill-gray-900 dark:fill-white font-bold">your agent</text>
+  <text x="86" y="230" text-anchor="middle" font-size="13" class="fill-gray-500 dark:fill-slate-400">Claude Code, or any</text>
+
+  <!-- endpoint chips -->
+  <g font-size="14" class="font-mono">
+    <rect x="216" y="40" width="212" height="40" rx="9" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="322" y="65" text-anchor="middle" class="fill-primary">/llms.txt</text>
+
+    <rect x="216" y="110" width="212" height="40" rx="9" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="322" y="135" text-anchor="middle" class="fill-primary">/api/skills.json</text>
+
+    <rect x="216" y="180" width="212" height="40" rx="9" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="322" y="205" text-anchor="middle" class="fill-primary">/skills/&lt;slug&gt;.md</text>
+
+    <rect x="216" y="250" width="212" height="40" rx="9" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="322" y="275" text-anchor="middle" class="fill-primary">scripts/*.py</text>
+  </g>
+
+  <!-- arrows agent -> endpoints -->
+  <g class="text-gray-400 dark:text-slate-500">
+    <path d="M 156 190 C 186 190 186 60 208 60" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#as-arrow)"></path>
+    <path d="M 156 200 C 186 200 186 130 208 130" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#as-arrow)"></path>
+    <line x1="156" y1="210" x2="208" y2="203" stroke="currentColor" stroke-width="1.5" marker-end="url(#as-arrow)"></line>
+    <path d="M 156 222 C 186 222 186 270 208 270" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#as-arrow)"></path>
+  </g>
+
+  <!-- portal node -->
+  <rect x="384" y="330" width="160" height="70" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+  <text x="464" y="360" text-anchor="middle" font-size="16" class="fill-gray-900 dark:fill-white font-bold">your portal</text>
+  <text x="464" y="384" text-anchor="middle" font-size="12" class="fill-gray-500 dark:fill-slate-400">your token, your machine</text>
+
+  <!-- arrow endpoints -> portal -->
+  <g class="text-gray-400 dark:text-slate-500">
+    <path d="M 430 290 C 464 300 464 300 464 322" fill="none" stroke="currentColor" stroke-width="1.8" marker-end="url(#as-arrow)"></path>
+    <text x="360" y="315" font-size="13" text-anchor="end" class="fill-gray-500 dark:fill-slate-400">runs the skill</text>
+  </g>
+</svg>

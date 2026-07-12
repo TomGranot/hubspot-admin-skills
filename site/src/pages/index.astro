@@ -10,19 +10,20 @@ import FAQs from '~/components/widgets/FAQs.astro';
 import Stats from '~/components/widgets/Stats.astro';
 import CallToAction from '~/components/widgets/CallToAction.astro';
 import StructuredData from '~/components/StructuredData.astro';
+import AuditReport from '~/components/diagrams/AuditReport.astro';
+import SafetyPipeline from '~/components/diagrams/SafetyPipeline.astro';
+import AgentSurfaces from '~/components/diagrams/AgentSurfaces.astro';
 
 import { CATEGORIES } from '~/data/categories';
 import { PROBLEMS } from '~/data/problems';
 import { getSkills, GITHUB_REPO_URL, MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
 import { organizationSchema, websiteSchema } from '~/lib/structuredData';
 
-import heroImage from '~/assets/images/hero.png';
-
 const skills = await getSkills();
 const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
 
 const metadata = {
-  title: 'HubSpot Admin Skills — audit, clean & automate HubSpot CRM with Claude Code',
+  title: 'HubSpot Admin Skills — the CRM cleanup you keep postponing, run by Claude Code',
   ignoreTitleTemplate: true,
 };
 ---
@@ -37,58 +38,64 @@ const metadata = {
       { variant: 'primary', text: 'Install the plugin', href: '/install', icon: 'tabler:terminal-2' },
       { text: 'Browse all skills', href: '/skills' },
     ]}
-    image={{ src: heroImage, alt: 'CRM Autopilot — HubSpot Admin Skills' }}
   >
     <Fragment slot="title">
-      Your HubSpot CRM, cleaned and automated by <span class="text-accent dark:text-white">Claude Code</span>
+      The HubSpot cleanup you keep postponing, <span class="text-accent dark:text-white">run by Claude Code</span>
     </Fragment>
 
     <Fragment slot="subtitle">
-      <span class="font-semibold">{skills.length} open-source skills</span> that audit your portal, fix what's broken, and
-      keep it clean — duplicates, bounces, missing lifecycle stages, unowned contacts, stale deals, and everything else that
-      quietly rots a CRM. Built for humans <em>and</em> AI agents.
+      Duplicate companies, hard bounces still marked marketable, a third of your contacts missing a lifecycle stage.
+      You know the backlog. These {skills.length} open-source skills work through it: each one audits first, exports a
+      CSV baseline, makes the change, and shows you the before/after.
+    </Fragment>
+
+    <Fragment slot="image">
+      <AuditReport />
     </Fragment>
   </Hero>
 
-  <Note title="How it works:" description="Audit your portal → get a phased plan → execute skill by skill → maintain" />
+  <Note title="The loop:" description="Audit your portal → get a phased plan → execute skill by skill → maintain" />
 
   <Steps
     id="workflow"
-    title="From messy portal to maintained system in four moves"
+    title="What a cleanup actually looks like"
     items={[
       {
         title: 'Step 1: <span class="font-medium">Audit</span>',
         description:
-          'Run <code>/hubspot-audit</code>. It scans contacts, companies, deals, engagement, deliverability, duplicates, owners, lists, and workflows — and grades every finding A–F, mapped to the skill that fixes it.',
+          'Run <code>/hubspot-audit</code>. Read-only API queries across eight dimensions: contacts, deliverability, duplicates, owners, lifecycle, lists, workflows, pipeline. Every finding gets a grade and the name of the skill that fixes it.',
         icon: 'tabler:report-search',
       },
       {
         title: 'Step 2: <span class="font-medium">Plan</span>',
         description:
-          "Run <code>/hubspot-implementation-plan</code>. It reads the audit and produces a phased roadmap ordered by dependency — because you can't score leads before enriching company data.",
+          'Run <code>/hubspot-implementation-plan</code>. It orders the fixes by dependency: you can\'t score leads on firmographics nobody backfilled, so enrichment comes before scoring, hygiene before both.',
         icon: 'tabler:route',
       },
       {
         title: 'Step 3: <span class="font-medium">Execute</span>',
         description:
-          'Each skill follows the same safe pattern: Plan → Before (CSV baseline) → Execute (API scripts or guided UI work) → After (verification). Rollback guidance included.',
+          'One skill per finding. Destructive skills export a CSV baseline before touching anything, stop at an abort threshold, and document the rollback. Workflows are created disabled so you review them in the UI first.',
         icon: 'tabler:player-play',
       },
       {
         title: 'Step 4: <span class="font-medium">Maintain</span>',
         description:
-          'Prevention workflows plus <code>/weekly-cleanup-routine</code> and <code>/quarterly-database-cleanup</code> keep entropy from winning it all back.',
+          'Prevention workflows screen new records at creation. <code>/weekly-cleanup-routine</code> is a five-minute check; <code>/quarterly-database-cleanup</code> handles the drift both miss.',
         icon: 'tabler:calendar-repeat',
       },
     ]}
-    image={{ src: heroImage, alt: 'HubSpot Admin Skills workflow' }}
-  />
+  >
+    <Fragment slot="image">
+      <SafetyPipeline />
+    </Fragment>
+  </Steps>
 
   <Features
     id="categories"
     tagline="Skill categories"
     title="Skills for every phase of the CRM lifecycle"
-    subtitle={`${skills.length} skills across six categories — ${scriptedCount} of them ship with ready-to-run Python scripts.`}
+    subtitle={`${skills.length} skills across six categories. ${scriptedCount} ship with ready-to-run Python scripts.`}
     columns={3}
     items={CATEGORIES.map((category) => ({
       title: category.title,
@@ -101,27 +108,31 @@ const metadata = {
   <Content
     isReversed
     tagline="For AI agents"
-    title="A skills library your agent can read natively"
+    title="Built to be read by agents, not scraped"
     items={[
       {
-        title: 'llms.txt + llms-full.txt',
-        description: 'A spec-compliant index and a single-fetch concatenation of every skill.',
+        title: 'llms.txt and llms-full.txt',
+        description: 'An index of every skill, and the full documentation in one fetch.',
       },
       {
         title: 'Raw markdown twins',
-        description: 'Every skill page has a .md URL serving the verbatim SKILL.md — frontmatter, code, and all.',
+        description: 'Every skill page has a .md URL serving the SKILL.md verbatim, frontmatter included.',
       },
       {
-        title: 'skills.json manifest',
-        description: 'A machine-readable catalog with categories, script availability, and install commands.',
+        title: 'skills.json',
+        description: 'The whole catalog as JSON: slugs, categories, script URLs, install commands.',
       },
     ]}
-    image={{ src: heroImage, alt: 'Agent-readable surfaces' }}
   >
     <Fragment slot="content">
       <h3 class="text-2xl font-bold tracking-tight dark:text-white sm:text-3xl mb-2">Point your agent at this site</h3>
-      Every page here is designed to be consumed by coding agents as easily as by people — no scraping required.
-      <a class="text-primary hover:underline" href="/install#agents">See the agent install guide →</a>
+      If an agent does your HubSpot work, it can read this site directly and run any skill against your portal with
+      your own token.
+      <a class="text-primary hover:underline" href="/install#agents">Agent install guide →</a>
+    </Fragment>
+
+    <Fragment slot="image">
+      <AgentSurfaces />
     </Fragment>
 
     <Fragment slot="bg">
@@ -133,40 +144,40 @@ const metadata = {
     stats={[
       { title: 'Skills', amount: `${skills.length}` },
       { title: 'With Python scripts', amount: `${scriptedCount}` },
-      { title: 'Common problems solved', amount: `${PROBLEMS.length}` },
+      { title: 'Common problems covered', amount: `${PROBLEMS.length}` },
       { title: 'License', amount: 'MIT' },
     ]}
   />
 
   <FAQs
-    title="Frequently asked questions"
+    title="The questions that decide whether you run this"
     tagline="FAQs"
     classes={{ container: 'max-w-6xl' }}
     items={[
       {
-        title: 'What do I need to run these skills?',
+        title: 'Is this safe to run against production?',
         description:
-          'Claude Code, a HubSpot account with a private app token (appropriate scopes), and Python 3.10+ with uv for the scripted skills. Workflow-building skills need Marketing Professional or higher.',
+          'The audit is read-only. Skills that change data export a CSV of every affected record first, show you what will change, ask before writing, and stop at an abort threshold. Run /sandbox-self-test against a free HubSpot developer test account if you want proof before granting a production token.',
       },
       {
-        title: 'Is this safe to run against a production portal?',
+        title: 'Where does my CRM data go?',
         description:
-          'Every destructive skill follows the same safety pattern: it audits first, exports a CSV baseline, shows you exactly what will change, asks for confirmation, and documents rollback. That said — test against a sandbox portal first, like you would any admin tooling.',
+          'Nowhere. There is no SaaS here. The skills are markdown instructions plus Python scripts that run on your machine, calling the HubSpot API with your own private app token. CSV exports stay in a local, gitignored folder.',
       },
       {
-        title: 'Do the skills send my CRM data anywhere?',
+        title: 'What do I need?',
         description:
-          'The skills are markdown instructions plus Python scripts that run on your machine against the HubSpot API with your own token. The repo is open source — you can read every line before running it.',
+          'Claude Code, a HubSpot private app token, and Python 3.10+ with uv for the scripted skills. Workflow skills need Marketing Professional or higher; the audit and hygiene skills work on any tier.',
       },
       {
-        title: "What if my problem isn't covered by an existing skill?",
+        title: "What if the audit finds something no skill covers?",
         description:
-          'The audit skill detects issues that no existing skill covers and offers to create a new skill on the spot — and to contribute it back to the community as a pull request.',
+          'It offers to write the skill on the spot, and to contribute it back as a pull request. The skill set grows out of real portals, not a roadmap.',
       },
       {
-        title: 'Is this affiliated with HubSpot?',
+        title: 'Is this a HubSpot product?',
         description:
-          'No. This is an independent open-source project built from hands-on experience administering HubSpot CRM at scale. HubSpot is a trademark of HubSpot, Inc.',
+          'No. Independent open source, built from years of administering HubSpot portals. It works inside your existing portal; nothing gets replaced. HubSpot is a trademark of HubSpot, Inc.',
       },
     ]}
   />

@@ -106,8 +106,10 @@ const metadata = {
       <p class="font-semibold text-amber-900 dark:text-amber-200">A note on safety</p>
       <p class="text-amber-800 dark:text-amber-300 mt-1">
         Several skills modify or delete CRM records. Every destructive skill exports a CSV baseline first, shows what
-        will change, and asks for confirmation — but you should still test against a HubSpot sandbox portal before
-        running anything against production.
+        will change, and asks before writing. Want proof before granting a production token? Run
+        <a href="/skills/sandbox-self-test" class="underline font-medium">/sandbox-self-test</a> against a free HubSpot
+        developer test account: it seeds fixtures, runs the toolkit end to end, grades the results, and refuses to
+        touch anything that is not a sandbox.
       </p>
     </div>
   </section>

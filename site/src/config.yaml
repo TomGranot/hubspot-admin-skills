@@ -9,9 +9,9 @@ site:
 # Default SEO metadata
 metadata:
   title:
-    default: HubSpot Admin Skills — audit, clean & automate HubSpot CRM with Claude Code
+    default: HubSpot Admin Skills — the CRM cleanup you keep postponing, run by Claude Code
     template: '%s — HubSpot Admin Skills'
-  description: '30+ open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating your HubSpot CRM. Built for humans and AI agents.'
+  description: 'Open-source Claude Code skills that audit your HubSpot portal, fix what the audit finds, and keep it fixed. CSV baselines, abort thresholds, rollback paths. Readable by humans and agents.'
   robots:
     index: true
     follow: true

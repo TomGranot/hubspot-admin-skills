@@ -1,0 +1,69 @@
+---
+// The 4-stage pattern every destructive skill follows, with the artifact each
+// stage leaves behind — including the rollback path back to the CSV baseline.
+---
+
+<svg
+  viewBox="0 0 520 560"
+  role="img"
+  aria-label="The four-stage skill pattern: Plan, Before with CSV baseline export, Execute, After with verification — and a rollback path from After back to the baseline"
+  class="w-full h-auto font-sans"
+>
+  <defs>
+    <marker id="sp-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+      ></path>
+    </marker>
+  </defs>
+
+  <!-- stage nodes -->
+  <g>
+    <rect x="30" y="20" width="300" height="86" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+    <text x="54" y="56" font-size="19" class="fill-gray-900 dark:fill-white font-bold">1 · Plan</text>
+    <text x="54" y="84" font-size="14" class="fill-gray-500 dark:fill-slate-400">the approach, thresholds, your sign-off</text>
+
+    <rect x="30" y="156" width="300" height="86" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+    <text x="54" y="192" font-size="19" class="fill-gray-900 dark:fill-white font-bold">2 · Before</text>
+    <text x="54" y="220" font-size="14" class="fill-gray-500 dark:fill-slate-400">audit current state, export baseline</text>
+
+    <rect x="30" y="292" width="300" height="86" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+    <text x="54" y="328" font-size="19" class="fill-gray-900 dark:fill-white font-bold">3 · Execute</text>
+    <text x="54" y="356" font-size="14" class="fill-gray-500 dark:fill-slate-400">batched API writes, abort threshold</text>
+
+    <rect x="30" y="428" width="300" height="86" rx="12" class="fill-white dark:fill-slate-900 stroke-gray-300 dark:stroke-slate-700" stroke-width="1.5"></rect>
+    <text x="54" y="464" font-size="19" class="fill-gray-900 dark:fill-white font-bold">4 · After</text>
+    <text x="54" y="492" font-size="14" class="fill-gray-500 dark:fill-slate-400">re-audit, compare against baseline</text>
+  </g>
+
+  <!-- connectors -->
+  <g class="text-gray-400 dark:text-slate-500">
+    <line x1="180" y1="106" x2="180" y2="148" stroke="currentColor" stroke-width="1.8" marker-end="url(#sp-arrow)"></line>
+    <line x1="180" y1="242" x2="180" y2="284" stroke="currentColor" stroke-width="1.8" marker-end="url(#sp-arrow)"></line>
+    <line x1="180" y1="378" x2="180" y2="420" stroke="currentColor" stroke-width="1.8" marker-end="url(#sp-arrow)"></line>
+  </g>
+
+  <!-- artifact chips -->
+  <g font-size="13" class="font-mono">
+    <rect x="366" y="176" width="128" height="34" rx="8" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="430" y="198" text-anchor="middle" class="fill-primary">baseline.csv</text>
+
+    <rect x="366" y="448" width="128" height="34" rx="8" class="fill-blue-50 dark:fill-slate-800 stroke-primary" stroke-width="1.3"></rect>
+    <text x="430" y="470" text-anchor="middle" class="fill-primary">verified diff</text>
+  </g>
+  <g class="text-gray-400 dark:text-slate-500">
+    <line x1="330" y1="193" x2="360" y2="193" stroke="currentColor" stroke-width="1.5" marker-end="url(#sp-arrow)"></line>
+    <line x1="330" y1="465" x2="360" y2="465" stroke="currentColor" stroke-width="1.5" marker-end="url(#sp-arrow)"></line>
+  </g>
+
+  <!-- rollback path -->
+  <g class="text-gray-400 dark:text-slate-500">
+    <path
+      d="M 430 448 L 430 218"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-dasharray="5 5"
+      marker-end="url(#sp-arrow)"></path>
+    <text x="443" y="338" font-size="13" class="fill-gray-500 dark:fill-slate-400">rollback</text>
+  </g>
+</svg>

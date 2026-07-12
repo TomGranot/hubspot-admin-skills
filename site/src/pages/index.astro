@@ -1,4 +1,6 @@
 ---
+import { YouTube } from 'astro-embed';
+
 import Layout from '~/layouts/PageLayout.astro';
 
 import Hero from '~/components/widgets/Hero.astro';
@@ -17,7 +19,7 @@ import AgentSurfaces from '~/components/diagrams/AgentSurfaces.astro';
 import { CATEGORIES } from '~/data/categories';
 import { PROBLEMS } from '~/data/problems';
 import { getSkills, GITHUB_REPO_URL, MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
-import { organizationSchema, websiteSchema } from '~/lib/structuredData';
+import { organizationSchema, videoSchema, websiteSchema } from '~/lib/structuredData';
 
 const skills = await getSkills();
 const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
@@ -30,7 +32,7 @@ const metadata = {
 
 <Layout metadata={metadata}>
   <Fragment slot="head">
-    <StructuredData schema={[websiteSchema(), organizationSchema()]} />
+    <StructuredData schema={[websiteSchema(), organizationSchema(), videoSchema()]} />
   </Fragment>
 
   <Hero
@@ -90,6 +92,23 @@ const metadata = {
       <SafetyPipeline />
     </Fragment>
   </Steps>
+
+  <section id="watch" class="px-4 sm:px-6 mx-auto max-w-4xl py-12 lg:py-16 scroll-mt-24">
+    <div class="text-center mb-8">
+      <p class="text-base text-primary font-bold tracking-wide uppercase">Watch</p>
+      <h2 class="text-3xl md:text-4xl font-bold leading-tighter tracking-tighter font-heading dark:text-white">
+        See it run
+      </h2>
+      <p class="text-muted mt-3 text-xl">
+        Tom Granot and Andy Katz walk through automating a HubSpot CRM with Claude Code.
+      </p>
+    </div>
+    <YouTube
+      id="ZUIprPSbYO4"
+      title="Automate Your HubSpot CRM with Claude Code"
+      class="mx-auto rounded-lg shadow-lg overflow-hidden"
+    />
+  </section>
 
   <Features
     id="categories"

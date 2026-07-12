@@ -78,6 +78,6 @@ export const footerData = {
   secondaryLinks: [],
   socialLinks: [{ ariaLabel: 'Github', icon: 'tabler:brand-github', href: GITHUB_REPO_URL }],
   footNote: `
-    Built by <a class="text-blue-600 underline dark:text-muted" href="https://consume.granot.io">Tom Granot</a> · Open source under MIT · Not affiliated with HubSpot, Inc.
+    Built by <a class="text-blue-600 underline dark:text-muted" href="https://granot.io">Tom Granot</a> · Open source under MIT · Not affiliated with HubSpot, Inc.
   `,
 };

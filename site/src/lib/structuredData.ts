@@ -88,7 +88,7 @@ export const skillArticleSchema = (skill: Skill) => ({
   headline: skill.title,
   description: skill.description,
   url: abs(skillPath(skill.slug)),
-  author: { '@type': 'Person', name: 'Tom Granot', url: 'https://consume.granot.io' },
+  author: { '@type': 'Person', name: 'Tom Granot', url: 'https://granot.io' },
   publisher: organizationSchema(),
   license: `${GITHUB_REPO_URL}/blob/main/LICENSE`,
   about: 'HubSpot CRM administration',
@@ -107,6 +107,16 @@ export const skillSourceCodeSchema = (skill: Skill) =>
         url: abs(scriptPath(skill.slug, skill.scriptFiles[0])),
         license: `${GITHUB_REPO_URL}/blob/main/LICENSE`,
       };
+
+export const videoSchema = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: 'Automate Your HubSpot CRM with Claude Code',
+  description: 'Tom Granot and Andy Katz walk through automating a HubSpot CRM with Claude Code.',
+  thumbnailUrl: 'https://i.ytimg.com/vi/ZUIprPSbYO4/hqdefault.jpg',
+  embedUrl: 'https://www.youtube.com/embed/ZUIprPSbYO4',
+  contentUrl: 'https://www.youtube.com/watch?v=ZUIprPSbYO4',
+});
 
 export const problemFaqSchema = (problem: Problem) => ({
   '@context': 'https://schema.org',

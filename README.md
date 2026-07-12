@@ -4,10 +4,10 @@
   <img src="./assets/hero.png" alt="CRM Autopilot — HubSpot Admin Skills" width="100%" />
 </p>
 
-**36 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
+**37 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
 
 [![Website](https://img.shields.io/badge/site-hubspot.granot.io-ff7a59)](https://hubspot.granot.io)
-[![Skills](https://img.shields.io/badge/skills-36-blue)](./skills/)
+[![Skills](https://img.shields.io/badge/skills-37-blue)](./skills/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)](https://claude.com/claude-code)
 
@@ -16,6 +16,10 @@
 Built by [Tom Granot](https://consume.granot.io) — from deep experience with enterprise HubSpot CRM administration.
 
 ---
+
+## What's New in 1.2
+
+- **Self-testing, BYO sandbox.** New `/sandbox-self-test` verifies the whole toolkit against a free, disposable HubSpot developer test account you bring: seeded fixtures, read-path smokes for every scripted skill, end-to-end destructive and enrichment cases (mock provider — zero credits), list + v4 workflow round-trips, a graded report, and marker-scoped teardown. Production is locked out in code (account-type gate, fails closed, no override). Optional manual-dispatch CI workflow included.
 
 ## What's New in 1.1
 
@@ -38,6 +42,16 @@ The skills use two complementary connection paths:
 2. **HubSpot's official MCP server (optional, interactive).** Connect Claude Code to `mcp.hubspot.com` via OAuth for conversational reads and spot-checks — "show me 5 contacts this cleanup touched" — without writing a script. Run `/connect-hubspot-mcp` to set it up and to see the full division of labor.
 
 Audits, hygiene, enrichment, and segmentation run on scripts; use MCP alongside them for verification and triage.
+
+## Self-Testing (Bring Your Own Sandbox)
+
+Before trusting any of this with production, make the toolkit prove itself on a disposable portal:
+
+1. Create a free **developer test account** (HubSpot Settings > Testing > Developer test accounts — every account gets up to 10, no plan required).
+2. Create a private app inside it and put its token in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
+3. Run `/sandbox-self-test`.
+
+The suite seeds synthetic fixtures (one defect per testable skill), smoke-tests every scripted skill's read path, runs destructive and enrichment cases end-to-end (enrichment uses a mock provider — no credits), round-trips a list and a v4 workflow, writes a PASS/FAIL/SKIP report to `reports/`, and tears everything down. It **hard-refuses to run against anything that isn't a `DEVELOPER_TEST` or `SANDBOX` portal** — the account-type check is enforced in every script, fails closed, and has no override. An optional GitHub Actions workflow (manual dispatch only) runs the same suite in CI.
 
 ## Quick Start
 
@@ -90,7 +104,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 ## Skills Reference
 
-### Audit & Planning (4)
+### Audit & Planning (5)
 
 | Skill | Description |
 |-------|-------------|
@@ -98,6 +112,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | [`hubspot-implementation-plan`](https://hubspot.granot.io/skills/hubspot-implementation-plan) | Generate a phased implementation plan from audit findings with prioritized action items |
 | [`connect-hubspot-mcp`](https://hubspot.granot.io/skills/connect-hubspot-mcp) | Connect Claude Code to HubSpot's official remote MCP server for conversational CRM reads and spot-checks |
 | [`audit-api-usage`](https://hubspot.granot.io/skills/audit-api-usage) | Find every integration calling legacy v1–v4 HubSpot endpoints before the March 2027 end of support |
+| [`sandbox-self-test`](https://hubspot.granot.io/skills/sandbox-self-test) | Verify the whole toolkit against a disposable developer sandbox you bring — seed, test, report, tear down; production-locked |
 
 ### Database Hygiene (6)
 
@@ -168,6 +183,7 @@ All four builders create their workflows via the stable v4 Automation API (alway
 - HubSpot **Marketing Professional** plan or higher (for workflow-based skills)
 - Optional: HubSpot's **MCP server** connection for conversational spot-checks (`/connect-hubspot-mcp`)
 - Optional: an **enrichment provider** API key (FullEnrich, Apollo, Hunter, Dropcontact, or your own) for `/waterfall-enrich-contacts`
+- Optional: a free **developer test account** with its token in `HUBSPOT_SANDBOX_ACCESS_TOKEN` for `/sandbox-self-test`
 
 ### API versioning
 
@@ -185,6 +201,9 @@ hubspot-admin-skills/
 ├── CHANGELOG.md
 ├── LICENSE
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── sandbox-self-test.yml   (opt-in, manual dispatch only)
 ├── assets/
 │   └── hero.png
 ├── .claude-plugin/
@@ -213,7 +232,11 @@ hubspot-admin-skills/
     │   └── scripts/
     │       ├── before.py / execute.py / after.py
     │       └── providers/           (fullenrich, apollo, hunter, dropcontact, _template)
-    ├── ...                        (36 skills total, 20 with scripts)
+    ├── sandbox-self-test/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       └── preflight.py / seed.py / run_suite.py / teardown.py
+    ├── ...                        (37 skills total, 21 with scripts)
     └── backfill-geo-data/
         └── SKILL.md
 ```

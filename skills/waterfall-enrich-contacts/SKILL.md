@@ -25,6 +25,7 @@ The internal enrichment skills (`/enrich-company-name`, `/enrich-industry`, `/ba
 | Hunter | `providers/hunter.py` | Email finding by name+domain, confidence scores | Requests per plan; email only |
 | Dropcontact | `providers/dropcontact.py` | GDPR-first, algorithmic (no stored database) | Credits, async |
 | Your provider | copy `providers/_template.py` | Whatever you already use | — |
+| Mock (testing only) | `providers/mock.py` | Deterministic fake data for `/sandbox-self-test` and dry runs — no network | Free; never use on production |
 | HubSpot Breeze Intelligence | (native, no adapter) | In-platform enrichment + form shortening | Credit add-on; programmatic API access is enterprise-gated — which is exactly why this skill defaults to provider-agnostic adapters |
 
 Switch providers with one env var: `ENRICHMENT_PROVIDER=apollo`.
@@ -52,7 +53,7 @@ Everything is set in `.env`:
 
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
-ENRICHMENT_PROVIDER=fullenrich          # fullenrich | apollo | hunter | dropcontact | yours
+ENRICHMENT_PROVIDER=fullenrich          # fullenrich | apollo | hunter | dropcontact | mock | yours
 FULLENRICH_API_KEY=...                  # the chosen provider's key
 ENRICHMENT_TARGET_FIELD=phone           # phone | email | jobtitle
 ENRICHMENT_MAX_CONTACTS=100             # hard cap per run — credits cost money

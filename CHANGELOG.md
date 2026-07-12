@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 — 2026-07-12
+
+Self-testing release: the toolkit can now prove itself against a disposable portal you bring.
+
+### New skill (36 → 37)
+
+- **`sandbox-self-test`** (audit-planning) — bring-your-own developer sandbox test harness:
+  - `preflight.py` gates on `GET /account-info/v3/details` — runs **only** against `DEVELOPER_TEST`/`SANDBOX` portals, fails closed, no override; probes required scopes.
+  - `seed.py` creates a marker-tagged synthetic fixture matrix (reserved `.invalid` email domain, `SELFTEST` prefixes), one defect per testable skill; idempotent.
+  - `run_suite.py` smoke-tests every scripted skill's `before.py`, runs end-to-end cases (`delete-no-email-contacts` destructive cycle, `waterfall-enrich-contacts` with the new mock provider, `workflows-as-code` export) and API round-trips (dynamic list, disabled v4 workflow); writes `reports/selftest-{date}.md`; sandbox-unsimulatable areas (bounce state, `hs_email_optout`, `hs_marketable_status`, deactivated owners) are reported as SKIP with reasons, never silently omitted.
+  - `teardown.py` deletes strictly by marker, with CSV audit log and typed confirmation.
+  - The suite uses its own `HUBSPOT_SANDBOX_ACCESS_TOKEN` env var — a production token in `HUBSPOT_ACCESS_TOKEN` is invisible to it, and every script re-checks the account-type gate independently.
+- **Mock enrichment provider** (`waterfall-enrich-contacts/scripts/providers/mock.py`) — deterministic fake data, no network, no credits; lets the enrichment pipeline be tested for free.
+- **Optional CI**: `.github/workflows/sandbox-self-test.yml`, manual dispatch only, using a `HUBSPOT_SANDBOX_ACCESS_TOKEN` repository secret; uploads the report as an artifact.
+- CONTRIBUTING.md gains a "Testing Your Skill" section: scripted-skill contributions extend the fixture matrix and case registry (or document why they're not sandbox-testable).
+
 ## 1.1.0 — 2026-07-12
 
 Modernization release tracking HubSpot's 2026 platform changes.

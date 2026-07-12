@@ -11,7 +11,7 @@ The `hubspot-audit` skill detects issues that no existing skill covers and offer
 1. **Fork**: `gh repo fork TomGranot/hubspot-admin-skills --clone`
 2. **Branch**: `git checkout -b skill/your-skill-name`
 3. **Create**: Add `skills/<your-skill>/SKILL.md` following the spec below
-4. **Test**: Run the skill against a HubSpot sandbox portal
+4. **Test**: Run `/sandbox-self-test` against a free developer test account (see "Testing Your Skill" below)
 5. **PR**: `gh pr create --repo TomGranot/hubspot-admin-skills`
 
 ## Skill Anatomy
@@ -121,6 +121,19 @@ Every script:
 5. **Never hard-codes** portal IDs, owner IDs, property values, or anything company-specific. Configuration goes in a clearly marked `# --- Configuration ---` block at the top.
 
 SKILL.md files should reference their scripts in a `## Scripts` table (stage → path → purpose) rather than duplicating full listings inline. Short inline snippets are fine where they teach an API concept (a filter payload, a gotcha).
+
+## Testing Your Skill
+
+The repo tests itself against a **bring-your-own developer sandbox** — see `skills/sandbox-self-test/`. Before opening a PR:
+
+1. Create a free developer test account (HubSpot Settings > Testing > Developer test accounts) and put a private-app token from it in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
+2. Run the cycle: `preflight.py` → `seed.py` → `run_suite.py` → `teardown.py` (each under `skills/sandbox-self-test/scripts/`, via `uv run`). The suite automatically smoke-tests every skill that ships a `scripts/before.py` — including yours.
+3. **If your skill mutates data**, extend the harness with your case:
+   - add a fixture row to the matrix in `seed.py` (marked: `SELFTEST` name prefix, `@selftest.hubspot-admin-skills.invalid` email domain, or `[SELFTEST]` object-name prefix — teardown finds objects only by these markers),
+   - add a case to the registry in `run_suite.py` (end-to-end via subprocess with piped confirmations, or an API round-trip), asserting portal state via the Search API,
+   - if your skill's effect cannot be simulated in a sandbox (bounce state, marketing status, seat changes), add it to `NOT_SANDBOX_TESTABLE` with the reason instead — visible SKIPs beat silent gaps.
+
+The suite refuses to run against anything that is not a `DEVELOPER_TEST` or `SANDBOX` portal. Do not weaken that gate in a PR; it will not be merged.
 
 ## API Version Policy
 

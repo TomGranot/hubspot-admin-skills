@@ -24,6 +24,9 @@ PROVIDERS = {
     "apollo": "apollo",
     "hunter": "hunter",
     "dropcontact": "dropcontact",
+    # Deterministic fake data, no network, no credits — used by the
+    # sandbox-self-test suite. Never point it at production.
+    "mock": "mock",
 }
 
 

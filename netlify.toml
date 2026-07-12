@@ -8,7 +8,10 @@
   command = "npm run build"
   # Skip builds for commits that touch neither the site nor the skills content.
   # Runs from the base directory (site/), hence the relative paths.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ../skills ../netlify.toml"
+  # Guard: with no previous successful deploy, Netlify sets CACHED_COMMIT_REF
+  # equal to COMMIT_REF, which would make the diff empty and cancel every
+  # build forever — force those builds through (exit 1 = build).
+  ignore = "if [ \"$CACHED_COMMIT_REF\" = \"$COMMIT_REF\" ]; then exit 1; fi; git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ../skills ../netlify.toml"
 
 [build.environment]
   NODE_VERSION = "22"

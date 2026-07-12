@@ -123,7 +123,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | Skill | Description |
 |-------|-------------|
 | `create-icp-tiers` | Create an ICP (Ideal Customer Profile) tier property and assign tier values based on firmographic criteria |
-| `build-lead-scoring` | Design and implement a lead scoring model using HubSpot's scoring properties and behavioral signals |
+| `build-lead-scoring` | Design and implement a lead scoring model in HubSpot's Lead Scoring tool — separate Fit and Engagement scores with decay |
 | `build-smart-lists` | Build active smart lists for key segments — ICP tiers, lifecycle stages, engagement levels, and suppression groups |
 
 ### Automation Workflows (5)
@@ -189,7 +189,9 @@ hubspot-admin-skills/
 │   └── plugin.json
 └── skills/
     ├── hubspot-audit/
-    │   └── SKILL.md
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       └── audit_portal.py
     ├── hubspot-implementation-plan/
     │   └── SKILL.md
     ├── delete-no-email-contacts/

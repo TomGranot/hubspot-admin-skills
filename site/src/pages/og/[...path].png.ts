@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import sharp from 'sharp';
 
+import { CATEGORIES } from '~/data/categories';
 import { PROBLEMS } from '~/data/problems';
 import { getSkills } from '~/lib/skills';
 
@@ -16,7 +17,45 @@ interface OgProps {
 
 export async function getStaticPaths() {
   const skills = await getSkills();
+  const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
+
+  const pages: { path: string; props: OgProps }[] = [
+    {
+      path: 'home',
+      props: {
+        title: 'The HubSpot cleanup you keep postponing, run by Claude Code',
+        kicker: 'Open source · MIT',
+        badge: `${skills.length} skills, ${scriptedCount} with Python scripts`,
+      },
+    },
+    {
+      path: 'pages/skills',
+      props: { title: `All ${skills.length} skills, one safe pattern`, kicker: 'Skills reference' },
+    },
+    {
+      path: 'pages/problems',
+      props: { title: "What's broken in your HubSpot portal?", kicker: 'Problem index' },
+    },
+    {
+      path: 'pages/install',
+      props: { title: 'Install in two commands', kicker: 'Get started', badge: 'Humans and agents welcome' },
+    },
+    {
+      path: 'pages/contributing',
+      props: { title: 'Help build the skill set', kicker: 'Community' },
+    },
+    ...CATEGORIES.map((category) => ({
+      path: `categories/${category.slug}`,
+      props: {
+        title: category.title,
+        kicker: 'Skill category',
+        badge: `${skills.filter((s) => s.category.slug === category.slug).length} skills`,
+      },
+    })),
+  ];
+
   return [
+    ...pages.map(({ path, props }) => ({ params: { path }, props })),
     ...skills.map((skill) => ({
       params: { path: `skills/${skill.slug}` },
       props: {
@@ -36,7 +75,7 @@ const escapeXml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** Greedy word wrap tuned for the 64px font below. */
-const wrapTitle = (title: string, maxChars = 30, maxLines = 4): string[] => {
+const wrapTitle = (title: string, maxChars = 25, maxLines = 4): string[] => {
   const words = title.split(' ');
   const lines: string[] = [];
   let line = '';

@@ -20,7 +20,7 @@ metadata:
     images:
       - url: '~/assets/images/default.png'
         width: 1200
-        height: 628
+        height: 630
     type: website
   twitter:
     cardType: summary_large_image

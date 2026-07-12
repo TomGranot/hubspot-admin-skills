@@ -22,6 +22,9 @@ const otherCategories = CATEGORIES.filter((c) => c.slug !== category.slug);
 const metadata = {
   title: `${category.title} skills for HubSpot`,
   description: `${category.description} ${skills.length} Claude Code skills in this category.`,
+  openGraph: {
+    images: [{ url: `/og/categories/${category.slug}.png`, width: 1200, height: 630 }],
+  },
 };
 ---
 

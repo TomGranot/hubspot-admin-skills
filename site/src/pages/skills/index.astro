@@ -17,6 +17,9 @@ const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
 const metadata = {
   title: 'All skills',
   description: `Browse all ${skills.length} HubSpot admin skills for Claude Code — audit, hygiene, enrichment, segmentation, automation, and maintenance. ${scriptedCount} ship with ready-to-run Python scripts.`,
+  openGraph: {
+    images: [{ url: '/og/pages/skills.png', width: 1200, height: 630 }],
+  },
 };
 ---
 

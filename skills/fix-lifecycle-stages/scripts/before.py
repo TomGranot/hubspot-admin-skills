@@ -26,6 +26,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -55,7 +56,7 @@ STAGE_LABELS = {
     "(empty)": "(empty)",
 }
 
-CSV_FILE = os.path.join(os.path.dirname(__file__), "before_fix_lifecycle.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "before_fix_lifecycle.csv")
 
 # ── Helpers ──────────────────────────────────────────────────────
 
@@ -124,6 +125,7 @@ for obj_type, obj_label in [("contacts", "CONTACTS"), ("companies", "COMPANIES")
     print()
 
 # ── CSV audit trail ──────────────────────────────────────────────
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(
         f, fieldnames=["object", "stage", "label", "count", "disallowed"],

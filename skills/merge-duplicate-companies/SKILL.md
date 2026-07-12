@@ -1,13 +1,10 @@
 ---
 name: merge-duplicate-companies
-description: >
-  Identify duplicate company records by domain and name, export audit
-  CSVs for review, and guide merging. API for discovery, third-party
-  tools or manual UI for merging (HubSpot has no bulk merge API).
+description: "Identify duplicate company records by domain and name, export audit CSVs for review, and guide merging. API for discovery, third-party tools or manual UI for merging (HubSpot has no bulk merge API)."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -24,6 +21,14 @@ Duplicate company records fragment contacts, deals, and engagement history acros
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin permissions for merging in the HubSpot UI
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/merge-duplicate-companies/scripts/before.py` |
+
+Only the detection stage is scripted: `before.py` inventories companies and flags duplicate candidates by domain and normalized name. Merging itself happens one pair at a time in the UI (see Key Constraint).
+
 ## Key Constraint
 
 **HubSpot has no bulk merge API.** Merging must happen one pair at a time through the HubSpot UI or via third-party tools. The API is used for discovery, analysis, and audit trail generation.
@@ -32,7 +37,7 @@ Duplicate company records fragment contacts, deals, and engagement history acros
 
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -43,7 +48,7 @@ Before writing any code, confirm with the user:
 3. **Prioritization strategy**: Recommend merging Customer-stage companies first, then Opportunity-stage, then everything else.
 4. **Time estimate**: This is the most time-consuming process. Budget 2-4 hours for critical duplicates, 8-12 hours total for full cleanup.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Fetch all companies, identify duplicate groups by domain and name, and export audit CSVs.
 
@@ -258,7 +263,7 @@ Set unique identifier: Company domain name
 
 This prevents future duplicates by using domain-based matching instead of name-based.
 
-### Stage 4: After State
+### Stage 4: After
 
 Re-run the Before State analysis and compare duplicate counts.
 
@@ -310,15 +315,21 @@ After State: Verify duplicate reduction.
 
 8. **The Duplicates tool is plan-tier dependent.** Not all HubSpot plans include it. Check availability before instructing the user to navigate there.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- **Company merges cannot be unmerged.** HubSpot has no unmerge for companies — the only recovery is recreating the secondary company manually from the before CSV and re-associating its contacts and deals.
+- This is why the before CSV export and per-pair human review are mandatory.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/merge-duplicate-companies/scripts/before.py
 ```

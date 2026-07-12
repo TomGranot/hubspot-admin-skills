@@ -4,7 +4,7 @@ description: "Ensure all contacts and companies have appropriate lifecycle stage
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: data-enrichment
 ---
 
@@ -19,9 +19,21 @@ Records without a lifecycle stage are invisible in pipeline reports, excluded fr
 ## Prerequisites
 
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts and Companies with bulk edit permissions
 - Access to Automation > Workflows
 - Understanding of HubSpot's lifecycle stage progression rules (see Critical Concept below)
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/fix-lifecycle-stages/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/fix-lifecycle-stages/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/fix-lifecycle-stages/scripts/after.py` |
+
+`before.py` audits missing and per-stage counts for contacts and companies. `execute.py` performs the clear-then-set fixes (review its configuration block for the disallowed-stage mapping before running). `after.py` verifies coverage.
 
 ## Critical Concept: Forward-Only Lifecycle Progression
 
@@ -37,21 +49,17 @@ To move a record from a later stage (e.g., "Other", "Evangelist") to an earlier 
 A direct set to an earlier stage will be **silently rejected** — no error, no warning, the value simply does not change. This is the single most common gotcha when fixing lifecycle stages.
 
 ```python
-# WRONG — silently fails if current stage is "later" than target
-api_client.crm.contacts.basic_api.update(
-    contact_id=contact_id,
-    simple_public_object_input={"properties": {"lifecyclestage": "lead"}}
-)
+url = f"{BASE}/crm/v3/objects/contacts/{contact_id}"
 
-# CORRECT — clear first, then set
-api_client.crm.contacts.basic_api.update(
-    contact_id=contact_id,
-    simple_public_object_input={"properties": {"lifecyclestage": ""}}
-)
-api_client.crm.contacts.basic_api.update(
-    contact_id=contact_id,
-    simple_public_object_input={"properties": {"lifecyclestage": "lead"}}
-)
+# WRONG — silently fails if current stage is "later" than target
+requests.patch(url, headers=HEADERS,
+               json={"properties": {"lifecyclestage": "lead"}})
+
+# CORRECT — clear first, then set (two separate calls)
+requests.patch(url, headers=HEADERS,
+               json={"properties": {"lifecyclestage": ""}})
+requests.patch(url, headers=HEADERS,
+               json={"properties": {"lifecyclestage": "lead"}})
 ```
 
 ## Plan
@@ -63,64 +71,34 @@ api_client.crm.contacts.basic_api.update(
 5. Create prevention workflows for contacts and companies
 6. Verify 100% coverage (after state)
 
-## Before State
+## Before
 
 ### Audit Script
 
+Run `uv run skills/fix-lifecycle-stages/scripts/before.py`. The core queries it runs:
+
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
+def count(object_type, filters):
+    resp = requests.post(f"{BASE}/crm/v3/objects/{object_type}/search",
+                         headers=HEADERS,
+                         json={"filterGroups": [{"filters": filters}], "limit": 1})
+    resp.raise_for_status()
+    return resp.json()["total"]
 
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+missing = count("contacts", [
+    {"propertyName": "lifecyclestage", "operator": "NOT_HAS_PROPERTY"}])
+print(f"Contacts missing lifecycle stage: {missing}")
 
-# Count contacts with no lifecycle stage
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "lifecyclestage",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts missing lifecycle stage: {result.total}")
-
-# Count contacts at each stage
 stages = ["subscriber", "lead", "marketingqualifiedlead", "salesqualifiedlead",
           "opportunity", "customer", "evangelist", "other"]
 for stage in stages:
-    result = api_client.crm.contacts.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": "lifecyclestage",
-                    "operator": "EQ",
-                    "value": stage
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    if result.total > 0:
-        print(f"  {stage}: {result.total}")
+    n = count("contacts", [
+        {"propertyName": "lifecyclestage", "operator": "EQ", "value": stage}])
+    if n:
+        print(f"  {stage}: {n}")
 
-# Repeat for companies
-result = api_client.crm.companies.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "lifecyclestage",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"\nCompanies missing lifecycle stage: {result.total}")
+print(f"Companies missing lifecycle stage: "
+      f"{count('companies', [{'propertyName': 'lifecyclestage', 'operator': 'NOT_HAS_PROPERTY'}])}")
 ```
 
 ### Define Disallowed Stages
@@ -229,36 +207,9 @@ If contacts keep getting set to disallowed stages (e.g., by imports or integrati
 
 This prevents disallowed stages from recurring.
 
-## After State
+## After
 
-```python
-# Re-run the before-state audit
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "lifecyclestage",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts missing lifecycle stage: {result.total} (should be 0)")
-
-result = api_client.crm.companies.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "lifecyclestage",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Companies missing lifecycle stage: {result.total} (should be 0)")
-```
+Re-run the audit: `uv run skills/fix-lifecycle-stages/scripts/after.py`. Both missing-stage counts (contacts and companies) should be 0.
 
 **Verification checklist:**
 
@@ -269,6 +220,11 @@ print(f"Companies missing lifecycle stage: {result.total} (should be 0)")
 5. Spot-check contacts from Opportunity sub-list -> their lifecycle stage is "Opportunity"
 6. Test the prevention workflow: create a test contact with no lifecycle stage, wait a few minutes, confirm it gets set to "Lead". Delete the test contact.
 7. Funnel reports now show all records with no "unknown" bucket
+
+## Rollback
+
+- The execute script's CSV audit trail records every record it changed with the original stage value. To undo, batch-update those IDs back to their previous stage (remember: moving backward requires the same clear-then-set pattern).
+- Turn off the prevention workflows to stop automatic stage assignment.
 
 ## Key Technical Learnings
 

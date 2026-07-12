@@ -4,7 +4,7 @@ description: "Weekly manual review of contacts with 3+ bounce events. Decide whe
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -16,34 +16,34 @@ A weekly manual review process for contacts flagged with 3+ bounces. The bounce 
 
 - Bounce monitoring workflow active (run `/bounce-monitoring-workflow` first)
 - `email_health_flag` custom property exists on contacts
-- HubSpot API token in `.env` (for scripted pre-filtering)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) for scripted pre-filtering
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Pull the Review List
+### Stage 1: Before
 
-Use the HubSpot API to search for contacts where `email_health_flag` is set:
+Use the CRM Search API to pull contacts where `email_health_flag` is set:
 
 ```python
-from hubspot import HubSpot
-from hubspot.crm.contacts import PublicObjectSearchRequest
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
-search = PublicObjectSearchRequest(
-    filter_groups=[{
-        "filters": [{
-            "propertyName": "email_health_flag",
-            "operator": "EQ",
-            "value": "true"
-        }]
-    }],
-    properties=["email", "firstname", "lastname", "company",
-                "hs_email_bounce", "hs_email_hard_bounce_reason_enum",
-                "lifecyclestage", "hubspot_owner_id"]
-)
-
-results = api_client.crm.contacts.search_api.do_search(search)
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "email_health_flag", "operator": "EQ", "value": "true"},
+    ]}],
+    "properties": ["email", "firstname", "lastname", "company",
+                   "hs_email_bounce", "hs_email_hard_bounce_reason_enum",
+                   "lifecyclestage", "hubspot_owner_id"],
+    "limit": 100,
+})
+resp.raise_for_status()
+results = resp.json()["results"]
 ```
 
 Export results to a CSV for review.
@@ -66,16 +66,20 @@ For each flagged contact, check:
 | Yes | Yes | Hard | Attempt to find updated email |
 | Yes | Yes | Soft | Keep suppressed, monitor |
 
-### Stage 3: After — Execute Decisions
+### Stage 3: After — Apply Decisions and Log
 
 1. **Delete** contacts marked for deletion via the HubSpot UI or API batch delete.
 2. **Clear** the `email_health_flag` on all reviewed contacts.
 3. Log the review results (deleted count, kept count, recovery attempts) for the quarterly report.
 
-### Stage 4: Rollback
+## Rollback
 
 - Deleted contacts can be restored from HubSpot's recycling bin within 90 days.
 - Contacts kept as suppressed can be restored to marketing status via a workflow or manual update in the UI.
+
+## MCP Note
+
+This weekly triage is exactly the interactive, judgment-heavy work HubSpot's MCP server is good at (see `/connect-hubspot-mcp`): ask Claude to pull each flagged contact's details, deal history, and bounce reason conversationally while you decide delete-vs-recover.
 
 ## Frequency
 

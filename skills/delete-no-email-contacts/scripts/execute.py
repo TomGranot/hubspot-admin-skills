@@ -16,6 +16,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -131,7 +132,7 @@ for i in range(0, len(all_ids), BATCH_SIZE):
     time.sleep(BATCH_DELAY)
 
 # --- Step 3: Save deletion log ---
-output_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+output_dir = "data/audit-logs"
 os.makedirs(output_dir, exist_ok=True)
 
 log_path = os.path.join(output_dir, "no-email-contacts-deleted.csv")

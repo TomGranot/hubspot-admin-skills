@@ -4,7 +4,7 @@ description: "Run a comprehensive HubSpot CRM database audit. Analyzes contacts,
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: audit-planning
 ---
 
@@ -14,14 +14,14 @@ Run a full diagnostic audit of a HubSpot CRM portal. This skill collects metrics
 
 ## Setup
 
-1. **Get the API token.** Check `.env` for `HUBSPOT_API_TOKEN`. If it is not set, ask the user to provide their HubSpot private app API token and store it in `.env`:
+1. **Get the API token.** Check `.env` for `HUBSPOT_ACCESS_TOKEN`. If it is not set, ask the user to provide their HubSpot private app access token and store it in `.env`:
    ```
-   HUBSPOT_API_TOKEN=pat-na1-xxxxxxxx
+   HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
    ```
 
-2. **Install dependencies.** Use `uv` (not pip):
+2. **No package install needed.** Scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves `requests` and `python-dotenv` automatically:
    ```bash
-   uv pip install hubspot-api-client python-dotenv
+   uv run skills/hubspot-audit/scripts/audit_portal.py
    ```
 
 3. **Create the output directory** if it does not exist:
@@ -61,10 +61,13 @@ Run queries for each of the following eight dimensions. Collect exact counts for
 
 ### 4. Engagement Health
 - Last activity distribution: active in last 30 days, 31-90 days, 91-180 days, 181-365 days, 365+ days, never engaged
-- Email open rate (last 90 days)
-- Email click rate (last 90 days)
+- Contacts who opened an email in the last 90 days (`hs_email_last_open_date`)
+- Contacts who never opened any email
 - Contacts with zero page views
 - Contacts with zero form submissions
+- Current-customer consistency: contacts where `hs_current_customer` = true but lifecycle stage is not Customer (the `hs_current_customer` system property is read-only, set by HubSpot, and available since June 2026)
+
+Note: aggregate *per-email* open/click rates are not derivable from contact properties — they come from the marketing email statistics API (v3, Marketing Hub plans) or the email health dashboard in the UI. The per-contact last-open/last-click properties above are the right audit signal at the database level.
 
 ### 5. Duplicate Analysis
 - Duplicate email addresses (exact match)
@@ -111,9 +114,10 @@ These details are critical for getting accurate results:
 
 - **Search API pagination limit**: The Search API returns a maximum of 10,000 results per query. If you expect more than 10K, segment queries by another property (e.g., `createdate` ranges, lifecycle stage, or first letter of email) and sum the results.
 
-- **Deactivated owners**: The Owners API does not return deactivated owners by default. Pass `archived=True`:
+- **Deactivated owners**: The Owners API does not return deactivated owners by default. Pass `archived=true`:
   ```python
-  api_client.crm.owners.owners_api.get_page(archived=True)
+  resp = requests.get(f"{BASE}/crm/v3/owners", headers=HEADERS,
+                      params={"limit": 100, "archived": "true"})
   ```
 
 - **Rate limiting**: Private apps are limited to 100 requests per 10 seconds. Add a small delay between batch calls or use exponential backoff on 429 responses.
@@ -122,21 +126,32 @@ These details are critical for getting accurate results:
 
 - **Marketing contact status**: The property `hs_marketable_status` indicates whether a contact is set as a marketing contact. This property is **read-only via API**.
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run skills/hubspot-audit/scripts/audit_portal.py` |
+
 ## Script Structure
 
-Write a single Python script (`scripts/audit_portal.py`) that:
+This skill ships [`scripts/audit_portal.py`](./scripts/audit_portal.py), which:
 
-1. Loads the API token from `.env`
-2. Initializes the HubSpot client:
+1. Loads `HUBSPOT_ACCESS_TOKEN` from `.env`
+2. Calls the REST endpoints directly with `requests`:
    ```python
-   from hubspot import HubSpot
-   api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+   TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+   BASE = "https://api.hubapi.com"
+   HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
    ```
-3. Runs each dimension's queries sequentially (respect rate limits)
+3. Runs each dimension's queries sequentially (respecting rate limits)
 4. Collects all results into a structured dict
 5. Computes letter grades per dimension (see grading rubric below)
 6. Renders the markdown report
 7. Saves to `reports/hubspot-audit-{YYYY-MM-DD}.md`
+
+If a dimension needs portal-specific queries beyond what the script covers, extend it with the same house style rather than writing a separate one-off script.
+
+**MCP note:** if HubSpot's MCP server is connected (see `/connect-hubspot-mcp`), use it for spot-checks while auditing — opening sample records behind a suspicious count is faster than writing one-off queries. The audit's counting queries themselves should stay in the script for reproducibility.
 
 ## Grading Rubric
 

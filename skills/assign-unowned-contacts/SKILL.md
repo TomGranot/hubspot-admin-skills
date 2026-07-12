@@ -4,7 +4,7 @@ description: "Assign an owner to marketing contacts that have no owner. Ensures 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: data-enrichment
 ---
 
@@ -19,8 +19,20 @@ Marketing contacts without an owner are a blind spot. They receive campaigns but
 ## Prerequisites
 
 - Phase 1 hygiene and earlier Phase 3 enrichment processes completed
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact read/write and owners read scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts with permission to bulk edit owner assignments
 - **Approval from team leads before bulk assignment.** This is a business decision, not just a technical one. Get sign-off on the assignment strategy before proceeding.
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/assign-unowned-contacts/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/assign-unowned-contacts/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/assign-unowned-contacts/scripts/after.py` |
+
+`before.py` counts unowned marketing contacts and lists available owners. `execute.py` batch-assigns them to `HUBSPOT_TARGET_OWNER_ID` (set in `.env`; safety threshold 50,000 — high because owner assignment is fully reversible). `after.py` verifies the count dropped to zero.
 
 ## Interview: Gather Requirements
 
@@ -41,7 +53,7 @@ Before executing, collect the following information from the user:
 3. Execute the bulk assignment
 4. Verify all marketing contacts have owners (after state)
 
-## Before State
+## Before
 
 ### Create the Unowned Marketing Contacts List
 
@@ -55,34 +67,17 @@ Before executing, collect the following information from the user:
 
 ### Script Approach
 
+Run `uv run skills/assign-unowned-contacts/scripts/before.py`. The core query:
+
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
-
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# Count unowned marketing contacts
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [
-                {
-                    "propertyName": "hs_marketable_status",
-                    "operator": "EQ",
-                    "value": "true"
-                },
-                {
-                    "propertyName": "hubspot_owner_id",
-                    "operator": "NOT_HAS_PROPERTY"
-                }
-            ]
-        }],
-        "limit": 0
-    }
-)
-print(f"Unowned marketing contacts: {result.total}")
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "hs_marketable_status", "operator": "EQ", "value": "true"},
+        {"propertyName": "hubspot_owner_id", "operator": "NOT_HAS_PROPERTY"},
+    ]}],
+    "limit": 1,
+})
+print(f"Unowned marketing contacts: {resp.json()['total']}")
 ```
 
 ## Execute
@@ -123,55 +118,29 @@ Choose one of these approaches (requires team lead approval):
 
 ### Bulk Assignment via API
 
+For the catch-all strategy, this is fully scripted: set `HUBSPOT_TARGET_OWNER_ID` in `.env` (run `before.py` to see available owner IDs) and run `uv run skills/assign-unowned-contacts/scripts/execute.py`.
+
 ```python
-# Pattern for API-based assignment
-# Useful for territory-based rules or when UI bulk edit times out
+# What execute.py does:
+# 1. POST /crm/v3/objects/contacts/search — unowned marketing contacts (paginated)
+# 2. Build batch payload: {"inputs": [{"id": ..., "properties": {"hubspot_owner_id": OWNER_ID}}]}
+# 3. POST /crm/v3/objects/contacts/batch/update in batches of 100
 
-OWNER_ID = "your-owner-id"  # Get from Owners API
-
-# 1. Search for unowned marketing contacts (paginate through all)
-# 2. Build batch update payload with hubspot_owner_id = OWNER_ID
-# 3. Submit in batches of 100 via crm.contacts.batch_api.update
-
-# For territory-based routing:
-# 1. Search for unowned marketing contacts
-# 2. For each contact, determine territory based on country/state/industry
-# 3. Map territory to owner ID
-# 4. Batch update with the appropriate owner per contact
+# For territory-based routing (extend the script):
+# 1. Search for unowned marketing contacts with country/state/industry properties
+# 2. Map each contact to an owner via your territory matrix
+# 3. Batch update with the appropriate owner per contact
 ```
 
 **API notes:**
-- Get owner IDs from the Owners API: `api_client.crm.owners.owners_api.get_page()`
+- Get owner IDs from the Owners API: `GET /crm/v3/owners?limit=100`
 - To find a specific owner by email: iterate through owners and match on `email`
 - Batch update accepts up to 100 records per call
 - Rate limit: 100 requests per 10 seconds
 
-## After State
+## After
 
-Wait 5-10 minutes for HubSpot to finish processing, then verify.
-
-```python
-# Re-run the same search
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [
-                {
-                    "propertyName": "hs_marketable_status",
-                    "operator": "EQ",
-                    "value": "true"
-                },
-                {
-                    "propertyName": "hubspot_owner_id",
-                    "operator": "NOT_HAS_PROPERTY"
-                }
-            ]
-        }],
-        "limit": 0
-    }
-)
-print(f"Unowned marketing contacts: {result.total} (should be 0)")
-```
+Wait 5-10 minutes for HubSpot to finish processing, then verify: `uv run skills/assign-unowned-contacts/scripts/after.py` (re-runs the before-state query and compares against the baseline; the count should be 0).
 
 **Verification checklist:**
 
@@ -179,6 +148,11 @@ print(f"Unowned marketing contacts: {result.total} (should be 0)")
 2. Re-run the before-state script — count should be 0
 3. Spot-check 5-10 contacts that were previously unowned — confirm they show the assigned owner
 4. Check owner-based dashboards/reports to confirm the previously invisible contacts now appear
+
+## Rollback
+
+- Owner assignment is fully reversible: the execute script's CSV audit trail records every contact it assigned. To undo, batch-update those contact IDs with the previous owner (empty for "no owner").
+- Individual assignments can also be reverted from each contact's property history.
 
 ## Key Technical Learnings
 

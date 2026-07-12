@@ -16,6 +16,7 @@ import json
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -88,10 +89,9 @@ worst_still_marketing = resp3.json().get("total", 0)
 print(f"  {WORST_OFFENDER_THRESHOLD}+ delivered, still marketing: {worst_still_marketing}")
 
 # --- Compare with before state ---
-before_csv = os.path.join(
-    os.path.dirname(__file__), "..", "data", "ghost-contacts-before.csv"
-)
+before_csv = os.path.join("data", "audit-logs", "ghost-contacts-before.csv")
 if os.path.exists(before_csv):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(before_csv, "r") as f:
         reader = csv.DictReader(f)
         before_contacts = list(reader)

@@ -1,13 +1,10 @@
 ---
 name: suppress-hard-bounced
-description: >
-  Identify and suppress hard-bounced contacts to protect email sender
-  reputation. Hybrid approach: API for discovery and audit, manual UI
-  for suppression (hs_marketable_status is read-only via API).
+description: "Identify and suppress hard-bounced contacts to protect email sender reputation. Hybrid approach: API for discovery and audit, manual UI for suppression (hs_marketable_status is read-only via API)."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: database-hygiene
 ---
 
@@ -24,13 +21,22 @@ Hard-bounced contacts have permanently undeliverable email addresses. Every emai
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin or Marketing Hub Admin permissions for the manual UI suppression step
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/suppress-hard-bounced/scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/suppress-hard-bounced/scripts/after.py` |
+
+There is no execute script: the marketing-status change itself must happen via a HubSpot workflow or the UI (see Key Constraint and Stage 3).
+
 ## Key Constraint
 
 **`hs_marketable_status` is read-only via the API.** You cannot set a contact to non-marketing programmatically. The API is used for discovery, analysis, and audit trail generation. The actual suppression must happen in the HubSpot UI.
 
 ## Execution Pattern
 
-This skill follows a 4-stage execution pattern: **Plan -> Before State -> Execute -> After State**.
+This skill follows a 4-stage execution pattern: **Plan -> Before -> Execute -> After**.
 
 ### Stage 1: Plan
 
@@ -40,7 +46,7 @@ Before writing any code, confirm with the user:
 2. **Non-marketing processing timing**: HubSpot processes non-marketing status changes at the start of the next billing cycle. Billing savings are not immediate.
 3. **High-bounce contacts**: Contacts with 3+ bounces are the most severe reputation risk. Ask whether the user wants a separate review list for potential deletion.
 
-### Stage 2: Before State
+### Stage 2: Before
 
 Discover all hard-bounced contacts, break down by bounce reason, and generate an audit CSV.
 
@@ -268,7 +274,7 @@ review_list_payload = {
 }
 ```
 
-### Stage 4: After State
+### Stage 4: After
 
 Re-run the Before State query. Compare the `still_marketing` count -- it should be zero (or near zero if new bounces occurred between Before and After).
 
@@ -314,15 +320,22 @@ else:
 
 6. **Keep the list active permanently.** New hard bounces will occur over time. The active list captures them automatically. Run this suppression process monthly or set up a workflow.
 
-## Package Setup
+## Rollback
 
-```bash
-uv init hubspot-cleanup
-cd hubspot-cleanup
-uv add requests python-dotenv
-```
+- Suppressed contacts can be restored to marketing status in the UI (Actions > Set as marketing contact) or by the suppression workflow's inverse criteria.
+- The before CSV records every affected contact for verification.
+- Note: unbouncing an address is separate — HubSpot Support can unbounce legitimately-bounced addresses only in limited cases.
 
-Create a `.env` file:
+## Setup
+
+Create a `.env` file in the repo root:
+
 ```
 HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
+```
+
+No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
+
+```bash
+uv run skills/suppress-hard-bounced/scripts/before.py
 ```

@@ -4,7 +4,7 @@ description: "Generate a phased implementation plan from a HubSpot audit report.
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: audit-planning
 ---
 
@@ -77,7 +77,7 @@ Build the targeting infrastructure.
 | Build smart lists for segments | Always (after scoring) | `/build-smart-lists` | Fully scriptable (Lists API) | 2-3 hrs |
 | Create segment lists for campaigns | Always (after smart lists) | `/create-segment-lists` | Fully scriptable | 1-2 hrs |
 
-**Key constraint:** HubSpot's lead scoring tool is UI-only. There is no API for configuring scoring rules. Build the scoring model manually based on the ICP tier data from the previous step.
+**Key constraint:** Configuring lead scoring rules is still UI-only (the post-2025 scoring tool has no configuration API), but each score generates CRM properties that ARE readable and filterable via API. Build the scoring model manually based on the ICP tier data from the previous step; verify score distributions via the Search API.
 
 #### Phase 4: Automation (Week 6-8)
 
@@ -85,25 +85,19 @@ Set up ongoing automated hygiene.
 
 | Task | Trigger (from audit) | Skill | Automation | Est. Time |
 |------|----------------------|-------|------------|-----------|
-| New contact hygiene workflow | Always | `/new-contact-hygiene-workflow` | Manual UI only | 2-3 hrs |
-| Engagement-based suppression workflow | Engagement grade D or F | `/engagement-suppression-workflow` | Manual UI only | 2-3 hrs |
-| Lifecycle stage progression workflow | Always | `/lifecycle-progression-workflow` | Manual UI only | 2-3 hrs |
-| Bounce monitoring workflow | Deliverability grade C or worse | `/bounce-monitoring-workflow` | Manual UI only | 1-2 hrs |
+| New contact hygiene workflow | Always | `/new-contact-hygiene-workflow` | Hybrid (API + UI review) | 1-2 hrs |
+| Engagement-based suppression workflow | Engagement grade D or F | `/engagement-suppression-workflow` | Hybrid (API + UI review) | 1-2 hrs |
+| Lifecycle stage progression workflow | Always | `/lifecycle-progression-workflow` | Hybrid (API + UI review) | 1-2 hrs |
+| Bounce monitoring workflow | Deliverability grade C or worse | `/bounce-monitoring-workflow` | Hybrid (API + UI review) | 1 hr |
+| Export workflows as versioned JSON | After any workflow build | `/workflows-as-code` | Fully scriptable | 30 min |
 
-**Key constraint:** The HubSpot Workflows API (v4) is beta and unstable. Do not attempt to create workflows via API. However, you have **three options** for building each workflow:
+**Key update:** The v4 Automation API is stable and supports creating, updating, and batch-reading workflows for contacts, companies, deals, and tickets, with all action types (the v3 workflows API is now legacy). The workflow skills are **API-first**: each ships before/execute/after scripts that create the workflows via `POST /automation/v4/flows` — always disabled, so a human reviews them in the UI before enabling. Two options per workflow:
 
-1. **Manual UI Build** -- Follow the step-by-step instructions in each skill. Most reliable, full control over triggers and actions.
+1. **v4 Automation API (primary)** -- Run each skill's scripts, then complete the short UI review. Notes: flows touching sensitive-data properties require the corresponding sensitive-data scopes; a few action types (copy-from-associated-object, internal notifications) have undocumented API field shapes and are added in the UI during review.
 
-2. **HubSpot Breeze AI** -- Use Breeze (Automation > Workflows > Create workflow > "Describe what you want") to generate a workflow skeleton from a natural language prompt. Each workflow skill includes a ready-to-paste Breeze prompt. **Critical caveat:** Breeze creates event-based triggers (OR logic) instead of filter-based triggers (AND logic). You MUST manually verify and fix trigger conditions after Breeze generates the workflow. Breeze also cannot create "is unknown" branch conditions, copy properties from associated objects, or configure re-enrollment rules.
+2. **Manual UI Build (fallback)** -- Follow the step-by-step instructions in each skill. Required on plan tiers where the Automation API returns 403. (HubSpot Breeze AI can also scaffold workflows from prompts, but it creates event-based OR triggers instead of filter-based AND triggers and cannot configure re-enrollment or "is unknown" conditions — verify everything it builds. The Claude Chrome extension can drive the workflow builder UI directly.)
 
-3. **Claude Anthropic Chrome Extension** -- Use the Claude Chrome extension to interact with the HubSpot workflow builder UI directly. Claude can see the UI and click through each step, which is often more accurate than Breeze for complex workflows with nested branches or multi-condition AND triggers.
-
-Each workflow skill (`/new-contact-hygiene-workflow`, `/engagement-suppression-workflow`, `/lifecycle-progression-workflow`, `/bounce-monitoring-workflow`) documents all three options with specific guidance and Breeze prompts tailored to that workflow. The ICP tier classification workflows in `/create-icp-tiers` also include these three options.
-
-> **Note on Fast Mode**: If you're using Claude Code's Fast Mode to speed up workflow creation,
-> be aware of the billing model: Haiku usage is included in your subscription, but Opus in
-> Fast Mode consumes extra credits. For workflow building tasks (which are UI-heavy and may
-> require many interactions), consider whether the speed tradeoff is worth the credit cost.
+Each workflow skill (`/new-contact-hygiene-workflow`, `/engagement-suppression-workflow`, `/lifecycle-progression-workflow`, `/bounce-monitoring-workflow`) documents both options. The ICP tier classification workflows in `/create-icp-tiers` are still built in the UI due to their multi-group demotion filter logic. After building, run `/workflows-as-code` to export everything to versioned JSON.
 
 #### Phase 5: Ongoing Maintenance (Ongoing)
 
@@ -165,7 +159,7 @@ Include this section in every plan:
 
 1. **`hs_marketable_status` is read-only via API** — This is the single biggest blocker. Any task that needs to suppress or unsuppress a contact as a marketing contact cannot do so directly via API. Workaround: set a custom flag property via API, then trigger a HubSpot workflow on that flag to change marketing status.
 
-2. **HubSpot Workflows API v4 is beta/unstable** — Do not attempt to create workflows via API. Build all workflows manually in the HubSpot UI using the specifications from each skill.
+2. **Workflows are created via the stable v4 Automation API, always disabled** — Scripts create every workflow with `isEnabled: false`; a human reviews it in the UI before enabling. UI-only leftovers: copy-from-associated-object actions and notification recipients (undocumented API field shapes). The v3 workflows API is legacy — do not build new integrations on it.
 
 3. **Lifecycle stage is forward-only** — HubSpot prevents setting a contact to an earlier lifecycle stage. To fix this, clear the property first (set to empty string via API), then set the desired stage in a second API call.
 
@@ -249,7 +243,7 @@ The most critical issues are:
 ## Technical Constraints
 
 1. `hs_marketable_status` is read-only via API ...
-2. Workflows API v4 is beta ...
+2. Workflows created via v4 API, always disabled for UI review ...
 3. Lifecycle stage is forward-only ...
 4. Search API caps at 10K ...
 5. Rate limit: 100 req / 10 sec ...

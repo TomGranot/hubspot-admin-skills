@@ -4,7 +4,7 @@ description: "Create a comprehensive lead scoring model with separate Fit and En
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: segmentation-scoring
 ---
 
@@ -25,13 +25,16 @@ Without scoring, every lead looks equally (un)important. Sales has no ranked lis
 
 ## Critical: Old vs New Lead Scoring
 
-**The old "HubSpot Score" property is deprecated.** Score properties stopped being editable as of July 2025 and stopped updating as of August 2025. Do NOT reference the old HubSpot Score property in any workflows, lists, or reports.
+**The legacy "HubSpot Score" property was retired on August 31, 2025** — it stopped being editable in July 2025 and stopped updating entirely at the retirement date. Any workflow, list, or report still referencing `hubspotscore` has been running on frozen data since then; part of this skill's job is to find and repoint those references.
 
-The **new Lead Scoring tool** (Marketing > Lead Scoring) supports:
-- Score groups with max point limits
+The **Lead Scoring tool** (Marketing > Lead Scoring) supports:
+- Layered architecture: total score limit → group limits → rules → criteria
 - Engagement decay (points reduce over time automatically)
-- Separate Fit vs Engagement score types
+- Separate Fit vs Engagement score types, with time frames and thresholds
+- Scoring for **contacts, companies, and deals**
 - Up to 5 total scores per portal
+
+**Scores are API-readable.** Configuring scoring rules is still UI-only — there is no scoring configuration API — but each score you create auto-generates CRM properties (the score value and a threshold property). Those properties are readable and filterable through the CRM Search API like any other property, which is what the After stage and the `/lifecycle-progression-workflow` scripts rely on. Find the internal property names under Settings > Properties after creating each score.
 
 ## Interview: Gather Requirements
 
@@ -61,12 +64,13 @@ Before executing, collect the following information from the user:
 4. Allow 4-6 hours for HubSpot to recalculate all contacts
 5. Verify scoring distribution and accuracy (after state)
 
-## Before State
+## Before
 
 1. Navigate to **Marketing > Lead Scoring**
 2. Note any existing scores (you have a limit of 5 total)
 3. Review existing score criteria — decide whether to update or replace
 4. Check that ICP Tier property is fully populated on companies (run create-icp-tiers after state check)
+5. Search for leftover references to the retired `hubspotscore` property in workflows, lists, and reports — these have been frozen since August 2025 and must be repointed to the new score properties
 
 ## Execute
 
@@ -159,10 +163,10 @@ For reference, here is how the two scores work together to prioritize contacts:
 If you want to automatically progress contacts through lifecycle stages based on scoring:
 
 - Define a combined threshold (e.g., Fit Score > 30 AND Engagement Score > 20 = MQL; typically the combined threshold falls in the 40-60 range, but calibrate based on your pipeline)
-- Build this as a separate workflow (not part of the scoring model itself)
+- Build this as a separate workflow — `/lifecycle-progression-workflow` creates it via the v4 Automation API; set its `LEAD_SCORE_PROPERTY` config to your new score property's internal name
 - This is a separate task from building the scoring model
 
-## After State
+## After
 
 **Allow 4-6 hours for HubSpot to fully recalculate all contact scores.** The new Lead Scoring tool processes asynchronously, and large databases take time.
 
@@ -194,9 +198,27 @@ If you want to automatically progress contacts through lifecycle stages based on
 - Compare to actual scores
 - Investigate any discrepancies
 
+**Score distribution via API** (the score properties are searchable like any property — replace the property name with your score's internal name from Settings > Properties):
+
+```python
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "your_fit_score_property", "operator": "GTE", "value": "50"},
+    ]}],
+    "limit": 1,
+})
+print(f"Contacts with Fit Score >= 50: {resp.json()['total']}")
+```
+
+## Rollback
+
+- Scores can be turned off or deleted in Marketing > Lead Scoring. Deleting a score removes its generated properties — check that no workflows or lists reference them first (especially `/lifecycle-progression-workflow` and any "MQL Ready" lists).
+- The retired legacy `hubspotscore` property cannot be revived; there is nothing to roll back to.
+
 ## Key Technical Learnings
 
-- **The old "HubSpot Score" property is frozen.** It will not update. Do not reference it in workflows, lists, or reports. Use the new Lead Scoring tool scores instead.
+- **The legacy "HubSpot Score" property is gone (retired August 2025).** Anything still referencing `hubspotscore` runs on frozen data. Repoint it to the new score properties.
+- **Score properties are API-readable, configuration is not.** Use the Search API to verify distributions and drive automation off score properties; build and tune the rules in the UI.
 - **Two separate scores are better than one.** Fit and Engagement serve different purposes: Fit tells you WHO to talk to (company and persona match), Engagement tells you WHEN to talk to them (behavioral recency). Combining into one number obscures both signals.
 - **Score decay is a major improvement.** Enable it on engagement criteria so scores naturally decrease over time. Without decay, a contact who clicked one email two years ago looks the same as one who clicked yesterday.
 - **Allow 4-6 hours for recalculation.** Do not panic if scores show 0 immediately after creation. The new tool processes asynchronously across the entire database.

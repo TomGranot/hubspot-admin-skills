@@ -4,7 +4,7 @@ description: "Build workflows to automate contact progression through the sales 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 
@@ -24,87 +24,74 @@ Automate the contact journey through the sales funnel with four progression work
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- Lead scoring model configured (run `/build-lead-scoring` first)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
+- Lead scoring model configured (run `/build-lead-scoring` first) — you need the internal name of your score property
 - Deal pipeline set up with a "Closed Won" stage
 - Meeting tool or integration configured (for SQL transition)
 
-## Building the Workflow: Three Options
+## Scripts
 
-### Option 1: Manual UI Build
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/lifecycle-progression-workflow/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/lifecycle-progression-workflow/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/lifecycle-progression-workflow/scripts/after.py` |
 
-Follow the step-by-step instructions in the "Execute" section below. This is the most reliable method and gives you full control over every trigger, branch, and action.
+`before.py` inventories existing workflows and checks name collisions. `execute.py` creates all four progression workflows via `POST /automation/v4/flows` — **always disabled, for review before enabling**. `after.py` verifies and reports enabled state.
 
-### Option 2: HubSpot Breeze AI
+## Building the Workflow: Two Options
 
-HubSpot's built-in Breeze AI can generate workflow skeletons from natural language prompts. Navigate to **Automation > Workflows > Create workflow > "Describe what you want"** and paste one prompt per workflow. You will need to create four separate workflows:
+### Option A: Create via the v4 Automation API (primary)
 
-**Workflow 1 -- Lead to MQL:**
-```
-Create a contact-based workflow that triggers when a contact's HubSpot score
-is greater than or equal to [your MQL threshold] AND their lifecycle stage is "Lead".
-The workflow should set the lifecycle stage to "Marketing Qualified Lead"
-and send an internal notification to the marketing team.
-```
+All four progression workflows are linear (filter-based AND trigger → set lifecycle stage), which the v4 API expresses directly. The script encodes:
 
-**Workflow 2 -- MQL to SQL:**
-```
-Create a contact-based workflow that triggers when a meeting is booked with
-a contact AND their lifecycle stage is "Marketing Qualified Lead".
-The workflow should set the lifecycle stage to "Sales Qualified Lead"
-and send an internal notification to the sales owner.
-```
+| Workflow | Enrollment (AND) | Action |
+|----------|------------------|--------|
+| Lead → MQL | score property >= threshold + stage = Lead | set stage = MQL |
+| MQL → SQL | `engagements_last_meeting_booked` is known + stage = MQL | set stage = SQL |
+| SQL → Opportunity | `num_associated_deals` >= 1 + stage = SQL | set stage = Opportunity |
+| Opportunity → Customer | `hs_current_customer` = true + stage = Opportunity | set stage = Customer |
 
-**Workflow 3 -- SQL to Opportunity:**
-```
-Create a contact-based workflow that triggers when a contact has an associated
-deal created AND their lifecycle stage is "Sales Qualified Lead".
-The workflow should set the lifecycle stage to "Opportunity".
-```
+The last workflow uses `hs_current_customer` — the read-only system property HubSpot introduced in June 2026 that marks contacts belonging to a current customer — as a cleaner signal than inspecting associated deal stages.
 
-**Workflow 4 -- Opportunity to Customer:**
-```
-Create a contact-based workflow that triggers when a contact's associated deal
-stage equals "Closed Won" AND their lifecycle stage is "Opportunity".
-The workflow should set the lifecycle stage to "Customer"
-and send an internal notification to the CS/onboarding team.
+**Before running:** set `LEAD_SCORE_PROPERTY` in `execute.py` to your score property's internal name. With HubSpot's post-2025 lead scoring tool, each score you create generates its own property — find the internal name under Settings > Properties (it is not the retired `hubspotscore`).
+
+```bash
+uv run skills/lifecycle-progression-workflow/scripts/before.py
+uv run skills/lifecycle-progression-workflow/scripts/execute.py
 ```
 
-**CRITICAL WARNING: Breeze trigger limitations.** Breeze creates **event-based triggers (OR logic)** instead of **filter-based triggers (AND logic)**. Each of these four workflows requires AND logic between the event condition and the current lifecycle stage. After Breeze creates each workflow, you MUST manually verify and fix the trigger/enrollment conditions in the UI to ensure both conditions are ANDed together. Breeze is best used for creating the workflow skeleton (actions, branches, delays) -- the trigger conditions almost always need manual correction.
+**Safety model:** all four workflows are created with `isEnabled: false`. Review the triggers in the UI, add the optional internal-notification actions (marketing team, sales owner, CS/onboarding — recipients are portal-specific), then enable them one at a time, watching the first enrollments.
 
-**Additional Breeze limitations for these workflows:**
-- Breeze **cannot** configure re-enrollment rules
-- Breeze may not correctly set the lifecycle stage condition as part of the enrollment trigger (it may create it as a branch instead)
+### Option B: Manual UI Build
 
-### Option 3: Claude Anthropic Chrome Extension
+Follow the step-by-step instructions in Stage 3 below. Use this on portals where the Automation API is unavailable, or when you prefer to configure the meeting/deal triggers with portal-specific event conditions instead of the property-based equivalents the script uses.
 
-The Claude Anthropic Chrome extension lets Claude see and interact with the HubSpot workflow builder UI directly. You can describe the workflow logic in natural language and Claude will click through the UI to build it. This is often more accurate than Breeze for workflows requiring precise AND-logic triggers, because Claude can verify each trigger condition visually.
-
-To use this approach:
-1. Open the HubSpot workflow builder in Chrome (Automation > Workflows > Create workflow)
-2. Activate the Claude Chrome extension
-3. Describe each of the four progression workflows using the specifications from this skill
-4. Build them one at a time, verifying triggers before moving to the next
-
-> **Note on Fast Mode**: If you're using Claude Code's Fast Mode to speed up workflow creation,
-> be aware of the billing model: Haiku usage is included in your subscription, but Opus in
-> Fast Mode consumes extra credits. For workflow building tasks (which are UI-heavy and may
-> require many interactions), consider whether the speed tradeoff is worth the credit cost.
+**Alternatives:** HubSpot Breeze AI can scaffold these workflows from prompts, but it creates event-based (OR) triggers where AND logic between the event and the current stage is required, and cannot configure re-enrollment — verify everything it builds. The Claude Chrome extension can drive the workflow builder UI directly. Both are secondary options.
 
 ## Step-by-Step Build Instructions
 
-### Stage 1: Before — Plan Thresholds
+### Stage 1: Plan
 
 1. Define your MQL score threshold (typically 40-60 on a 0-100 scale). Adjust after 30-60 days of observation.
-2. Confirm your deal pipeline stages include a clear "Closed Won" equivalent.
-3. Document current lifecycle stage distribution (run the audit or check the property breakdown) so you can measure the impact.
+2. Identify your lead score property's internal name (post-2025 scoring tool properties are per-score; see `/build-lead-scoring`).
+3. Confirm your deal pipeline stages include a clear "Closed Won" equivalent.
 
-### Stage 2: Execute — Build Four Workflows
+### Stage 2: Before
 
-Build each as a separate contact-based workflow.
+1. Run `uv run skills/lifecycle-progression-workflow/scripts/before.py` to inventory workflows and check name collisions.
+2. Document current lifecycle stage distribution (run the audit or check the property breakdown) so you can measure the impact.
+
+### Stage 3: Execute
+
+**Option A:** run `uv run skills/lifecycle-progression-workflow/scripts/execute.py`, then complete the UI review steps listed above.
+
+**Option B — manual UI build:** build each as a separate contact-based workflow.
 
 #### Workflow 1: Lead to MQL
 
-1. **Trigger:** HubSpot score is greater than or equal to [threshold] AND lifecycle stage is "Lead"
+1. **Trigger:** Your lead score property is greater than or equal to [threshold] AND lifecycle stage is "Lead"
 2. **Action:** Set lifecycle stage to "Marketing Qualified Lead"
 3. **Action (optional):** Send internal notification to marketing team
 4. **Re-enrollment:** OFF
@@ -135,8 +122,9 @@ Build each as a separate contact-based workflow.
 - Suppression list: None needed — the lifecycle stage condition prevents backwards movement
 - Time zone: Not applicable
 
-### Stage 3: After — Verify
+### Stage 4: After
 
+0. Run `uv run skills/lifecycle-progression-workflow/scripts/after.py` (API path) to confirm all four workflows exist and report enabled state.
 1. Test each workflow with a test contact:
    - Manually adjust score/create meeting/create deal/close deal and confirm progression.
 2. Verify that workflows do not conflict — a contact should not be enrolled in two progression workflows simultaneously.
@@ -145,7 +133,7 @@ Build each as a separate contact-based workflow.
    - Contacts stuck at a stage despite meeting criteria
    - Unexpected enrollment volumes
 
-### Stage 4: Rollback
+## Rollback
 
 1. Turn off any or all four workflows.
 2. Lifecycle stages already set remain — HubSpot does not allow backward movement without manual override or a dedicated reset workflow.
@@ -155,4 +143,4 @@ Build each as a separate contact-based workflow.
 
 - **Backward movement:** HubSpot prevents lifecycle stage from going backward by default. If a deal is lost and the contact should return to MQL, you need a separate "regression" workflow that explicitly sets the stage.
 - **Multiple deals:** If a contact has multiple deals, the Opportunity-to-Customer workflow fires when any associated deal is closed-won. This is usually the desired behavior.
-- **Score decay:** If your lead scoring model includes decay, a contact's score may drop below the MQL threshold after promotion. This is fine — the lifecycle stage is already set and will not regress.
+- **Score decay:** HubSpot's post-2025 scoring tool supports engagement decay, so a contact's score may drop below the MQL threshold after promotion. This is fine — the lifecycle stage is already set and will not regress.

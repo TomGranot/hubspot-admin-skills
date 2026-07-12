@@ -4,10 +4,10 @@
   <img src="./assets/hero.png" alt="CRM Autopilot — HubSpot Admin Skills" width="100%" />
 </p>
 
-**30+ Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
+**36 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
 
 [![Website](https://img.shields.io/badge/site-hubspot.granot.io-ff7a59)](https://hubspot.granot.io)
-[![Skills](https://img.shields.io/badge/skills-32-blue)](./skills/)
+[![Skills](https://img.shields.io/badge/skills-36-blue)](./skills/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)](https://claude.com/claude-code)
 
@@ -16,6 +16,28 @@
 Built by [Tom Granot](https://consume.granot.io) — from deep experience with enterprise HubSpot CRM administration.
 
 ---
+
+## What's New in 1.1
+
+HubSpot's platform moved fast in 2026, and this release moves with it:
+
+- **Workflows are now API-first.** HubSpot's v4 Automation API is stable (v3 is legacy), so the four workflow-builder skills now *create* their workflows via scripts — always disabled, for review in the UI before enabling — instead of walking you through 40 clicks. Nested branch designs are decomposed into small linear flows the API expresses cleanly.
+- **New `/workflows-as-code`** — export every workflow to versioned JSON, diff exports, restore from backup. HubSpot has no workflow recycle bin; now you have one.
+- **Official MCP support.** HubSpot's remote MCP server went GA in April 2026; `/connect-hubspot-mcp` wires it into Claude Code for conversational spot-checks alongside the bulk scripts.
+- **New `/waterfall-enrich-contacts`** — external enrichment with pluggable provider adapters (FullEnrich waterfall by default; Apollo, Hunter, Dropcontact included; bring your own), cost caps, and a no-overwrite safety model.
+- **New `/audit-api-usage`** — HubSpot switched to date-based API versioning (`2026-03`) and legacy v1–v4 endpoints lose support on March 30, 2027. This skill finds everything in your stack that needs migrating.
+- **Lead scoring refreshed** for the post-2025 scoring tool (Fit + Engagement scores, decay, API-readable score properties), plus repo-wide consistency fixes — one env var, one Python house style, scripts linked from every skill. See [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## Connecting to HubSpot
+
+The skills use two complementary connection paths:
+
+1. **Private app token + scripts (the default).** Every scripted skill runs plain-Python `requests` against HubSpot's REST APIs using a private app token (`HUBSPOT_ACCESS_TOKEN` in `.env`). This is the path for bulk operations — it gives you pagination, rate-limit handling, abort thresholds, and CSV audit trails.
+2. **HubSpot's official MCP server (optional, interactive).** Connect Claude Code to `mcp.hubspot.com` via OAuth for conversational reads and spot-checks — "show me 5 contacts this cleanup touched" — without writing a script. Run `/connect-hubspot-mcp` to set it up and to see the full division of labor.
+
+Audits, hygiene, enrichment, and segmentation run on scripts; use MCP alongside them for verification and triage.
 
 ## Quick Start
 
@@ -58,7 +80,7 @@ The plan tells you exactly which slash command to run next. Each skill follows a
 | **Execute** | Makes the changes (API scripts or step-by-step UI instructions) |
 | **After** | Verifies the fix, compares before/after, confirms success |
 
-Skills that can be scripted include ready-to-run Python scripts. Skills that require HubSpot UI work (workflows, lead scoring) provide precise build instructions — with options for HubSpot Breeze AI or the Claude Chrome extension.
+Skills that can be scripted include ready-to-run Python scripts (plain `requests`, run with `uv run` — no project setup needed). Skills that require HubSpot UI work (lead scoring, some workflow options) provide precise build instructions.
 
 ### 5. Maintain
 
@@ -68,12 +90,14 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 ## Skills Reference
 
-### Audit & Planning (2)
+### Audit & Planning (4)
 
 | Skill | Description |
 |-------|-------------|
 | [`hubspot-audit`](https://hubspot.granot.io/skills/hubspot-audit) | Run a comprehensive audit of your HubSpot portal — contacts, companies, deals, properties, lists, workflows, and forms |
 | [`hubspot-implementation-plan`](https://hubspot.granot.io/skills/hubspot-implementation-plan) | Generate a phased implementation plan from audit findings with prioritized action items |
+| [`connect-hubspot-mcp`](https://hubspot.granot.io/skills/connect-hubspot-mcp) | Connect Claude Code to HubSpot's official remote MCP server for conversational CRM reads and spot-checks |
+| [`audit-api-usage`](https://hubspot.granot.io/skills/audit-api-usage) | Find every integration calling legacy v1–v4 HubSpot endpoints before the March 2027 end of support |
 
 ### Database Hygiene (6)
 
@@ -86,7 +110,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | [`merge-duplicate-companies`](https://hubspot.granot.io/skills/merge-duplicate-companies) | Detect and merge duplicate company records using domain matching and fuzzy name comparison |
 | [`reassign-deactivated-owners`](https://hubspot.granot.io/skills/reassign-deactivated-owners) | Reassign contacts and deals owned by deactivated HubSpot users to active team members |
 
-### Data Enrichment (5)
+### Data Enrichment (6)
 
 | Skill | Description |
 |-------|-------------|
@@ -95,23 +119,27 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | [`standardize-geo-values`](https://hubspot.granot.io/skills/standardize-geo-values) | Normalize country and state/region values to consistent formats across your database |
 | [`assign-unowned-contacts`](https://hubspot.granot.io/skills/assign-unowned-contacts) | Assign marketing contacts that have no owner to the appropriate team members based on territory or segment rules |
 | [`fix-lifecycle-stages`](https://hubspot.granot.io/skills/fix-lifecycle-stages) | Detect and correct lifecycle stage violations — contacts stuck in the wrong stage or regressed backwards |
+| [`waterfall-enrich-contacts`](https://hubspot.granot.io/skills/waterfall-enrich-contacts) | Enrich emails, phones, and titles via external providers — FullEnrich waterfall by default, Apollo/Hunter/Dropcontact included, or bring your own |
 
 ### Segmentation & Scoring (3)
 
 | Skill | Description |
 |-------|-------------|
 | [`create-icp-tiers`](https://hubspot.granot.io/skills/create-icp-tiers) | Create an ICP (Ideal Customer Profile) tier property and assign tier values based on firmographic criteria |
-| [`build-lead-scoring`](https://hubspot.granot.io/skills/build-lead-scoring) | Design and implement a lead scoring model using HubSpot's scoring properties and behavioral signals |
+| [`build-lead-scoring`](https://hubspot.granot.io/skills/build-lead-scoring) | Design and implement a lead scoring model in HubSpot's Lead Scoring tool — separate Fit and Engagement scores with decay |
 | [`build-smart-lists`](https://hubspot.granot.io/skills/build-smart-lists) | Build active smart lists for key segments — ICP tiers, lifecycle stages, engagement levels, and suppression groups |
 
-### Automation Workflows (4)
+### Automation Workflows (5)
+
+All four builders create their workflows via the stable v4 Automation API (always disabled, for UI review before enabling), with a manual UI path as fallback.
 
 | Skill | Description |
 |-------|-------------|
 | [`new-contact-hygiene-workflow`](https://hubspot.granot.io/skills/new-contact-hygiene-workflow) | Build a workflow that screens new contacts on creation — validates email, enriches data, and assigns owners |
-| [`engagement-suppression-workflow`](https://hubspot.granot.io/skills/engagement-suppression-workflow) | Create a workflow that automatically suppresses contacts after prolonged disengagement |
+| [`engagement-suppression-workflow`](https://hubspot.granot.io/skills/engagement-suppression-workflow) | Create a two-tier sunset system that re-engages dormant contacts before suppressing them |
 | [`lifecycle-progression-workflow`](https://hubspot.granot.io/skills/lifecycle-progression-workflow) | Set up automated lifecycle stage progression based on engagement thresholds and sales activity |
-| [`bounce-monitoring-workflow`](https://hubspot.granot.io/skills/bounce-monitoring-workflow) | Build a workflow that monitors bounce events and auto-suppresses contacts exceeding bounce thresholds |
+| [`bounce-monitoring-workflow`](https://hubspot.granot.io/skills/bounce-monitoring-workflow) | Build workflows that monitor bounce events and auto-suppress contacts exceeding bounce thresholds |
+| [`workflows-as-code`](https://hubspot.granot.io/skills/workflows-as-code) | Export all workflows to versioned JSON, diff exports over time, and restore workflows from backup |
 
 ### Ongoing Maintenance (12)
 
@@ -135,9 +163,15 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 ## Prerequisites
 
 - **Claude Code** installed and configured
-- **HubSpot account** with API access (private app token with appropriate scopes)
-- **Python 3.10+** with [uv](https://github.com/astral-sh/uv) for scripted processes
+- **HubSpot account** with a private app token in `.env` as `HUBSPOT_ACCESS_TOKEN`. Typical scopes across the skill set: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.deals.read/write`, `crm.objects.owners.read`, `crm.schemas.*` (property management), `crm.lists.read/write`, `automation` (workflow skills), `forms` — grant per skill as documented in each SKILL.md
+- **Python 3.10+** with [uv](https://github.com/astral-sh/uv) — scripts carry inline metadata and run with `uv run`, no project setup
 - HubSpot **Marketing Professional** plan or higher (for workflow-based skills)
+- Optional: HubSpot's **MCP server** connection for conversational spot-checks (`/connect-hubspot-mcp`)
+- Optional: an **enrichment provider** API key (FullEnrich, Apollo, Hunter, Dropcontact, or your own) for `/waterfall-enrich-contacts`
+
+### API versioning
+
+Scripts target HubSpot's stable REST versions: `/crm/v3/`, `/automation/v4/`, `/marketing/v3/` — all supported until **March 30, 2027**. HubSpot's current recommended target is the date-based `2026-03` release; this repo will migrate in a future major version, and `/audit-api-usage` helps you migrate everything else in your stack.
 
 ---
 
@@ -147,6 +181,8 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 hubspot-admin-skills/
 ├── README.md
 ├── CLAUDE.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
 ├── LICENSE
 ├── .gitignore
 ├── assets/
@@ -156,7 +192,9 @@ hubspot-admin-skills/
 │   └── plugin.json
 └── skills/
     ├── hubspot-audit/
-    │   └── SKILL.md
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       └── audit_portal.py
     ├── hubspot-implementation-plan/
     │   └── SKILL.md
     ├── delete-no-email-contacts/
@@ -170,7 +208,12 @@ hubspot-admin-skills/
     │   └── scripts/
     │       ├── before.py
     │       └── after.py
-    ├── ...                        (32 skills total, 13 with scripts)
+    ├── waterfall-enrich-contacts/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       ├── before.py / execute.py / after.py
+    │       └── providers/           (fullenrich, apollo, hunter, dropcontact, _template)
+    ├── ...                        (36 skills total, 20 with scripts)
     └── backfill-geo-data/
         └── SKILL.md
 ```
@@ -187,31 +230,13 @@ If you say yes, Claude Code will create the skill, push it to your fork, and ope
 
 ### Manual Contributing
 
-If you prefer to contribute manually:
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full skill template, frontmatter spec, Python house style, safety-mechanism requirements, and category list. The short version:
 
-1. **Fork**: `gh repo fork tomgranot/hubspot-admin-skills --clone`
+1. **Fork**: `gh repo fork TomGranot/hubspot-admin-skills --clone`
 2. **Branch**: `git checkout -b skill/your-skill-name`
-3. **Create**: Add `skills/<your-skill>/SKILL.md` following the existing format:
-   - YAML frontmatter: `name`, `description`, `license`, `metadata` (author, version, category)
-   - 4-stage execution pattern: **Plan** → **Before State** → **Execute** → **After State**
-   - API code examples using `hubspot-api-client` where applicable
-   - Safety mechanisms (thresholds, CSV exports, confirmation prompts)
-   - Rollback instructions
+3. **Create**: Add `skills/<your-skill>/SKILL.md` following the 4-stage pattern (**Plan** → **Before** → **Execute** → **After**, plus **Rollback**)
 4. **Test**: Run the skill against a HubSpot sandbox portal
-5. **PR**: `gh pr create --repo tomgranot/hubspot-admin-skills`
-
-### Skill Categories
-
-When creating a skill, assign it to one of these categories in the `metadata.category` field:
-
-| Category | Slug | Description |
-|----------|------|-------------|
-| Audit & Planning | `audit-planning` | Portal assessment and implementation planning |
-| Database Hygiene | `database-hygiene` | Removing bad data, suppressing contacts, deduplication |
-| Data Enrichment | `data-enrichment` | Filling gaps in contact/company data |
-| Segmentation & Scoring | `segmentation-scoring` | ICP tiers, lead scoring, smart lists |
-| Automation Workflows | `automation-workflows` | HubSpot workflows for ongoing hygiene |
-| Ongoing Maintenance | `ongoing-maintenance` | Recurring cleanup and health checks |
+5. **PR**: `gh pr create --repo TomGranot/hubspot-admin-skills`
 
 Please keep skills generic and company-agnostic. No customer data, API keys, or proprietary information.
 

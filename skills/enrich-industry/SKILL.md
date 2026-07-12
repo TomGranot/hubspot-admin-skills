@@ -4,7 +4,7 @@ description: "Backfill contact-level industry from associated company records us
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: data-enrichment
 ---
 
@@ -19,8 +19,19 @@ Without industry on contact records, you cannot segment email campaigns by verti
 ## Prerequisites
 
 - HubSpot Marketing Hub Professional or Sales Hub Professional (for Workflows)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) for the scripted stages
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Company name enrichment (enrich-company-name skill) should be completed first, as it may trigger new company associations
 - Access to Settings > Properties to verify/create the contact Industry property
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/enrich-industry/scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/enrich-industry/scripts/after.py` |
+
+There is no execute script: the enrichment itself runs as a HubSpot workflow (see Execute below).
 
 ## Plan
 
@@ -29,7 +40,7 @@ Without industry on contact records, you cannot segment email campaigns by verti
 3. Build a workflow that copies industry from the associated company
 4. Verify enrichment results (after state)
 
-## Before State
+## Before
 
 ### Check Property Compatibility
 
@@ -52,27 +63,16 @@ This is the most important pre-step. Contacts may have TWO industry properties: 
 
 ### Audit Enrichment Opportunity
 
+Run `uv run skills/enrich-industry/scripts/before.py`. The core query:
+
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
-
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# Count contacts missing industry
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "industry",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts missing industry: {result.total}")
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "industry", "operator": "NOT_HAS_PROPERTY"},
+    ]}],
+    "limit": 1,
+})
+print(f"Contacts missing industry: {resp.json()['total']}")
 ```
 
 Also create a HubSpot list to estimate enrichable contacts:
@@ -107,26 +107,9 @@ This workflow is nearly identical to the company name enrichment workflow. If yo
 
 **Note:** Unlike the company name workflow, no delay is needed here. If the contact already has an associated company with industry data (checked by the enrollment trigger), the copy can happen immediately.
 
-## After State
+## After
 
-Wait 1-2 hours for the workflow to process, then verify.
-
-**Script approach:**
-
-```python
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "industry",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts still missing industry: {result.total}")
-```
+Wait 1-2 hours for the workflow to process, then verify: `uv run skills/enrich-industry/scripts/after.py` (re-runs the before-state query and compares against the baseline).
 
 **Verification checklist:**
 
@@ -138,6 +121,15 @@ print(f"Contacts still missing industry: {result.total}")
    - Click the associated company and confirm the industry matches
 4. Check that the industry distribution on contacts roughly mirrors the company industry distribution
 5. Check workflow history for failures — most common is property value mismatch (company has a value that does not match a dropdown option on the contact)
+
+## Rollback
+
+- Turn off the workflow to stop further enrichment.
+- The workflow only fills empty fields. If wrong values were copied (e.g., mismatched dropdown options), filter contacts by the workflow's enrollment history and clear the contact `industry` property, or restore individual values from property history.
+
+## External Providers
+
+This skill only moves industry data the portal already has (company → contact). When the *company* itself has no industry value, that gap needs external data — see `/waterfall-enrich-contacts` for the provider-agnostic enrichment path, or HubSpot's Breeze Intelligence add-on for in-platform enrichment.
 
 ## Key Technical Learnings
 

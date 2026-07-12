@@ -4,7 +4,7 @@ description: "Run a comprehensive quarterly CRM audit covering list health, boun
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,8 +14,8 @@ A structured quarterly audit that catches data drift before it becomes a crisis.
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`)
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Previous quarter's report (for trend comparison) — optional on first run
 
 ## Audit Checklist

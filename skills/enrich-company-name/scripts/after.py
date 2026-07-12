@@ -21,6 +21,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -33,12 +34,13 @@ HEADERS = {
 SEARCH_URL = f"{BASE}/crm/v3/objects/contacts/search"
 SAMPLE_SIZE = 200
 RATE_LIMIT_PAUSE = 0.15    # seconds between paginated requests
-CSV_FILE = os.path.join(os.path.dirname(__file__), "after_enrich_company_name.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "after_enrich_company_name.csv")
 
 # Load before-state baseline if available
-BEFORE_CSV = os.path.join(os.path.dirname(__file__), "before_enrich_company_name.csv")
+BEFORE_CSV = os.path.join("data", "audit-logs", "before_enrich_company_name.csv")
 before_missing = None
 if os.path.exists(BEFORE_CSV):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(BEFORE_CSV) as f:
         for row in csv.DictReader(f):
             if row["metric"] == "missing_company_name":

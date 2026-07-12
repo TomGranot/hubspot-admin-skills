@@ -4,7 +4,7 @@ description: "Audit and remove unused, test, or deprecated forms from HubSpot. I
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,26 +14,49 @@ Audit HubSpot forms to remove unused and test forms. Stale forms clutter the for
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `forms` scope
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Note: The Forms API may return 403 on some plan tiers. If so, perform the audit manually in the HubSpot UI under Marketing > Forms.
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Inventory All Forms
+### Stage 1: Plan
 
-Pull all forms via the API:
+Confirm with the user before starting:
+
+1. How aggressive to be: delete outright, or prefix with "[DEPRECATED]" first and delete next quarter?
+2. Any forms that must never be touched (compliance, legal, active campaigns)?
+
+### Stage 2: Before
+
+Inventory all forms via the Marketing Forms API (v3):
 
 ```python
-from hubspot import HubSpot
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-forms = api_client.marketing.forms.forms_api.get_page(limit=100)
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+
+forms, after = [], None
+while True:
+    params = {"limit": 100}
+    if after:
+        params["after"] = after
+    resp = requests.get(f"{BASE}/marketing/v3/forms", headers=HEADERS, params=params)
+    resp.raise_for_status()
+    data = resp.json()
+    forms.extend(data.get("results", []))
+    after = data.get("paging", {}).get("next", {}).get("after")
+    if not after:
+        break
 ```
 
 For each form, record: form ID, name, type, submission count, created date, last submission date.
 
-### Stage 2: Execute — Identify Candidates for Deletion
+### Stage 3: Execute
 
 Flag forms matching any of these criteria:
 
@@ -47,13 +70,15 @@ Before deleting, check:
 - Is the form embedded on any live landing page or website page?
 - Is the form used in any pop-up or slide-in CTA?
 
-### Stage 3: After — Delete and Document
+Present the candidate list to the user and wait for explicit confirmation, then delete confirmed unused forms via the API (`DELETE /marketing/v3/forms/{formId}`) or UI.
 
-1. Delete confirmed unused forms via the API or UI.
+### Stage 4: After
+
+1. Re-run the inventory and confirm the deleted forms are gone.
 2. Document what was deleted in a cleanup log.
 3. If a form with submissions is deleted, the submission data is retained on the contact records — but the form definition is gone.
 
-### Stage 4: Rollback
+## Rollback
 
 - Deleted forms cannot be restored in HubSpot.
 - Before deleting a form with any submissions, export the form definition (field names, settings) so it can be recreated.

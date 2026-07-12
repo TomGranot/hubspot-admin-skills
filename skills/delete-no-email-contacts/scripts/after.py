@@ -16,6 +16,7 @@ import json
 import requests
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -58,11 +59,10 @@ print(f"  Total contacts with no email: {total}")
 print()
 
 # Compare with before state CSV if it exists
-before_csv = os.path.join(
-    os.path.dirname(__file__), "..", "data", "no-email-contacts-before.csv"
-)
+before_csv = os.path.join("data", "audit-logs", "no-email-contacts-before.csv")
 before_count = 0
 if os.path.exists(before_csv):
+    os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
     with open(before_csv, "r") as f:
         reader = csv.reader(f)
         next(reader)  # skip header

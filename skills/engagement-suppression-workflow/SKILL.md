@@ -4,7 +4,7 @@ description: "Build a two-tier sunset workflow that re-engages dormant contacts 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: automation-workflows
 ---
 
@@ -23,8 +23,20 @@ This preserves deliverability scores while maximizing the recoverable audience.
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A re-engagement email campaign or sequence ready to send
-- A custom dropdown property to track suppression status (e.g., `engagement_flag` or `reengagement_status` — dropdown with values: "re-engagement sent", "suppressed")
+- A custom dropdown property to track suppression status (default: `engagement_flag` — the execute script creates it if missing)
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/engagement-suppression-workflow/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/engagement-suppression-workflow/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/engagement-suppression-workflow/scripts/after.py` |
+
+`before.py` inventories existing workflows and checks for name collisions. `execute.py` creates the `engagement_flag` property (if missing) and both sunset workflows via `POST /automation/v4/flows` — **always disabled, for review in the UI before enabling**. `after.py` verifies they exist and reports enabled state.
 
 ## Workflow Design
 
@@ -68,68 +80,54 @@ TRIGGER: Last engagement date > [sunset window] ago
    prop      + set non-marketing
 ```
 
-## Building the Workflow: Three Options
+## Building the Workflow: Two Options
 
-### Option 1: Manual UI Build
+### Option A: Create via the v4 Automation API (primary)
 
-Follow the step-by-step instructions in the "Execute" section below. This is the most reliable method and gives you full control over every trigger, branch, and action.
+The stable v4 Automation API supports creating workflows programmatically. Instead of one workflow with an if/then branch, the script decomposes the design into **two linear workflows** — which the API expresses cleanly and which are easier to reason about:
 
-### Option 2: HubSpot Breeze AI
+1. **Tier 1 — Flag for Re-engagement**: enrollment = last open older than the sunset window (or never) AND email known AND not globally unsubscribed AND flag unknown. Action: set `engagement_flag` = "re-engagement sent".
+2. **Tier 2 — Suppress Non-responders**: enrollment = flag = "re-engagement sent" AND still no open/click after sunset + re-engagement windows. Actions: set flag = "suppressed", set marketing contact status to non-marketing.
 
-HubSpot's built-in Breeze AI can generate a workflow skeleton from a natural language prompt. Navigate to **Automation > Workflows > Create workflow > "Describe what you want"** and paste the following prompt:
+Run the scripts (configure `SUNSET_DAYS`, `REENGAGE_DAYS`, `FLAG_PROPERTY` in `execute.py` first):
 
-```
-Create a contact-based workflow for a two-tier sunset/re-engagement system.
-Enrollment trigger: contacts where the last email open date is more than [sunset window] days ago,
-AND email is known, AND they are not globally unsubscribed, AND a custom property
-"[your suppression status property]" is unknown.
-
-The workflow should:
-1. Set the contact property "[your suppression status property]" to "re-engagement sent"
-2. Enroll the contact in a re-engagement email sequence
-3. Wait [re-engagement window] days
-4. Check if the contact has opened or clicked any email in the last [re-engagement window] days
-   - If YES (re-engaged): clear the "[your suppression status property]" property
-   - If NO (still disengaged): set "[your suppression status property]" to "suppressed" and set the contact
-     as a non-marketing contact
+```bash
+uv run skills/engagement-suppression-workflow/scripts/before.py
+uv run skills/engagement-suppression-workflow/scripts/execute.py
 ```
 
-**CRITICAL WARNING: Breeze trigger limitations.** Breeze creates **event-based triggers (OR logic)** instead of **filter-based triggers (AND logic)**. This is a known limitation. After Breeze creates the workflow, you MUST manually verify and fix the trigger/enrollment conditions in the UI. The enrollment trigger for this workflow requires AND logic across four conditions -- Breeze will likely create them as separate OR conditions, which would enroll contacts incorrectly. Breeze is best used for creating the workflow skeleton (actions, branches, delays) -- the trigger conditions almost always need manual correction.
+**Safety model:** both workflows are created with `isEnabled: false`. Review them in Automation > Workflows, then:
+- Add the "enroll in re-engagement sequence/email" action to Tier 1 (email/sequence IDs are portal-specific).
+- If the script reported it could not include the set-marketing-status action, add "Set marketing contact status" to Tier 2 in the UI (one click).
+- Turn both on, choosing whether to enroll existing contacts.
 
-**Additional Breeze limitations for this workflow:**
-- Breeze **cannot** create "is unknown" branch conditions -- you must add these manually
-- Breeze **cannot** configure re-enrollment rules
-- Breeze **cannot** set up workflow goals (early exit on re-engagement)
+**Payload notes:** the scripts use documented v4 action types (`0-5` set property; `0-31` set marketing contact status, with automatic fallback if your portal rejects its undocumented field shape). If a filter shape is rejected, HubSpot's own recommendation applies: build the workflow once in the UI, `GET /automation/v4/flows/{flowId}`, and adapt the script to the exact shapes your portal returns.
 
-### Option 3: Claude Anthropic Chrome Extension
+### Option B: Manual UI Build (single workflow with branch)
 
-The Claude Anthropic Chrome extension lets Claude see and interact with the HubSpot workflow builder UI directly. You can describe the workflow logic in natural language and Claude will click through the UI to build it. This is often more accurate than Breeze for complex workflows because Claude can verify each step visually, including the multi-condition AND enrollment trigger and the "is unknown" checks that Breeze cannot handle.
+Follow the step-by-step instructions in Stage 3 below. This builds the original single-workflow design with the if/then re-engagement branch, and works on portals where the Automation API is unavailable.
 
-To use this approach:
-1. Open the HubSpot workflow builder in Chrome (Automation > Workflows > Create workflow)
-2. Activate the Claude Chrome extension
-3. Describe the workflow using the design diagram and instructions from this skill
-
-> **Note on Fast Mode**: If you're using Claude Code's Fast Mode to speed up workflow creation,
-> be aware of the billing model: Haiku usage is included in your subscription, but Opus in
-> Fast Mode consumes extra credits. For workflow building tasks (which are UI-heavy and may
-> require many interactions), consider whether the speed tradeoff is worth the credit cost.
+**Alternatives:** HubSpot Breeze AI can scaffold a similar workflow from a prompt, but it creates event-based (OR) triggers instead of filter-based (AND) triggers and cannot configure re-enrollment or "is unknown" conditions — every Breeze-built trigger needs manual verification. The Claude Chrome extension can drive the workflow builder UI directly. Both are secondary to Options A and B.
 
 ## Step-by-Step Build Instructions
 
-### Stage 1: Before — Prepare
+### Stage 1: Plan
 
-1. **Create your suppression status property** (e.g., `engagement_flag` or `reengagement_status`) if it does not exist:
-   - Object: Contact
-   - Type: Dropdown select
-   - Options: "re-engagement sent", "suppressed", blank/unknown
-   - Group: Contact information
+1. Choose your **sunset window** (typically 120-270 days; default 180) and **re-engagement window** (21-45 days; default 30).
+2. **Define "engagement"** for the Tier 2 check. Recommended: email open OR email click within the re-engagement window.
+3. **Create or identify a re-engagement email/sequence.** A simple 1-2 email series asking "Still interested?" with a clear CTA works well.
 
-2. **Create or identify a re-engagement email/sequence.** A simple 1-2 email series asking "Still interested?" with a clear CTA works well.
+### Stage 2: Before
 
-3. **Define "engagement"** for your branch condition. Recommended: email open OR email click OR form submission OR page view within your re-engagement window (typically 21-45 days).
+Run `uv run skills/engagement-suppression-workflow/scripts/before.py` — it inventories all workflows, flags name collisions with the two planned SUNSET workflows, and writes the inventory CSV baseline.
 
-### Stage 2: Execute — Build the Workflow
+If building manually, also create your suppression status property (dropdown: "re-engagement sent", "suppressed") if it does not exist — the API path creates it automatically.
+
+### Stage 3: Execute
+
+**Option A:** run `uv run skills/engagement-suppression-workflow/scripts/execute.py`, then complete the UI review steps listed above.
+
+**Option B — manual UI build:**
 
 1. **Set enrollment trigger:**
    - `hs_email_last_open_date` is more than your sunset window (typically 120-270 days) ago OR is unknown
@@ -147,7 +145,7 @@ To use this approach:
 5. **If/then branch:**
    - Condition: `hs_email_last_open_date` is less than [re-engagement window] days ago OR `hs_email_last_click_date` is less than [re-engagement window] days ago
    - **YES (re-engaged):** Set your suppression status property to blank/unknown (clears flag, contact returns to normal)
-   - **NO (still disengaged):** Set your suppression status property = "suppressed" and set `hs_marketable_status` to non-marketing contact (via workflow action — this is the only way to set it, as the API is read-only)
+   - **NO (still disengaged):** Set your suppression status property = "suppressed" and set `hs_marketable_status` to non-marketing contact via the "Set marketing contact status" workflow action. (The property itself is read-only via direct API writes — a workflow action is the mechanism, whether the workflow is built in the UI or created via the v4 API.)
 
 6. **Settings:**
    - Re-enrollment: OFF
@@ -155,16 +153,17 @@ To use this approach:
 
 7. **Turn on the workflow.**
 
-### Stage 3: After — Verify
+### Stage 4: After
 
-1. Spot-check 10-20 contacts that entered the workflow. Confirm:
+1. Run `uv run skills/engagement-suppression-workflow/scripts/after.py` (API path) to confirm both workflows exist and report their enabled state.
+2. Spot-check 10-20 contacts that entered the workflow. Confirm:
    - Re-engagement email was sent
-   - After 30 days, disengaged contacts were suppressed
-   - Re-engaged contacts had their suppression status property cleared
-2. Monitor deliverability metrics weekly for the first month.
-3. Track how many contacts re-engage vs. get suppressed — adjust the sunset window if needed.
+   - After the re-engagement window, disengaged contacts were suppressed
+   - Re-engaged contacts had their suppression status property cleared (Option B) or never entered Tier 2 (Option A)
+3. Monitor deliverability metrics weekly for the first month.
+4. Track how many contacts re-engage vs. get suppressed — adjust the sunset window if needed.
 
-### Stage 4: Rollback
+## Rollback
 
 1. Turn off the workflow.
 2. To reverse suppressions: filter contacts where your suppression status property = "suppressed" and manually set them back to marketing contacts in the UI.

@@ -4,7 +4,7 @@ description: "Populate missing contact company name fields from associated compa
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: data-enrichment
 ---
 
@@ -19,8 +19,19 @@ Contacts missing a company name cannot be matched to ICP-classified companies, b
 ## Prerequisites
 
 - HubSpot Marketing Hub Professional or Sales Hub Professional (for Workflows)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact read/write scopes (for the scripted stages)
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
 - **HubSpot auto-association enabled:** Settings > Objects > Companies > "Create and associate companies with contacts" toggle must be ON. This lets HubSpot automatically create company records from email domains and associate them.
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/enrich-company-name/scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/enrich-company-name/scripts/after.py` |
+
+There is no execute script: the enrichment itself runs as a HubSpot workflow (see Execute below), which handles both the backlog and future contacts.
 
 ## Plan
 
@@ -30,33 +41,20 @@ Contacts missing a company name cannot be matched to ICP-classified companies, b
 4. Optionally run an API backfill script for immediate results
 5. Verify enrichment results (after state)
 
-## Before State
+## Before
 
-Run a before-state audit to capture the baseline.
+Run the before-state audit to capture the baseline: `uv run skills/enrich-company-name/scripts/before.py`
 
-**Script approach (recommended):**
+The core query it runs:
 
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
-
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# Count contacts missing company name
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "company",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts missing company name: {result.total}")
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "company", "operator": "NOT_HAS_PROPERTY"},
+    ]}],
+    "limit": 1,
+})
+print(f"Contacts missing company name: {resp.json()['total']}")
 ```
 
 **Manual approach:** Go to Contacts > filter by Company name > is unknown. Record the count.
@@ -96,23 +94,19 @@ Save the count. This is your baseline for measuring success.
 Use this if you need the data populated immediately rather than waiting for workflow processing.
 
 ```python
-# Pattern: Fetch contacts missing company name,
-# look up their associated company, copy the name
-from hubspot import HubSpot
-
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# 1. Search for contacts missing company name
-# 2. For each, get associations to companies
-# 3. Fetch the primary company's name
-# 4. Batch update the contact's company property
+# Pattern: fetch contacts missing company name,
+# look up their associated company, copy the name.
+# 1. POST /crm/v3/objects/contacts/search  (company NOT_HAS_PROPERTY)
+# 2. POST /crm/v4/associations/contacts/companies/batch/read  (get associations)
+# 3. POST /crm/v3/objects/companies/batch/read  (fetch company names)
+# 4. POST /crm/v3/objects/contacts/batch/update  (write the contact's company property)
 ```
 
 **Key API notes:**
 - Use the Search API to find contacts where `company` NOT_HAS_PROPERTY
 - Search API caps at 10,000 results. Segment by `createdate` ranges if needed.
 - Use Associations API v4 to get contact-to-company associations
-- Batch update contacts using `crm.contacts.batch_api.update`
+- Batch update contacts via `POST /crm/v3/objects/contacts/batch/update` (100 per call)
 - Respect rate limits: 100 requests per 10 seconds
 
 ### Why Do Both?
@@ -121,27 +115,9 @@ api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
 - The **API backfill** provides immediate results if you cannot wait for workflow processing (which may take hours for large databases).
 - If you only do the workflow, that is perfectly fine. It will process the backlog since existing contacts meeting the trigger criteria get enrolled on activation.
 
-## After State
+## After
 
-Wait 1-2 hours after activating the workflow (longer for very large databases), then verify.
-
-**Script approach:**
-
-```python
-# Same search as before-state script
-result = api_client.crm.contacts.search_api.do_search(
-    public_object_search_request={
-        "filterGroups": [{
-            "filters": [{
-                "propertyName": "company",
-                "operator": "NOT_HAS_PROPERTY"
-            }]
-        }],
-        "limit": 0
-    }
-)
-print(f"Contacts still missing company name: {result.total}")
-```
+Wait 1-2 hours after activating the workflow (longer for very large databases), then verify: `uv run skills/enrich-company-name/scripts/after.py` (re-runs the before-state query and compares against the baseline).
 
 **Verification checklist:**
 
@@ -153,6 +129,11 @@ print(f"Contacts still missing company name: {result.total}")
    - Multiple associated companies (HubSpot uses the primary company)
 5. Verify the workflow continues processing new contacts by checking for recent enrollments
 
+## Rollback
+
+- Turn off the workflow to stop further enrichment (Automation > Workflows > toggle off).
+- The workflow only fills empty fields, so there is nothing to "restore" — but if bad values were copied (e.g., from wrong primary associations), filter contacts by the workflow's enrollment history and clear the `company` property, or restore values from each contact's property history.
+
 ## Key Technical Learnings
 
 - **The 10-minute delay is a balance.** Auto-association typically completes in a few minutes, but 10 minutes provides a comfortable buffer. If many contacts go down the NO branch and later get associations, increase to 15-20 minutes.
@@ -160,6 +141,6 @@ print(f"Contacts still missing company name: {result.total}")
 - **Primary company wins.** If a contact is associated with multiple companies, HubSpot copies from the primary associated company. Verify primary associations are correct for key contacts.
 - **This workflow does NOT overwrite existing values.** The enrollment trigger requires "Company name is unknown", so contacts with an existing company name are never touched.
 - **Property type matters.** Contact "Company name" is a single-line text field by default. If someone changed it to a dropdown, the copy action may fail. Check in Settings > Properties before running.
-- **Personal email domains exit on the NO branch.** Contacts with gmail.com, yahoo.com, hotmail.com, outlook.com, etc. will not get enriched. This is expected. They need manual enrichment or a third-party tool (ZoomInfo, Clearbit, Apollo) to determine their company.
+- **Personal email domains exit on the NO branch.** Contacts with gmail.com, yahoo.com, hotmail.com, outlook.com, etc. will not get enriched. This is expected. They need manual enrichment or an external provider — see `/waterfall-enrich-contacts` for the provider-agnostic path.
 - **Company name is a prerequisite for ICP Tier classification.** Run this enrichment before creating ICP Tier workflows.
 - **Schedule the "after" verification script.** Workflow processing for large databases takes time. Do not check results immediately — schedule the verification for 2-4 hours after activation.

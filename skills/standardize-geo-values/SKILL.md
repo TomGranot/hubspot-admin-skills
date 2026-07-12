@@ -4,7 +4,7 @@ description: "Convert inconsistent country and state/region formats to standardi
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: data-enrichment
 ---
 
@@ -19,6 +19,8 @@ Inconsistent geo values break geographic segmentation. A list filtering for "Uni
 ## Prerequisites
 
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts and Companies views with bulk edit permissions
 - **Key constraint:** If your CRM integrates with another system (e.g., Salesforce, marketing automation), agree on the standard format (full names vs. ISO codes) with that system's admin BEFORE standardizing. Mismatched formats between synced systems will cause ongoing data conflicts.
 - Decision on standard format. This skill recommends:
@@ -38,6 +40,16 @@ Before executing, collect the following information from the user:
 - Examples: "Yes, Salesforce uses ISO 2-letter codes", "Yes, our ERP uses full country names", "No integrations to worry about"
 - Default: No integration constraints -- use HubSpot's default full-name format
 
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/standardize-geo-values/scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/standardize-geo-values/scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/standardize-geo-values/scripts/after.py` |
+
+`before.py` counts contacts and companies per variant value. `execute.py` applies the variant-to-standard mapping via batch update (review and extend its `COUNTRY_MAPPING`/`STATE_MAPPING` tables first). `after.py` verifies all variants return zero.
+
 ## Plan
 
 1. Audit all non-standard country and state values (before state)
@@ -46,52 +58,26 @@ Before executing, collect the following information from the user:
 4. Prevent future inconsistencies by configuring property types and forms
 5. Verify all values are standardized (after state)
 
-## Before State
+## Before
 
 ### API Audit Script
 
+Run `uv run skills/standardize-geo-values/scripts/before.py`. The core query pattern:
+
 ```python
-import os
-from hubspot import HubSpot
-from dotenv import load_dotenv
-
-load_dotenv()
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
-
-# Check for common country variants
 variants = ["US", "USA", "U.S.", "U.S.A.", "America"]
-for variant in variants:
-    result = api_client.crm.contacts.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": "country",
-                    "operator": "EQ",
-                    "value": variant
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    if result.total > 0:
-        print(f"Contacts with country = '{variant}': {result.total}")
-
-# Repeat for companies
-for variant in variants:
-    result = api_client.crm.companies.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": "country",
-                    "operator": "EQ",
-                    "value": variant
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    if result.total > 0:
-        print(f"Companies with country = '{variant}': {result.total}")
+for object_type in ["contacts", "companies"]:
+    for variant in variants:
+        resp = requests.post(f"{BASE}/crm/v3/objects/{object_type}/search",
+                             headers=HEADERS, json={
+            "filterGroups": [{"filters": [
+                {"propertyName": "country", "operator": "EQ", "value": variant},
+            ]}],
+            "limit": 1,
+        })
+        total = resp.json()["total"]
+        if total:
+            print(f"{object_type} with country = '{variant}': {total}")
 ```
 
 ### Manual Audit
@@ -107,9 +93,9 @@ Record all variant counts as your baseline.
 
 ### Method 1: API Batch Update (Recommended for Large Volumes)
 
-```python
-# Pattern: Build mapping table, search for each variant, batch update
+This is scripted: `uv run skills/standardize-geo-values/scripts/execute.py`. The mapping tables it applies:
 
+```python
 COUNTRY_MAPPING = {
     "US": "United States",
     "USA": "United States",
@@ -149,11 +135,11 @@ STATE_MAPPING = {
     # Add all 50 US states + territories as needed
 }
 
-# For each mapping:
-# 1. Search for contacts with the variant value
-# 2. Collect all matching contact IDs (paginate if > 100)
-# 3. Batch update using crm.contacts.batch_api.update
-# 4. Repeat for companies using crm.companies
+# For each mapping the script:
+# 1. Searches for contacts with the variant value (POST /crm/v3/objects/contacts/search)
+# 2. Collects all matching contact IDs (paginated via the `after` cursor)
+# 3. Batch updates them (POST /crm/v3/objects/contacts/batch/update, 100 per call)
+# 4. Repeats for companies (/crm/v3/objects/companies/...)
 ```
 
 **API notes:**
@@ -187,27 +173,9 @@ After standardizing existing data:
    - Verify dropdown values match your standardized format
 6. Check any **import templates** used by the team to ensure they reference standard values
 
-## After State
+## After
 
-```python
-# Re-run the same variant checks from before state
-variants = ["US", "USA", "U.S.", "U.S.A.", "America"]
-for variant in variants:
-    result = api_client.crm.contacts.search_api.do_search(
-        public_object_search_request={
-            "filterGroups": [{
-                "filters": [{
-                    "propertyName": "country",
-                    "operator": "EQ",
-                    "value": variant
-                }]
-            }],
-            "limit": 0
-        }
-    )
-    assert result.total == 0, f"Still have {result.total} contacts with '{variant}'"
-    print(f"Contacts with country = '{variant}': {result.total} (should be 0)")
-```
+Re-run the variant checks: `uv run skills/standardize-geo-values/scripts/after.py`. Every variant should return 0 for both contacts and companies.
 
 **Verification checklist:**
 
@@ -216,6 +184,11 @@ for variant in variants:
 3. Spot-check 10 contacts that were in cleanup lists to verify values are now standardized
 4. For states: filter by common abbreviations (NY, CA, TX) and confirm 0 results
 5. Forms are configured to prevent future inconsistencies
+
+## Rollback
+
+- The execute script's CSV audit trail records every record it changed with the original value. To undo, batch-update those IDs back to their previous values.
+- Individual values can also be reverted from each record's property history.
 
 ## Key Technical Learnings
 

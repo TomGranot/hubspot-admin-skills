@@ -23,6 +23,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuration ────────────────────────────────────────────────
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -32,7 +33,7 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-CSV_FILE = os.path.join(os.path.dirname(__file__), "after_standardize_geo.csv")
+CSV_FILE = os.path.join("data", "audit-logs", "after_standardize_geo.csv")
 
 # ── Helpers ──────────────────────────────────────────────────────
 
@@ -172,6 +173,8 @@ if not audit_rows:
         "object": "all", "field": "all",
         "value": "none", "remaining": 0, "status": "PASS",
     })
+
+os.makedirs(os.path.join("data", "audit-logs"), exist_ok=True)
 
 with open(CSV_FILE, "w", newline="") as f:
     writer = csv.DictWriter(

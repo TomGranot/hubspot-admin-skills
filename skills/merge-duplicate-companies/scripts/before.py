@@ -18,6 +18,7 @@ import requests
 from collections import defaultdict
 from dotenv import load_dotenv
 
+load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
@@ -126,7 +127,7 @@ print()
 # --- Step 4: Save CSVs ---
 print("Step 4: Saving audit CSVs...")
 
-output_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+output_dir = "data/audit-logs"
 os.makedirs(output_dir, exist_ok=True)
 
 # Domain duplicates CSV

@@ -4,7 +4,7 @@ description: "Archive or delete unused custom properties across all HubSpot obje
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,30 +14,40 @@ Remove or archive unused custom properties. Property bloat slows down forms, con
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.schemas.*.read` and `crm.schemas.*.write` scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Inventory All Custom Properties
+### Stage 1: Plan
 
-Pull properties for each object type:
+Confirm with the user before starting:
+
+1. Archive-first policy (recommended) or direct deletion for clearly dead test properties?
+2. Is a Salesforce (or other CRM) sync active? If yes, get the sync property mapping before touching anything.
+
+### Stage 2: Before
+
+Inventory custom properties for each object type via the Properties API (v3):
 
 ```python
-from hubspot import HubSpot
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
 for obj_type in ["contacts", "companies", "deals"]:
-    props = api_client.crm.properties.core_api.get_all(
-        object_type=obj_type
-    )
-    custom_props = [p for p in props.results if not p.hubspot_defined]
+    resp = requests.get(f"{BASE}/crm/v3/properties/{obj_type}", headers=HEADERS)
+    resp.raise_for_status()
+    custom_props = [p for p in resp.json()["results"] if not p.get("hubspotDefined")]
 ```
 
 For each custom property, record: name, label, object type, type, group, number of records with a value (requires search queries), whether it is used in any form/workflow/list.
 
-### Stage 2: Execute — Identify Candidates for Deletion
+### Stage 3: Execute
 
 **Safe to delete:**
 - Properties with zero populated records and not used in any form, workflow, or list
@@ -54,13 +64,15 @@ For each custom property, record: name, label, object type, type, group, number 
 - The property has historical data that might be needed for reporting
 - You are unsure whether anything depends on it
 
-### Stage 3: After — Delete or Archive
+Archive candidates via `DELETE /crm/v3/properties/{objectType}/{propertyName}` (this archives — the property moves to the archived state) after presenting the list to the user and getting explicit confirmation.
+
+### Stage 4: After
 
 1. Archive properties first (HubSpot supports property archiving).
 2. Wait 30 days, then delete archived properties that caused no issues.
 3. Document all changes in a cleanup log.
 
-### Stage 4: Rollback
+## Rollback
 
 - Archived properties can be unarchived at any time.
 - Deleted properties cannot be restored. The property definition and all associated data are permanently lost.

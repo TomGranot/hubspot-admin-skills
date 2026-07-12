@@ -4,7 +4,7 @@ description: "Enrich missing geographic data (country, state, city) on contacts 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: ongoing-maintenance
 ---
 
@@ -14,8 +14,8 @@ Fill in missing country, state, and city values on contacts and companies. Geogr
 
 ## Prerequisites
 
-- HubSpot API token in `.env`
-- Python with `hubspot-api-client` installed via `uv`
+- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Standardized geo values already in place (run `/standardize-geo-values` first)
 
 ## Enrichment Methods
@@ -34,53 +34,58 @@ Use HubSpot's built-in Operations Hub data quality tools or Breeze Intelligence 
 For contacts with a company domain but no geo data, look up the company's geographic information:
 
 ```python
-from hubspot import HubSpot
-from hubspot.crm.contacts import PublicObjectSearchRequest
+import os, requests
+from dotenv import load_dotenv
 
-api_client = HubSpot(access_token=os.getenv("HUBSPOT_API_TOKEN"))
+load_dotenv()
+TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
+BASE = "https://api.hubapi.com"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
 # Find contacts missing country but with company association
-search = PublicObjectSearchRequest(
-    filter_groups=[{
-        "filters": [
-            {"propertyName": "country", "operator": "NOT_HAS_PROPERTY"},
-            {"propertyName": "associatedcompanyid", "operator": "HAS_PROPERTY"}
-        ]
-    }],
-    properties=["email", "associatedcompanyid"]
-)
+resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
+    "filterGroups": [{"filters": [
+        {"propertyName": "country", "operator": "NOT_HAS_PROPERTY"},
+        {"propertyName": "associatedcompanyid", "operator": "HAS_PROPERTY"},
+    ]}],
+    "properties": ["email", "associatedcompanyid"],
+    "limit": 100,
+})
+resp.raise_for_status()
 ```
 
 Copy country/state/city from the associated company to the contact (same pattern as `/enrich-company-name`).
 
 ### Method 3: External Data Provider
 
-Integrate with a third-party enrichment service (Clearbit, ZoomInfo, Apollo, etc.):
-1. Export contacts missing geo data
-2. Run through enrichment provider
-3. Import enriched data back via CSV or API
+Use `/waterfall-enrich-contacts` — it provides pluggable provider adapters (FullEnrich by default; Apollo, Hunter, Dropcontact included, or bring your own), per-run cost caps, no-overwrite safety, and a CSV audit trail. Exhaust Methods 1-2 first: external lookups cost credits per contact, internal data is free.
 
 ## Step-by-Step Instructions
 
-### Stage 1: Before — Assess the Gap
+### Stage 1: Plan
+
+1. Choose the enrichment method (see above) based on volume, plan tier, and budget — confirm with the user.
+2. Confirm the no-overwrite rule: enrichment must only fill empty fields.
+
+### Stage 2: Before — Assess the Gap
 
 1. Count contacts missing country, state, and city.
 2. Segment by source — which lead sources tend to have missing geo data?
-3. Choose the enrichment method based on volume and budget.
+3. Export a CSV baseline of the affected records before changing anything.
 
-### Stage 2: Execute — Run Enrichment
+### Stage 3: Execute — Run Enrichment
 
 1. Apply the chosen method (or combine methods for maximum coverage).
 2. Process in batches of 100 to respect rate limits.
 3. Validate enriched values against the standardized geo format from `/standardize-geo-values`.
 
-### Stage 3: After — Verify
+### Stage 4: After — Verify
 
 1. Re-count contacts missing geographic fields. Calculate improvement percentage.
 2. Spot-check 20-30 enriched contacts for accuracy.
 3. Set up the new-contact hygiene workflow to prevent future gaps.
 
-### Stage 4: Rollback
+## Rollback
 
 - If enrichment data is inaccurate, filter contacts updated by the enrichment process (use `hs_lastmodifieddate` range) and clear the geo fields.
 - Keep a backup export of the original data before running enrichment.

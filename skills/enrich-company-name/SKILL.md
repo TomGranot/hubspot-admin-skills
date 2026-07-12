@@ -141,6 +141,6 @@ Wait 1-2 hours after activating the workflow (longer for very large databases), 
 - **Primary company wins.** If a contact is associated with multiple companies, HubSpot copies from the primary associated company. Verify primary associations are correct for key contacts.
 - **This workflow does NOT overwrite existing values.** The enrollment trigger requires "Company name is unknown", so contacts with an existing company name are never touched.
 - **Property type matters.** Contact "Company name" is a single-line text field by default. If someone changed it to a dropdown, the copy action may fail. Check in Settings > Properties before running.
-- **Personal email domains exit on the NO branch.** Contacts with gmail.com, yahoo.com, hotmail.com, outlook.com, etc. will not get enriched. This is expected. They need manual enrichment or a third-party tool (ZoomInfo, Clearbit, Apollo) to determine their company.
+- **Personal email domains exit on the NO branch.** Contacts with gmail.com, yahoo.com, hotmail.com, outlook.com, etc. will not get enriched. This is expected. They need manual enrichment or an external provider — see `/waterfall-enrich-contacts` for the provider-agnostic path.
 - **Company name is a prerequisite for ICP Tier classification.** Run this enrichment before creating ICP Tier workflows.
 - **Schedule the "after" verification script.** Workflow processing for large databases takes time. Do not check results immediately — schedule the verification for 2-4 hours after activation.

@@ -58,10 +58,7 @@ Copy country/state/city from the associated company to the contact (same pattern
 
 ### Method 3: External Data Provider
 
-Integrate with a third-party enrichment service (Clearbit, ZoomInfo, Apollo, etc.):
-1. Export contacts missing geo data
-2. Run through enrichment provider
-3. Import enriched data back via CSV or API
+Use `/waterfall-enrich-contacts` — it provides pluggable provider adapters (FullEnrich by default; Apollo, Hunter, Dropcontact included, or bring your own), per-run cost caps, no-overwrite safety, and a CSV audit trail. Exhaust Methods 1-2 first: external lookups cost credits per contact, internal data is free.
 
 ## Step-by-Step Instructions
 

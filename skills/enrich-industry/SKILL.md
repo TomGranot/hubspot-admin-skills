@@ -127,6 +127,10 @@ Wait 1-2 hours for the workflow to process, then verify: `uv run skills/enrich-i
 - Turn off the workflow to stop further enrichment.
 - The workflow only fills empty fields. If wrong values were copied (e.g., mismatched dropdown options), filter contacts by the workflow's enrollment history and clear the contact `industry` property, or restore individual values from property history.
 
+## External Providers
+
+This skill only moves industry data the portal already has (company → contact). When the *company* itself has no industry value, that gap needs external data — see `/waterfall-enrich-contacts` for the provider-agnostic enrichment path, or HubSpot's Breeze Intelligence add-on for in-platform enrichment.
+
 ## Key Technical Learnings
 
 - **Two industry properties can exist.** Some HubSpot portals have both `industry` and `industry_name` on contacts. Verify which one is authoritative before building the workflow. Writing to the wrong one means your lists and reports will not see the data.

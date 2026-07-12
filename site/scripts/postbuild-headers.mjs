@@ -14,7 +14,16 @@ const skillsDir = path.resolve(siteRoot, '../skills');
 const distDir = path.join(siteRoot, 'dist');
 
 const SITE_URL = 'https://hubspot.granot.io';
-const STAGES = ['before', 'execute', 'after'];
+
+const listScriptFiles = (slug) => {
+  const scriptsDir = path.join(skillsDir, slug, 'scripts');
+  if (!fs.existsSync(scriptsDir)) return [];
+  return fs
+    .readdirSync(scriptsDir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.py'))
+    .map((entry) => path.relative(scriptsDir, path.join(entry.parentPath, entry.name)))
+    .sort();
+};
 
 const slugs = fs
   .readdirSync(skillsDir, { withFileTypes: true })
@@ -46,10 +55,8 @@ for (const slug of slugs) {
     `  Link: <${SITE_URL}/skills/${slug}>; rel="canonical"`,
     ''
   );
-  for (const stage of STAGES) {
-    if (fs.existsSync(path.join(skillsDir, slug, 'scripts', `${stage}.py`))) {
-      lines.push(`/skills/${slug}/scripts/${stage}.py`, '  Content-Type: text/x-python; charset=utf-8', '');
-    }
+  for (const relPath of listScriptFiles(slug)) {
+    lines.push(`/skills/${slug}/scripts/${relPath}`, '  Content-Type: text/x-python; charset=utf-8', '');
   }
 }
 

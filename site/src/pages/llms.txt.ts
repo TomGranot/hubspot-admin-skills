@@ -24,7 +24,7 @@ export const GET: APIRoute = async () => {
 
   const body = `# HubSpot Admin Skills
 
-> ${skills.length} open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating HubSpot CRM. Each skill is a markdown playbook (SKILL.md) following a safe 4-stage pattern — Plan, Before (CSV baseline), Execute, After (verification) — and ${skills.filter((s) => s.scripts.length > 0).length} skills include ready-to-run Python scripts using the hubspot-api-client package.
+> ${skills.length} open-source Claude Code skills for auditing, cleaning, enriching, segmenting, and automating HubSpot CRM. Each skill is a markdown playbook (SKILL.md) following a safe 4-stage pattern — Plan, Before (CSV baseline), Execute, After (verification) — and ${skills.filter((s) => s.scripts.length > 0).length} skills include ready-to-run Python scripts (plain \`requests\` against HubSpot REST endpoints, PEP 723 inline metadata, run via \`uv run\`).
 
 Install in Claude Code:
 
@@ -33,11 +33,11 @@ ${MARKETPLACE_ADD_COMMAND}
 ${PLUGIN_INSTALL_COMMAND}
 \`\`\`
 
-Requirements: a HubSpot private app token (HUBSPOT_API_TOKEN), Python 3.10+ with uv for scripted skills.
+Requirements: a HubSpot private app token (HUBSPOT_ACCESS_TOKEN in .env), Python 3.10+ with uv for scripted skills.
 
 Machine-readable catalog: ${abs('/api/skills.json')}
 All skills in one fetch: ${abs('/llms-full.txt')}
-Raw scripts: ${abs('/skills/<slug>/scripts/<stage>.py')} (stages: before, execute, after)
+Raw scripts: ${abs('/skills/<slug>/scripts/<file>.py')} (before/execute/after stages plus any nested helpers; full list per skill in skills.json)
 Source repository: ${GITHUB_REPO_URL}
 
 ${sections.join('\n\n')}

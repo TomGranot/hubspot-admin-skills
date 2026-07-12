@@ -28,7 +28,7 @@ export const GET: APIRoute = async () => {
       plugin_install: PLUGIN_INSTALL_COMMAND,
     },
     requirements: {
-      hubspot: 'Private app token (HUBSPOT_API_TOKEN) with CRM scopes; Marketing Professional+ for workflow skills',
+      hubspot: 'Private app token (HUBSPOT_ACCESS_TOKEN in .env) with CRM scopes; Marketing Professional+ for workflow skills',
       python: 'Python 3.10+ with uv, for scripted skills',
     },
     endpoints: {
@@ -47,7 +47,10 @@ export const GET: APIRoute = async () => {
       version: skill.version,
       license: skill.license,
       scripted: skill.scripts.length > 0,
-      scripts: skill.scripts.map((stage) => ({ stage, url: abs(`/skills/${skill.slug}/scripts/${stage}.py`) })),
+      scripts: skill.scriptFiles.map((relPath) => ({
+        path: relPath,
+        url: abs(`/skills/${skill.slug}/scripts/${relPath}`),
+      })),
       urls: {
         html: abs(`/skills/${skill.slug}`),
         markdown: abs(`/skills/${skill.slug}.md`),

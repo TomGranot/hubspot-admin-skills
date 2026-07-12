@@ -2,13 +2,14 @@ import type { APIRoute } from 'astro';
 
 import { getSkills, readScript } from '~/lib/skills';
 
-// Raw Python scripts for scripted skills: /skills/<slug>/scripts/<stage>.py
+// Raw Python scripts for scripted skills, including nested files:
+// /skills/<slug>/scripts/before.py, /skills/<slug>/scripts/providers/apollo.py, ...
 export async function getStaticPaths() {
   const skills = await getSkills();
   return skills.flatMap((skill) =>
-    skill.scripts.map((stage) => ({
-      params: { slug: skill.slug, stage },
-      props: { source: readScript(skill.slug, stage) },
+    skill.scriptFiles.map((relPath) => ({
+      params: { slug: skill.slug, script: relPath },
+      props: { source: readScript(skill.slug, relPath) },
     }))
   );
 }

@@ -45,6 +45,8 @@ export interface Skill {
   license: string;
   /** Script stages that ship as ready-to-run Python files, e.g. ['before', 'execute', 'after']. */
   scripts: ScriptStage[];
+  /** All .py files under scripts/, as paths relative to scripts/ (includes nested files like providers/apollo.py). */
+  scriptFiles: string[];
   /** The "Why This Matters" section body, when present. */
   whyItMatters: string | undefined;
   /** Raw SKILL.md source, frontmatter included. */
@@ -58,6 +60,17 @@ const skillDir = (slug: string) => path.join(SKILLS_DIR, slug);
 
 const detectScripts = (slug: string): ScriptStage[] =>
   SCRIPT_STAGES.filter((stage) => fs.existsSync(path.join(skillDir(slug), 'scripts', `${stage}.py`)));
+
+/** All .py files under a skill's scripts/ dir, recursive, relative to scripts/. */
+const listScriptFiles = (slug: string): string[] => {
+  const scriptsDir = path.join(skillDir(slug), 'scripts');
+  if (!fs.existsSync(scriptsDir)) return [];
+  return fs
+    .readdirSync(scriptsDir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.py'))
+    .map((entry) => path.relative(scriptsDir, path.join(entry.parentPath, entry.name)))
+    .sort();
+};
 
 /** Extract the text of a `## <heading>` section from a markdown body. */
 export const extractSection = (body: string, heading: string): string | undefined => {
@@ -99,6 +112,7 @@ export const getSkills = async (): Promise<Skill[]> => {
       author: entry.data.metadata.author,
       license: entry.data.license,
       scripts: detectScripts(slug),
+      scriptFiles: listScriptFiles(slug),
       whyItMatters: extractSection(body, 'Why This Matters'),
       raw: fs.readFileSync(path.join(skillDir(slug), 'SKILL.md'), 'utf-8'),
       body,
@@ -129,12 +143,17 @@ export const getSkillsByCategory = async (category: CategorySlug): Promise<Skill
 export const getRelatedSkills = async (skill: Skill, count = 4): Promise<Skill[]> =>
   (await getSkillsByCategory(skill.category.slug)).filter((s) => s.slug !== skill.slug).slice(0, count);
 
-export const readScript = (slug: string, stage: ScriptStage): string =>
-  fs.readFileSync(path.join(skillDir(slug), 'scripts', `${stage}.py`), 'utf-8');
+/** Read a script by its path relative to the skill's scripts/ dir; rejects path traversal. */
+export const readScript = (slug: string, relPath: string): string => {
+  const scriptsDir = path.join(skillDir(slug), 'scripts');
+  const resolved = path.resolve(scriptsDir, relPath);
+  if (!resolved.startsWith(scriptsDir + path.sep)) throw new Error(`Invalid script path: ${relPath}`);
+  return fs.readFileSync(resolved, 'utf-8');
+};
 
 // URL helpers (paths only — join with Astro.site / SITE.site for absolute URLs)
 export const skillPath = (slug: string) => `/skills/${slug}`;
 export const skillMdPath = (slug: string) => `/skills/${slug}.md`;
-export const scriptPath = (slug: string, stage: ScriptStage) => `/skills/${slug}/scripts/${stage}.py`;
+export const scriptPath = (slug: string, relPath: string) => `/skills/${slug}/scripts/${relPath}`;
 export const categoryPath = (slug: string) => `/categories/${slug}`;
 export const skillGithubUrl = (slug: string) => `${GITHUB_REPO_URL}/tree/main/skills/${slug}`;

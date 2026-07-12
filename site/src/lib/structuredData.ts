@@ -101,10 +101,10 @@ export const skillSourceCodeSchema = (skill: Skill) =>
         '@context': 'https://schema.org',
         '@type': 'SoftwareSourceCode',
         name: `${skill.slug} scripts`,
-        description: `Ready-to-run Python scripts for the ${skill.title} skill: ${skill.scripts.join(', ')}.`,
+        description: `Ready-to-run Python scripts for the ${skill.title} skill: ${skill.scriptFiles.join(', ')}.`,
         programmingLanguage: 'Python',
         codeRepository: skillGithubUrl(skill.slug),
-        url: abs(scriptPath(skill.slug, skill.scripts[0])),
+        url: abs(scriptPath(skill.slug, skill.scriptFiles[0])),
         license: `${GITHUB_REPO_URL}/blob/main/LICENSE`,
       };
 

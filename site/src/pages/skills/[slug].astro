@@ -110,9 +110,9 @@ const metadata = {
         <Icon name="tabler:brand-github" class="w-4 h-4" /> Source on GitHub
       </a>
       {
-        skill.scripts.map((stage) => (
-          <a href={scriptPath(skill.slug, stage)} class="text-primary hover:underline inline-flex items-center gap-1">
-            <Icon name="tabler:file-code" class="w-4 h-4" /> {stage}.py
+        skill.scriptFiles.map((relPath) => (
+          <a href={scriptPath(skill.slug, relPath)} class="text-primary hover:underline inline-flex items-center gap-1">
+            <Icon name="tabler:file-code" class="w-4 h-4" /> {relPath}
           </a>
         ))
       }

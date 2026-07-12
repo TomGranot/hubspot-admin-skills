@@ -1,5 +1,7 @@
 ---
-import { GITHUB_REPO_URL } from '~/lib/skills';
+import { getSkills, GITHUB_REPO_URL } from '~/lib/skills';
+
+const skillCount = (await getSkills()).length;
 ---
 
 <div
@@ -10,6 +12,6 @@ import { GITHUB_REPO_URL } from '~/lib/skills';
     >OPEN SOURCE</span
   >
   <a href={GITHUB_REPO_URL} class="text-slate-300 hover:underline dark:text-slate-400 font-medium" rel="noopener"
-    >32 free Claude Code skills for HubSpot admins — star the repo »</a
+    >{skillCount} free Claude Code skills for HubSpot admins — star the repo »</a
   >
 </div>

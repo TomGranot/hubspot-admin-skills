@@ -14,6 +14,15 @@ Built by [Tom Granot](https://consume.granot.io) — from deep experience with e
 
 ---
 
+## Connecting to HubSpot
+
+The skills use two complementary connection paths:
+
+1. **Private app token + scripts (the default).** Every scripted skill runs plain-Python `requests` against HubSpot's REST APIs using a private app token (`HUBSPOT_ACCESS_TOKEN` in `.env`). This is the path for bulk operations — it gives you pagination, rate-limit handling, abort thresholds, and CSV audit trails.
+2. **HubSpot's official MCP server (optional, interactive).** Connect Claude Code to `mcp.hubspot.com` via OAuth for conversational reads and spot-checks — "show me 5 contacts this cleanup touched" — without writing a script. Run `/connect-hubspot-mcp` to set it up and to see the full division of labor.
+
+Audits, hygiene, enrichment, and segmentation run on scripts; use MCP alongside them for verification and triage.
+
 ## Quick Start
 
 ### 1. Install

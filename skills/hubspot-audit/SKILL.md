@@ -142,6 +142,8 @@ This skill ships [`scripts/audit_portal.py`](./scripts/audit_portal.py), which:
 
 If a dimension needs portal-specific queries beyond what the script covers, extend it with the same house style rather than writing a separate one-off script.
 
+**MCP note:** if HubSpot's MCP server is connected (see `/connect-hubspot-mcp`), use it for spot-checks while auditing — opening sample records behind a suspicious count is faster than writing one-off queries. The audit's counting queries themselves should stay in the script for reproducibility.
+
 ## Grading Rubric
 
 Assign a letter grade to each dimension based on severity:

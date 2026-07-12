@@ -77,6 +77,10 @@ For each flagged contact, check:
 - Deleted contacts can be restored from HubSpot's recycling bin within 90 days.
 - Contacts kept as suppressed can be restored to marketing status via a workflow or manual update in the UI.
 
+## MCP Note
+
+This weekly triage is exactly the interactive, judgment-heavy work HubSpot's MCP server is good at (see `/connect-hubspot-mcp`): ask Claude to pull each flagged contact's details, deal history, and bounce reason conversationally while you decide delete-vs-recover.
+
 ## Frequency
 
 Run weekly, ideally Monday morning. Should take 5-15 minutes depending on volume. If volume exceeds 50 contacts per week, investigate the root cause (bad list source, form spam, etc.).

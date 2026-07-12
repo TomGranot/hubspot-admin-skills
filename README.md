@@ -4,13 +4,26 @@
   <img src="./assets/hero.png" alt="CRM Autopilot — HubSpot Admin Skills" width="100%" />
 </p>
 
-**30+ Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
+**36 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
 
-[![Skills](https://img.shields.io/badge/skills-32-blue)](./skills/)
+[![Skills](https://img.shields.io/badge/skills-36-blue)](./skills/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)](https://claude.com/claude-code)
 
 Built by [Tom Granot](https://consume.granot.io) — from deep experience with enterprise HubSpot CRM administration.
+
+---
+
+## What's New in 1.1
+
+HubSpot's platform moved fast in 2026, and this release moves with it:
+
+- **Workflows are now API-first.** HubSpot's v4 Automation API is stable (v3 is legacy), so the four workflow-builder skills now *create* their workflows via scripts — always disabled, for review in the UI before enabling — instead of walking you through 40 clicks. Nested branch designs are decomposed into small linear flows the API expresses cleanly.
+- **New `/workflows-as-code`** — export every workflow to versioned JSON, diff exports, restore from backup. HubSpot has no workflow recycle bin; now you have one.
+- **Official MCP support.** HubSpot's remote MCP server went GA in April 2026; `/connect-hubspot-mcp` wires it into Claude Code for conversational spot-checks alongside the bulk scripts.
+- **New `/waterfall-enrich-contacts`** — external enrichment with pluggable provider adapters (FullEnrich waterfall by default; Apollo, Hunter, Dropcontact included; bring your own), cost caps, and a no-overwrite safety model.
+- **New `/audit-api-usage`** — HubSpot switched to date-based API versioning (`2026-03`) and legacy v1–v4 endpoints lose support on March 30, 2027. This skill finds everything in your stack that needs migrating.
+- **Lead scoring refreshed** for the post-2025 scoring tool (Fit + Engagement scores, decay, API-readable score properties), plus repo-wide consistency fixes — one env var, one Python house style, scripts linked from every skill. See [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
@@ -74,12 +87,14 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 ## Skills Reference
 
-### Audit & Planning (2)
+### Audit & Planning (4)
 
 | Skill | Description |
 |-------|-------------|
 | `hubspot-audit` | Run a comprehensive audit of your HubSpot portal — contacts, companies, deals, properties, lists, workflows, and forms |
 | `hubspot-implementation-plan` | Generate a phased implementation plan from audit findings with prioritized action items |
+| `connect-hubspot-mcp` | Connect Claude Code to HubSpot's official remote MCP server for conversational CRM reads and spot-checks |
+| `audit-api-usage` | Find every integration calling legacy v1–v4 HubSpot endpoints before the March 2027 end of support |
 
 ### Database Hygiene (6)
 
@@ -92,7 +107,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | `merge-duplicate-companies` | Detect and merge duplicate company records using domain matching and fuzzy name comparison |
 | `reassign-deactivated-owners` | Reassign contacts and deals owned by deactivated HubSpot users to active team members |
 
-### Data Enrichment (5)
+### Data Enrichment (6)
 
 | Skill | Description |
 |-------|-------------|
@@ -101,6 +116,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | `standardize-geo-values` | Normalize country and state/region values to consistent formats across your database |
 | `assign-unowned-contacts` | Assign marketing contacts that have no owner to the appropriate team members based on territory or segment rules |
 | `fix-lifecycle-stages` | Detect and correct lifecycle stage violations — contacts stuck in the wrong stage or regressed backwards |
+| `waterfall-enrich-contacts` | Enrich emails, phones, and titles via external providers — FullEnrich waterfall by default, Apollo/Hunter/Dropcontact included, or bring your own |
 
 ### Segmentation & Scoring (3)
 
@@ -110,14 +126,17 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 | `build-lead-scoring` | Design and implement a lead scoring model using HubSpot's scoring properties and behavioral signals |
 | `build-smart-lists` | Build active smart lists for key segments — ICP tiers, lifecycle stages, engagement levels, and suppression groups |
 
-### Automation Workflows (4)
+### Automation Workflows (5)
+
+All four builders create their workflows via the stable v4 Automation API (always disabled, for UI review before enabling), with a manual UI path as fallback.
 
 | Skill | Description |
 |-------|-------------|
 | `new-contact-hygiene-workflow` | Build a workflow that screens new contacts on creation — validates email, enriches data, and assigns owners |
-| `engagement-suppression-workflow` | Create a workflow that automatically suppresses contacts after prolonged disengagement |
+| `engagement-suppression-workflow` | Create a two-tier sunset system that re-engages dormant contacts before suppressing them |
 | `lifecycle-progression-workflow` | Set up automated lifecycle stage progression based on engagement thresholds and sales activity |
-| `bounce-monitoring-workflow` | Build a workflow that monitors bounce events and auto-suppresses contacts exceeding bounce thresholds |
+| `bounce-monitoring-workflow` | Build workflows that monitor bounce events and auto-suppress contacts exceeding bounce thresholds |
+| `workflows-as-code` | Export all workflows to versioned JSON, diff exports over time, and restore workflows from backup |
 
 ### Ongoing Maintenance (12)
 
@@ -141,9 +160,15 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 ## Prerequisites
 
 - **Claude Code** installed and configured
-- **HubSpot account** with API access (private app token with appropriate scopes)
-- **Python 3.10+** with [uv](https://github.com/astral-sh/uv) for scripted processes
+- **HubSpot account** with a private app token in `.env` as `HUBSPOT_ACCESS_TOKEN`. Typical scopes across the skill set: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.deals.read/write`, `crm.objects.owners.read`, `crm.schemas.*` (property management), `crm.lists.read/write`, `automation` (workflow skills), `forms` — grant per skill as documented in each SKILL.md
+- **Python 3.10+** with [uv](https://github.com/astral-sh/uv) — scripts carry inline metadata and run with `uv run`, no project setup
 - HubSpot **Marketing Professional** plan or higher (for workflow-based skills)
+- Optional: HubSpot's **MCP server** connection for conversational spot-checks (`/connect-hubspot-mcp`)
+- Optional: an **enrichment provider** API key (FullEnrich, Apollo, Hunter, Dropcontact, or your own) for `/waterfall-enrich-contacts`
+
+### API versioning
+
+Scripts target HubSpot's stable REST versions: `/crm/v3/`, `/automation/v4/`, `/marketing/v3/` — all supported until **March 30, 2027**. HubSpot's current recommended target is the date-based `2026-03` release; this repo will migrate in a future major version, and `/audit-api-usage` helps you migrate everything else in your stack.
 
 ---
 
@@ -178,7 +203,12 @@ hubspot-admin-skills/
     │   └── scripts/
     │       ├── before.py
     │       └── after.py
-    ├── ...                        (32 skills total, 13 with scripts)
+    ├── waterfall-enrich-contacts/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       ├── before.py / execute.py / after.py
+    │       └── providers/           (fullenrich, apollo, hunter, dropcontact, _template)
+    ├── ...                        (36 skills total, 20 with scripts)
     └── backfill-geo-data/
         └── SKILL.md
 ```

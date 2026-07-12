@@ -61,10 +61,13 @@ Run queries for each of the following eight dimensions. Collect exact counts for
 
 ### 4. Engagement Health
 - Last activity distribution: active in last 30 days, 31-90 days, 91-180 days, 181-365 days, 365+ days, never engaged
-- Email open rate (last 90 days)
-- Email click rate (last 90 days)
+- Contacts who opened an email in the last 90 days (`hs_email_last_open_date`)
+- Contacts who never opened any email
 - Contacts with zero page views
 - Contacts with zero form submissions
+- Current-customer consistency: contacts where `hs_current_customer` = true but lifecycle stage is not Customer (the `hs_current_customer` system property is read-only, set by HubSpot, and available since June 2026)
+
+Note: aggregate *per-email* open/click rates are not derivable from contact properties — they come from the marketing email statistics API (v3, Marketing Hub plans) or the email health dashboard in the UI. The per-contact last-open/last-click properties above are the right audit signal at the database level.
 
 ### 5. Duplicate Analysis
 - Duplicate email addresses (exact match)
@@ -122,6 +125,12 @@ These details are critical for getting accurate results:
 - **Engagement timestamps**: Use `hs_last_sales_activity_timestamp` and `notes_last_contacted` for activity dating. `hs_email_last_open_date` and `hs_email_last_click_date` are useful for email engagement specifically.
 
 - **Marketing contact status**: The property `hs_marketable_status` indicates whether a contact is set as a marketing contact. This property is **read-only via API**.
+
+## Scripts
+
+| Stage | Script | Run with |
+|-------|--------|----------|
+| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run skills/hubspot-audit/scripts/audit_portal.py` |
 
 ## Script Structure
 

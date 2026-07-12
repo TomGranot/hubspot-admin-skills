@@ -51,7 +51,7 @@ Before trusting any of this with production, make the toolkit prove itself on a 
 2. Create a private app inside it and put its token in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
 3. Run `/sandbox-self-test`.
 
-The suite seeds synthetic fixtures (one defect per testable skill), smoke-tests every scripted skill's read path, runs destructive and enrichment cases end-to-end (enrichment uses a mock provider — no credits), round-trips a list and a v4 workflow, writes a PASS/FAIL/SKIP report to `reports/`, and tears everything down. It **hard-refuses to run against anything that isn't a `DEVELOPER_TEST` or `SANDBOX` portal** — the account-type check is enforced in every script, fails closed, and has no override. An optional GitHub Actions workflow (manual dispatch only) runs the same suite in CI.
+The suite seeds synthetic fixtures (one defect per testable skill), smoke-tests every scripted skill's read path, runs destructive and enrichment cases end-to-end (enrichment uses a mock provider — no credits), round-trips a list and a v4 workflow, writes a PASS/FAIL/SKIP report to `reports/`, and tears everything down. It **hard-refuses to run against anything that isn't a `DEVELOPER_TEST` or `SANDBOX` portal** — the account-type check is enforced in every script, fails closed, and has no override. An opt-in GitHub Actions workflow (manual dispatch only) ships at `skills/sandbox-self-test/ci/` — copy it into `.github/workflows/` to run the suite in CI.
 
 ## Quick Start
 
@@ -201,9 +201,6 @@ hubspot-admin-skills/
 ├── CHANGELOG.md
 ├── LICENSE
 ├── .gitignore
-├── .github/
-│   └── workflows/
-│       └── sandbox-self-test.yml   (opt-in, manual dispatch only)
 ├── assets/
 │   └── hero.png
 ├── .claude-plugin/
@@ -234,6 +231,8 @@ hubspot-admin-skills/
     │       └── providers/           (fullenrich, apollo, hunter, dropcontact, _template)
     ├── sandbox-self-test/
     │   ├── SKILL.md
+    │   ├── ci/
+    │   │   └── sandbox-self-test.yml   (opt-in workflow — copy to .github/workflows/)
     │   └── scripts/
     │       └── preflight.py / seed.py / run_suite.py / teardown.py
     ├── ...                        (37 skills total, 21 with scripts)

@@ -13,7 +13,7 @@ Self-testing release: the toolkit can now prove itself against a disposable port
   - `teardown.py` deletes strictly by marker, with CSV audit log and typed confirmation.
   - The suite uses its own `HUBSPOT_SANDBOX_ACCESS_TOKEN` env var — a production token in `HUBSPOT_ACCESS_TOKEN` is invisible to it, and every script re-checks the account-type gate independently.
 - **Mock enrichment provider** (`waterfall-enrich-contacts/scripts/providers/mock.py`) — deterministic fake data, no network, no credits; lets the enrichment pipeline be tested for free.
-- **Optional CI**: `.github/workflows/sandbox-self-test.yml`, manual dispatch only, using a `HUBSPOT_SANDBOX_ACCESS_TOKEN` repository secret; uploads the report as an artifact.
+- **Optional CI**: a ready-made workflow at `skills/sandbox-self-test/ci/sandbox-self-test.yml` (copy into `.github/workflows/` to enable) — manual dispatch only, using a `HUBSPOT_SANDBOX_ACCESS_TOKEN` repository secret; uploads the report as an artifact.
 - CONTRIBUTING.md gains a "Testing Your Skill" section: scripted-skill contributions extend the fixture matrix and case registry (or document why they're not sandbox-testable).
 
 ## 1.1.0 — 2026-07-12

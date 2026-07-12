@@ -94,4 +94,12 @@ Teardown *is* the rollback: `uv run skills/sandbox-self-test/scripts/teardown.py
 
 ## CI (optional)
 
-`.github/workflows/sandbox-self-test.yml` runs preflight → seed → suite → teardown on **manual dispatch only**, using a `HUBSPOT_SANDBOX_ACCESS_TOKEN` repository secret, and uploads the report as an artifact. It never runs on push or PR — the sandbox is yours, so the trigger is too.
+A ready-made GitHub Actions workflow ships at [`ci/sandbox-self-test.yml`](./ci/sandbox-self-test.yml). To enable it, copy it into your fork's workflows directory and set the repository secret:
+
+```bash
+mkdir -p .github/workflows
+cp skills/sandbox-self-test/ci/sandbox-self-test.yml .github/workflows/
+gh secret set HUBSPOT_SANDBOX_ACCESS_TOKEN
+```
+
+It runs preflight → seed → suite → teardown on **manual dispatch only** and uploads the report as an artifact. It never runs on push or PR — the sandbox is yours, so the trigger is too. (It ships outside `.github/workflows/` deliberately: enabling CI that spends your sandbox is an explicit opt-in, and tokens without the `workflow` scope can still push this repo.)

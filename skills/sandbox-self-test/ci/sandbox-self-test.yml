@@ -1,0 +1,54 @@
+# Sandbox self-test — manual dispatch only.
+#
+# BYO sandbox: set the HUBSPOT_SANDBOX_ACCESS_TOKEN repository secret to a
+# private-app token from a HubSpot DEVELOPER_TEST or SANDBOX portal (the
+# suite hard-refuses anything else, including production tokens). This
+# workflow never runs on push or PR.
+
+name: sandbox-self-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      teardown:
+        description: "Tear down selftest fixtures after the suite"
+        type: boolean
+        default: true
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Preflight (account-type gate + scope probes)
+        env:
+          HUBSPOT_SANDBOX_ACCESS_TOKEN: ${{ secrets.HUBSPOT_SANDBOX_ACCESS_TOKEN }}
+        run: uv run skills/sandbox-self-test/scripts/preflight.py
+
+      - name: Seed fixtures
+        env:
+          HUBSPOT_SANDBOX_ACCESS_TOKEN: ${{ secrets.HUBSPOT_SANDBOX_ACCESS_TOKEN }}
+        run: uv run skills/sandbox-self-test/scripts/seed.py
+
+      - name: Run suite
+        env:
+          HUBSPOT_SANDBOX_ACCESS_TOKEN: ${{ secrets.HUBSPOT_SANDBOX_ACCESS_TOKEN }}
+        run: uv run skills/sandbox-self-test/scripts/run_suite.py
+
+      - name: Teardown
+        if: ${{ always() && inputs.teardown }}
+        env:
+          HUBSPOT_SANDBOX_ACCESS_TOKEN: ${{ secrets.HUBSPOT_SANDBOX_ACCESS_TOKEN }}
+        run: echo "TEARDOWN" | uv run skills/sandbox-self-test/scripts/teardown.py
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selftest-report
+          path: reports/selftest-*.md
+          if-no-files-found: ignore

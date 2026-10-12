@@ -22,11 +22,13 @@ Contacts without an email address serve no functional purpose in a HubSpot Marke
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/delete-no-email-contacts/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/delete-no-email-contacts/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/delete-no-email-contacts/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/delete-no-email-contacts/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` counts contacts with no email and exports the CSV baseline. `execute.py` collects IDs, exports the audit CSV, and batch-archives (typed confirmation + safety threshold). `after.py` verifies zero remain.
 
@@ -287,5 +289,5 @@ HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
 No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
 
 ```bash
-uv run skills/delete-no-email-contacts/scripts/before.py
+uv run scripts/before.py
 ```

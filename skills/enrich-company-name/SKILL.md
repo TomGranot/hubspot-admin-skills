@@ -26,10 +26,12 @@ Contacts missing a company name cannot be matched to ICP-classified companies, b
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/enrich-company-name/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/enrich-company-name/scripts/before.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/enrich-company-name/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 There is no execute script: the enrichment itself runs as a HubSpot workflow (see Execute below), which handles both the backlog and future contacts.
 
@@ -43,7 +45,7 @@ There is no execute script: the enrichment itself runs as a HubSpot workflow (se
 
 ## Before
 
-Run the before-state audit to capture the baseline: `uv run skills/enrich-company-name/scripts/before.py`
+Run the before-state audit to capture the baseline: `uv run scripts/before.py`
 
 The core query it runs:
 
@@ -117,7 +119,7 @@ Use this if you need the data populated immediately rather than waiting for work
 
 ## After
 
-Wait 1-2 hours after activating the workflow (longer for very large databases), then verify: `uv run skills/enrich-company-name/scripts/after.py` (re-runs the before-state query and compares against the baseline).
+Wait 1-2 hours after activating the workflow (longer for very large databases), then verify: `uv run scripts/after.py` (re-runs the before-state query and compares against the baseline).
 
 **Verification checklist:**
 

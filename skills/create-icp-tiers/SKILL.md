@@ -46,11 +46,13 @@ Before executing, collect the following information from the user:
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/create-icp-tiers/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/create-icp-tiers/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/create-icp-tiers/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/create-icp-tiers/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` checks whether the tier property exists and audits industry/employee-count coverage. `execute.py` creates the ICP Tier property (review its configuration block first). `after.py` verifies coverage and tier distribution. The classification workflows themselves are built in the UI (see Execute).
 
@@ -84,7 +86,7 @@ This ensures ICP-relevant companies are never lost due to size alone.
 
 ### Audit Current State
 
-Run `uv run skills/create-icp-tiers/scripts/before.py`. The core queries:
+Run `uv run scripts/before.py`. The core queries:
 
 ```python
 # Check if the ICP Tier property already exists
@@ -111,7 +113,7 @@ for prop_name in ["industry", "numberofemployees"]:
 
 Choose a property name that fits your CRM conventions (e.g., `company_segment`, `buyer_tier`, or `icp_tier`). The name is configurable -- just be consistent across workflows and lists.
 
-**Via API (recommended):** run `uv run skills/create-icp-tiers/scripts/execute.py`, which posts:
+**Via API (recommended):** run `uv run scripts/execute.py`, which posts:
 
 ```python
 # Configure your property name here
@@ -244,7 +246,7 @@ The stagger ensures higher-priority tiers process first. The "ICP Tier is unknow
 
 ## After
 
-Wait 2-4 hours for all workflows to process, then verify: `uv run skills/create-icp-tiers/scripts/after.py` (checks that 0 companies lack a tier and prints the distribution per tier value).
+Wait 2-4 hours for all workflows to process, then verify: `uv run scripts/after.py` (checks that 0 companies lack a tier and prints the distribution per tier value).
 
 **Verification checklist:**
 

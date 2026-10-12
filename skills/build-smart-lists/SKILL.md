@@ -27,9 +27,11 @@ Without predefined lists, every email campaign requires building filters from sc
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/build-smart-lists/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/build-smart-lists/scripts/execute.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
 
 `execute.py` creates the 10 foundation lists below via `POST /crm/v3/lists`, skips lists that already exist (409), and writes a CSV audit trail of created list IDs. There are no before/after scripts: the before-state inventory is a single Lists API query (see Before), and verification is a member-count review in the UI.
 
@@ -95,7 +97,7 @@ Inventory existing lists to avoid duplicates (`POST /crm/v3/lists/search` with a
 ### Step 1: Foundation lists (script)
 
 ```bash
-uv run skills/build-smart-lists/scripts/execute.py
+uv run scripts/execute.py
 ```
 
 The script posts each definition to `POST /crm/v3/lists` with `processingType: "DYNAMIC"`. Example payload shape (see the script for all ten):

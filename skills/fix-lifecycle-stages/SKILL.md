@@ -27,11 +27,13 @@ Records without a lifecycle stage are invisible in pipeline reports, excluded fr
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/fix-lifecycle-stages/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/fix-lifecycle-stages/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/fix-lifecycle-stages/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/fix-lifecycle-stages/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` audits missing and per-stage counts for contacts and companies. `execute.py` performs the clear-then-set fixes (review its configuration block for the disallowed-stage mapping before running). `after.py` verifies coverage.
 
@@ -75,7 +77,7 @@ requests.patch(url, headers=HEADERS,
 
 ### Audit Script
 
-Run `uv run skills/fix-lifecycle-stages/scripts/before.py`. The core queries it runs:
+Run `uv run scripts/before.py`. The core queries it runs:
 
 ```python
 def count(object_type, filters):
@@ -209,7 +211,7 @@ This prevents disallowed stages from recurring.
 
 ## After
 
-Re-run the audit: `uv run skills/fix-lifecycle-stages/scripts/after.py`. Both missing-stage counts (contacts and companies) should be 0.
+Re-run the audit: `uv run scripts/after.py`. Both missing-stage counts (contacts and companies) should be 0.
 
 **Verification checklist:**
 

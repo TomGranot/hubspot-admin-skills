@@ -26,11 +26,13 @@ Marketing contacts without an owner are a blind spot. They receive campaigns but
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/assign-unowned-contacts/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/assign-unowned-contacts/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/assign-unowned-contacts/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/assign-unowned-contacts/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` counts unowned marketing contacts and lists available owners. `execute.py` batch-assigns them to `HUBSPOT_TARGET_OWNER_ID` (set in `.env`; safety threshold 50,000 — high because owner assignment is fully reversible). `after.py` verifies the count dropped to zero.
 
@@ -67,7 +69,7 @@ Before executing, collect the following information from the user:
 
 ### Script Approach
 
-Run `uv run skills/assign-unowned-contacts/scripts/before.py`. The core query:
+Run `uv run scripts/before.py`. The core query:
 
 ```python
 resp = requests.post(f"{BASE}/crm/v3/objects/contacts/search", headers=HEADERS, json={
@@ -118,7 +120,7 @@ Choose one of these approaches (requires team lead approval):
 
 ### Bulk Assignment via API
 
-For the catch-all strategy, this is fully scripted: set `HUBSPOT_TARGET_OWNER_ID` in `.env` (run `before.py` to see available owner IDs) and run `uv run skills/assign-unowned-contacts/scripts/execute.py`.
+For the catch-all strategy, this is fully scripted: set `HUBSPOT_TARGET_OWNER_ID` in `.env` (run `before.py` to see available owner IDs) and run `uv run scripts/execute.py`.
 
 ```python
 # What execute.py does:
@@ -140,7 +142,7 @@ For the catch-all strategy, this is fully scripted: set `HUBSPOT_TARGET_OWNER_ID
 
 ## After
 
-Wait 5-10 minutes for HubSpot to finish processing, then verify: `uv run skills/assign-unowned-contacts/scripts/after.py` (re-runs the before-state query and compares against the baseline; the count should be 0).
+Wait 5-10 minutes for HubSpot to finish processing, then verify: `uv run scripts/after.py` (re-runs the before-state query and compares against the baseline; the count should be 0).
 
 **Verification checklist:**
 

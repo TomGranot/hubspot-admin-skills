@@ -42,11 +42,13 @@ Before executing, collect the following information from the user:
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/standardize-geo-values/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/standardize-geo-values/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/standardize-geo-values/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/standardize-geo-values/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` counts contacts and companies per variant value. `execute.py` applies the variant-to-standard mapping via batch update (review and extend its `COUNTRY_MAPPING`/`STATE_MAPPING` tables first). `after.py` verifies all variants return zero.
 
@@ -62,7 +64,7 @@ Before executing, collect the following information from the user:
 
 ### API Audit Script
 
-Run `uv run skills/standardize-geo-values/scripts/before.py`. The core query pattern:
+Run `uv run scripts/before.py`. The core query pattern:
 
 ```python
 variants = ["US", "USA", "U.S.", "U.S.A.", "America"]
@@ -93,7 +95,7 @@ Record all variant counts as your baseline.
 
 ### Method 1: API Batch Update (Recommended for Large Volumes)
 
-This is scripted: `uv run skills/standardize-geo-values/scripts/execute.py`. The mapping tables it applies:
+This is scripted: `uv run scripts/execute.py`. The mapping tables it applies:
 
 ```python
 COUNTRY_MAPPING = {
@@ -175,7 +177,7 @@ After standardizing existing data:
 
 ## After
 
-Re-run the variant checks: `uv run skills/standardize-geo-values/scripts/after.py`. Every variant should return 0 for both contacts and companies.
+Re-run the variant checks: `uv run scripts/after.py`. Every variant should return 0 for both contacts and companies.
 
 **Verification checklist:**
 

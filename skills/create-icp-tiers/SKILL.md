@@ -19,7 +19,7 @@ Without ICP classification, every inbound lead looks the same regardless of whet
 ## Prerequisites
 
 - Super Admin permissions in HubSpot
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with company read/write and `crm.schemas.companies.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with company read/write and `crm.schemas.companies.write` scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Automation > Workflows (Marketing Hub Professional or higher)
 - Data enrichment processes completed (company name, industry, geo values) so company data is as complete as possible

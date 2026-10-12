@@ -165,7 +165,7 @@ Include this section in every plan:
 
 4. **Search API caps at 10,000 results** — Any query that might return more than 10K results must be segmented (e.g., by date range or property value) and summed. This affects most counting queries on large portals.
 
-5. **Rate limit: 100 requests per 10 seconds** — All scripts must implement rate limiting. Use exponential backoff on HTTP 429 responses.
+5. **Rate limits: 100 requests per 10 seconds per app on Free/Starter, 190 on Professional/Enterprise; the Search API is capped separately at 5 per second** — All scripts must implement rate limiting. Use exponential backoff on HTTP 429 responses.
 
 ## Output Format
 

@@ -18,7 +18,7 @@ Workflows are production automation, but most portals treat them like disposable
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (plus sensitive-data scopes if any flows touch sensitive properties)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (plus sensitive-data scopes if any flows touch sensitive properties)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A place to keep exports — a git repository is ideal (`data/workflow-exports/` is gitignored here by default because exports may reference internal names; move them to a private repo if you want history)
 
@@ -91,5 +91,5 @@ The script strips server-assigned fields (`id`, `revisionId`, timestamps), renam
 1. **Updating in place requires the current `revisionId`.** `PUT /automation/v4/{flowId}` must include the flow's latest `revisionId` and `type` — a stale revision is rejected. The restore script sidesteps this by creating a new flow instead of updating.
 2. **Some actions round-trip imperfectly.** Actions whose field shapes are undocumented (e.g., copy-from-associated-object, notification recipients) export fine but may be rejected on re-create in a different portal. The restore script reports per-action errors; add rejected actions in the UI.
 3. **v3 workflow IDs are not v4 flow IDs.** If you have old tooling built on `/automation/v3/workflows`, the v4 API provides workflowId → flowId mapping endpoints for migration. New tooling should use v4 exclusively — v3 is legacy.
-4. **Sensitive-data scopes.** Flows that read or set sensitive properties require the corresponding sensitive-data scopes on your private app, or reads will fail.
+4. **Sensitive-data scopes.** Flows that read or set sensitive properties require the corresponding sensitive-data scopes on your service key, or reads will fail.
 5. **Exports may contain internal data.** Workflow names, property names, list IDs, and notification text are all in the JSON. Treat exports like configuration secrets — keep them in a private repo.

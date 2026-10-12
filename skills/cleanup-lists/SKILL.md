@@ -14,7 +14,7 @@ Audit HubSpot lists to remove clutter. Unused lists slow down the UI, confuse te
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.lists.read` (and `crm.lists.write` for deletion)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.lists.read` (and `crm.lists.write` for deletion)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Note: Lists API access may return 403 on some plan tiers. If so, perform the audit manually in the UI.
 

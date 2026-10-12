@@ -23,7 +23,7 @@ This preserves deliverability scores while maximizing the recoverable audience.
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A re-engagement email campaign or sequence ready to send
 - A custom dropdown property to track suppression status (default: `engagement_flag` — the execute script creates it if missing)

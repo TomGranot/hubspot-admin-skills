@@ -14,7 +14,7 @@ Remove departed employees from HubSpot and reassign their CRM records. Orphaned 
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.objects.owners.read` and contact/company/deal write scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.owners.read` and contact/company/deal write scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A list of current employees (to compare against HubSpot users)
 - A default owner or round-robin assignment rule for orphaned records

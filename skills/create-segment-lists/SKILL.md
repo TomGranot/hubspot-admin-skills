@@ -14,7 +14,7 @@ Build a library of segment lists that enable targeted marketing, accurate report
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.lists.read` and `crm.lists.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.lists.read` and `crm.lists.write` scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - ICP tier property created (run `/create-icp-tiers` first)
 - Lifecycle stages cleaned up (run `/fix-lifecycle-stages` first)

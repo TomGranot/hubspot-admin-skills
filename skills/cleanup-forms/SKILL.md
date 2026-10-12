@@ -14,7 +14,7 @@ Audit HubSpot forms to remove unused and test forms. Stale forms clutter the for
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `forms` scope
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `forms` scope
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Note: The Forms API may return 403 on some plan tiers. If so, perform the audit manually in the HubSpot UI under Marketing > Forms.
 

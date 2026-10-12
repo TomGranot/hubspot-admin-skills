@@ -16,7 +16,7 @@ Contacts without an email address serve no functional purpose in a HubSpot Marke
 
 ## Prerequisites
 
-- A HubSpot private app access token with `crm.objects.contacts.read` and `crm.objects.contacts.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.contacts.read` and `crm.objects.contacts.write` scopes
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 
@@ -265,7 +265,7 @@ else:
 
 2. **Search API pagination limit**: The HubSpot CRM Search API has a hard cap of 10,000 results per query. For this use case (typically a few hundred contacts), this is not an issue. If you encounter it, use segmented queries (e.g., filter by create date ranges).
 
-3. **Rate limiting**: The search API allows ~4 requests/second for a private app. The batch archive API is more restrictive. Use `time.sleep(0.5)` between batch archive calls.
+3. **Rate limiting**: The Search API allows 5 requests per second per token, separate from the general burst limit. The batch archive API is more restrictive. Use `time.sleep(0.5)` between batch archive calls.
 
 4. **Batch archive returns 204**: A successful batch archive returns HTTP 204 with an empty body, not 200. Check for `status_code == 204`.
 

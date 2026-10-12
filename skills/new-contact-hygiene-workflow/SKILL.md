@@ -24,7 +24,7 @@ So the split is: the script creates the default-lifecycle-stage workflow via API
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Workflow creation permissions in HubSpot
 - Company association enrichment completed (run `/enrich-company-name` and `/enrich-industry` first for existing contacts)

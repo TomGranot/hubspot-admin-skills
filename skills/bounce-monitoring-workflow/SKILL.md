@@ -23,7 +23,7 @@ Protect your email sender reputation with automated bounce detection and suppres
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A custom contact property for review flagging (default: `email_health_flag` — the execute script creates it if missing)
 - Admin email or Slack channel for hard bounce alerts

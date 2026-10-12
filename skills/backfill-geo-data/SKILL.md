@@ -14,7 +14,7 @@ Fill in missing country, state, and city values on contacts and companies. Geogr
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact and company read/write scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Standardized geo values already in place (run `/standardize-geo-values` first)
 

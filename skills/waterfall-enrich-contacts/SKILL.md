@@ -32,7 +32,7 @@ Switch providers with one env var: `ENRICHMENT_PROVIDER=apollo`.
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact read/write scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact read/write scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - An account + API key with your chosen provider (e.g. `FULLENRICH_API_KEY` from FullEnrich dashboard > Settings > API)
 - **A compliance check**: enrichment sends contact names and company data to a third party and imports personal data (emails, phones). Confirm this fits your data processing agreements and the applicable privacy rules (GDPR/CCPA) *before* running.

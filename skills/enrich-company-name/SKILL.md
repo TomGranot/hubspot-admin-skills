@@ -19,7 +19,7 @@ Contacts missing a company name cannot be matched to ICP-classified companies, b
 ## Prerequisites
 
 - HubSpot Marketing Hub Professional or Sales Hub Professional (for Workflows)
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact read/write scopes (for the scripted stages)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact read/write scopes (for the scripted stages)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
 - **HubSpot auto-association enabled:** Settings > Objects > Companies > "Create and associate companies with contacts" toggle must be ON. This lets HubSpot automatically create company records from email domains and associate them.
@@ -107,7 +107,7 @@ Use this if you need the data populated immediately rather than waiting for work
 - Search API caps at 10,000 results. Segment by `createdate` ranges if needed.
 - Use Associations API v4 to get contact-to-company associations
 - Batch update contacts via `POST /crm/v3/objects/contacts/batch/update` (100 per call)
-- Respect rate limits: 100 requests per 10 seconds
+- Respect rate limits: 100 requests per 10 seconds per app on Free/Starter, 190 on Professional/Enterprise; the Search API has its own cap of 5 requests per second
 
 ### Why Do Both?
 

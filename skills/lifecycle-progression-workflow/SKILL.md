@@ -24,7 +24,7 @@ Automate the contact journey through the sales funnel with four progression work
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Lead scoring model configured (run `/build-lead-scoring` first) — you need the internal name of your score property
 - Deal pipeline set up with a "Closed Won" stage

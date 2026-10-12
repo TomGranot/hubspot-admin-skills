@@ -24,7 +24,7 @@ Every skill in this repo mutates or reads a live HubSpot portal, and no two port
 ## Prerequisites
 
 - A **developer test account** (free: HubSpot Settings > Testing > Developer test accounts, up to 10 per account, 90-day expiry renewed by API activity) or a **standard sandbox** (Enterprise plans)
-- A private app **inside that test account** with scopes: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.owners.read`, `crm.lists.read/write`, `automation`
+- A service key (or legacy private app) **inside that test account** with scopes: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.owners.read`, `crm.lists.read/write`, `automation`
 - Its token in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN` (keep it separate from your production `HUBSPOT_ACCESS_TOKEN`)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 

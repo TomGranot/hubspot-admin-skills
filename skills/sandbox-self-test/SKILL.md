@@ -30,12 +30,14 @@ Every skill in this repo mutates or reads a live HubSpot portal, and no two port
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/sandbox-self-test/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/preflight.py`](./scripts/preflight.py) | `uv run skills/sandbox-self-test/scripts/preflight.py` |
-| Execute | [`scripts/seed.py`](./scripts/seed.py) | `uv run skills/sandbox-self-test/scripts/seed.py` |
-| Execute | [`scripts/run_suite.py`](./scripts/run_suite.py) | `uv run skills/sandbox-self-test/scripts/run_suite.py` |
-| After | [`scripts/teardown.py`](./scripts/teardown.py) | `uv run skills/sandbox-self-test/scripts/teardown.py` |
+| Before | [`scripts/preflight.py`](./scripts/preflight.py) | `uv run scripts/preflight.py` |
+| Execute | [`scripts/seed.py`](./scripts/seed.py) | `uv run scripts/seed.py` |
+| Execute | [`scripts/run_suite.py`](./scripts/run_suite.py) | `uv run scripts/run_suite.py` |
+| After | [`scripts/teardown.py`](./scripts/teardown.py) | `uv run scripts/teardown.py` |
 
 `preflight.py` gates on account type and probes scopes. `seed.py` creates the fixture matrix (idempotent). `run_suite.py` runs the cases and writes the report (`--list` prints the plan without any API call). `teardown.py` deletes everything marker-matched, with typed confirmation.
 
@@ -90,7 +92,7 @@ Read `reports/selftest-{date}.md` with the user: PASS/FAIL/SKIP per case. Invest
 
 ## Rollback
 
-Teardown *is* the rollback: `uv run skills/sandbox-self-test/scripts/teardown.py` removes every marker-matched object, and archived records remain recoverable in the sandbox for 90 days (Settings > Data Management > Deleted Objects). The nuclear option is equally valid: delete the developer test account and create a fresh one — that is what "disposable" means. Nothing this skill does can touch production, by construction.
+Teardown *is* the rollback: `uv run scripts/teardown.py` removes every marker-matched object, and archived records remain recoverable in the sandbox for 90 days (Settings > Data Management > Deleted Objects). The nuclear option is equally valid: delete the developer test account and create a fresh one — that is what "disposable" means. Nothing this skill does can touch production, by construction.
 
 ## CI (optional)
 
@@ -98,7 +100,7 @@ A ready-made GitHub Actions workflow ships at [`ci/sandbox-self-test.yml`](./ci/
 
 ```bash
 mkdir -p .github/workflows
-cp skills/sandbox-self-test/ci/sandbox-self-test.yml .github/workflows/
+cp ci/sandbox-self-test.yml .github/workflows/
 gh secret set HUBSPOT_SANDBOX_ACCESS_TOKEN
 ```
 

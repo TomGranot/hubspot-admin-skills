@@ -33,9 +33,9 @@ The shared dimensions run under every scope, so a marketing audit and a sales au
 
 2. **Run the audit.** The script carries PEP 723 inline metadata and runs with [`uv`](https://github.com/astral-sh/uv), which resolves its dependencies automatically:
    ```bash
-   uv run skills/hubspot-audit/scripts/audit_portal.py              # full
-   uv run skills/hubspot-audit/scripts/audit_portal.py --scope marketing
-   uv run skills/hubspot-audit/scripts/audit_portal.py --scope sales
+   uv run scripts/audit_portal.py              # full
+   uv run scripts/audit_portal.py --scope marketing
+   uv run scripts/audit_portal.py --scope sales
    ```
 
 The script creates `reports/` if needed and writes a markdown report plus a JSON twin (same name, `.json`) for other skills to read.
@@ -85,9 +85,11 @@ Thresholds (stale-deal window, win-rate window, stage limit) are in the `# --- C
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/hubspot-audit/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run skills/hubspot-audit/scripts/audit_portal.py [--scope full\|marketing\|sales]` |
+| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run scripts/audit_portal.py [--scope full\|marketing\|sales]` |
 
 If a portal needs a check the script does not cover, add a dimension function with the right tag rather than writing a separate one-off script. The offline tests in `tests/test_audit_portal.py` run against a fake API and need no portal.
 

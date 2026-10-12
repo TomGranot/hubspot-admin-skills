@@ -39,11 +39,13 @@ Switch providers with one env var: `ENRICHMENT_PROVIDER=apollo`.
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/waterfall-enrich-contacts/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/waterfall-enrich-contacts/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/waterfall-enrich-contacts/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/waterfall-enrich-contacts/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 Provider adapters live in [`scripts/providers/`](./scripts/providers/) — one module per provider implementing `enrich(contacts) -> results` (see `_template.py` for the contract).
 
@@ -72,7 +74,7 @@ ENRICHMENT_CREDITS_PER_CONTACT=1        # for before.py's cost preview
 ### Stage 2: Before
 
 ```bash
-uv run skills/waterfall-enrich-contacts/scripts/before.py
+uv run scripts/before.py
 ```
 
 Counts candidates (contacts with first name + last name + company but missing the target field) and prints a cost ceiling. Read-only.
@@ -80,7 +82,7 @@ Counts candidates (contacts with first name + last name + company but missing th
 ### Stage 3: Execute
 
 ```bash
-uv run skills/waterfall-enrich-contacts/scripts/execute.py
+uv run scripts/execute.py
 ```
 
 The script:
@@ -94,7 +96,7 @@ The script:
 ### Stage 4: After
 
 ```bash
-uv run skills/waterfall-enrich-contacts/scripts/after.py
+uv run scripts/after.py
 ```
 
 Compares candidate counts against the baseline, then **spot-check 10-20 enriched contacts by hand** — provider quality varies by segment, and the audit CSV tells you exactly what was written where.

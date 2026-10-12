@@ -36,8 +36,10 @@ No Marketing Hub tier is required to run the audit. Rows that need a feature the
 
 ## Run It
 
+The engine lives in the `hubspot-audit` skill, one directory over from this one. Run it from your project directory so `.env` and `reports/` resolve there (in a clone of the repo the path is `skills/hubspot-audit/scripts/audit_portal.py`).
+
 ```bash
-uv run skills/hubspot-audit/scripts/audit_portal.py --scope marketing
+uv run ../hubspot-audit/scripts/audit_portal.py --scope marketing
 ```
 
 Output: `reports/hubspot-marketing-audit-{YYYY-MM-DD}.md` and a `.json` twin.

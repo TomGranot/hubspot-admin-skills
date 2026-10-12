@@ -33,11 +33,13 @@ So the split is: the script creates the default-lifecycle-stage workflow via API
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/new-contact-hygiene-workflow/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/new-contact-hygiene-workflow/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/new-contact-hygiene-workflow/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/new-contact-hygiene-workflow/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `execute.py` creates one workflow — "HYGIENE: Default Lifecycle Stage for New Contacts" (enrollment: create date known AND lifecycle stage unknown; action: set stage to Lead; re-enrollment on) — **disabled, for review before enabling**. Extend it in the UI with the copy actions and notification branch per the design below.
 
@@ -103,11 +105,11 @@ TRIGGER: Contact create date is known
 ### Stage 2: Before
 
 1. Confirm company enrichment processes have run for existing data.
-2. Run `uv run skills/new-contact-hygiene-workflow/scripts/before.py` to inventory workflows and check name collisions.
+2. Run `uv run scripts/before.py` to inventory workflows and check name collisions.
 
 ### Stage 3: Execute
 
-**Option A:** run `uv run skills/new-contact-hygiene-workflow/scripts/execute.py`, then open the created workflow in the UI and continue from step 3 below (copy actions, delay, branch). **Option B:** open HubSpot > Automation > Workflows > Create workflow, select "Contact-based", start from scratch, and follow all steps.
+**Option A:** run `uv run scripts/execute.py`, then open the created workflow in the UI and continue from step 3 below (copy actions, delay, branch). **Option B:** open HubSpot > Automation > Workflows > Create workflow, select "Contact-based", start from scratch, and follow all steps.
 
 1. **Set enrollment trigger:**
    - Property: "Create date" > "is known"
@@ -143,7 +145,7 @@ TRIGGER: Contact create date is known
 
 ### Stage 4: After
 
-0. Run `uv run skills/new-contact-hygiene-workflow/scripts/after.py` (API path) to confirm the workflow exists and report enabled state.
+0. Run `uv run scripts/after.py` (API path) to confirm the workflow exists and report enabled state.
 1. Create a test contact manually. Confirm:
    - Lifecycle stage is set to "Lead"
    - Company name copied from associated company

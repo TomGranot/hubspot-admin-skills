@@ -32,11 +32,13 @@ Automate the contact journey through the sales funnel with four progression work
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/lifecycle-progression-workflow/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/lifecycle-progression-workflow/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/lifecycle-progression-workflow/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/lifecycle-progression-workflow/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` inventories existing workflows and checks name collisions. `execute.py` creates all four progression workflows via `POST /automation/v4/flows` — **always disabled, for review before enabling**. `after.py` verifies and reports enabled state.
 
@@ -60,8 +62,8 @@ The last workflow uses `hs_current_customer` — the read-only system property H
 **Before running:** set `LEAD_SCORE_PROPERTY` in `execute.py` to your score property's internal name. With HubSpot's post-2025 lead scoring tool, each score you create generates its own property — find the internal name under Settings > Properties (it is not the retired `hubspotscore`).
 
 ```bash
-uv run skills/lifecycle-progression-workflow/scripts/before.py
-uv run skills/lifecycle-progression-workflow/scripts/execute.py
+uv run scripts/before.py
+uv run scripts/execute.py
 ```
 
 **Safety model:** all four workflows are created with `isEnabled: false`. Review the triggers in the UI, add the optional internal-notification actions (marketing team, sales owner, CS/onboarding — recipients are portal-specific), then enable them one at a time, watching the first enrollments.
@@ -82,12 +84,12 @@ Follow the step-by-step instructions in Stage 3 below. Use this on portals where
 
 ### Stage 2: Before
 
-1. Run `uv run skills/lifecycle-progression-workflow/scripts/before.py` to inventory workflows and check name collisions.
+1. Run `uv run scripts/before.py` to inventory workflows and check name collisions.
 2. Document current lifecycle stage distribution (run the audit or check the property breakdown) so you can measure the impact.
 
 ### Stage 3: Execute
 
-**Option A:** run `uv run skills/lifecycle-progression-workflow/scripts/execute.py`, then complete the UI review steps listed above.
+**Option A:** run `uv run scripts/execute.py`, then complete the UI review steps listed above.
 
 **Option B — manual UI build:** build each as a separate contact-based workflow.
 
@@ -126,7 +128,7 @@ Follow the step-by-step instructions in Stage 3 below. Use this on portals where
 
 ### Stage 4: After
 
-0. Run `uv run skills/lifecycle-progression-workflow/scripts/after.py` (API path) to confirm all four workflows exist and report enabled state.
+0. Run `uv run scripts/after.py` (API path) to confirm all four workflows exist and report enabled state.
 1. Test each workflow with a test contact:
    - Manually adjust score/create meeting/create deal/close deal and confirm progression.
 2. Verify that workflows do not conflict — a contact should not be enrolled in two progression workflows simultaneously.

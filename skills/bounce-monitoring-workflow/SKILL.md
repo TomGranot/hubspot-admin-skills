@@ -30,11 +30,13 @@ Protect your email sender reputation with automated bounce detection and suppres
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/bounce-monitoring-workflow/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/bounce-monitoring-workflow/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/bounce-monitoring-workflow/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/bounce-monitoring-workflow/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` inventories existing workflows and checks name collisions. `execute.py` creates the `email_health_flag` property (if missing) and three bounce workflows via `POST /automation/v4/flows` — **always disabled, for review before enabling**. `after.py` verifies and reports enabled state.
 
@@ -53,8 +55,8 @@ Instead of one workflow with three nested branches, the script decomposes the de
 Configure `SUPPRESSION_THRESHOLD` and `REVIEW_THRESHOLD` in `execute.py`, then:
 
 ```bash
-uv run skills/bounce-monitoring-workflow/scripts/before.py
-uv run skills/bounce-monitoring-workflow/scripts/execute.py
+uv run scripts/before.py
+uv run scripts/execute.py
 ```
 
 **Safety model:** all three workflows are created with `isEnabled: false`. During UI review: add the internal-notification actions (hard bounce alert, review alert — notification recipients are portal-specific), add "Set marketing contact status" manually if the script reported it had to omit it, then turn the workflows on.
@@ -74,13 +76,13 @@ Follow the step-by-step instructions in Stage 3 below — the original single-wo
 
 ### Stage 2: Before
 
-1. Run `uv run skills/bounce-monitoring-workflow/scripts/before.py` to inventory workflows and check name collisions.
+1. Run `uv run scripts/before.py` to inventory workflows and check name collisions.
 2. Identify your current bounce baseline — run a quick search for contacts where `hs_email_bounce` > 0 to understand the starting volume.
 3. If building manually, create your bounce review property (checkbox or dropdown) — the API path creates it automatically.
 
 ### Stage 3: Execute
 
-**Option A:** run `uv run skills/bounce-monitoring-workflow/scripts/execute.py`, then complete the UI review steps listed above.
+**Option A:** run `uv run scripts/execute.py`, then complete the UI review steps listed above.
 
 **Option B — manual UI build:** build a single contact-based workflow with branching logic.
 
@@ -115,7 +117,7 @@ Follow the step-by-step instructions in Stage 3 below — the original single-wo
 
 ### Stage 4: After
 
-1. Run `uv run skills/bounce-monitoring-workflow/scripts/after.py` (API path) to confirm the workflows exist and report enabled state.
+1. Run `uv run scripts/after.py` (API path) to confirm the workflows exist and report enabled state.
 2. Check workflow history after the first week of email sends.
 3. Review the flagged contacts list weekly — decide for each contact:
    - **Delete** if the email is clearly invalid (typo domain, defunct company)

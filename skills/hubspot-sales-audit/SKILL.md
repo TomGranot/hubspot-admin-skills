@@ -36,8 +36,10 @@ The audit runs on any HubSpot tier with deals. The leads object needs Sales Hub;
 
 ## Run It
 
+The engine lives in the `hubspot-audit` skill, one directory over from this one. Run it from your project directory so `.env` and `reports/` resolve there (in a clone of the repo the path is `skills/hubspot-audit/scripts/audit_portal.py`).
+
 ```bash
-uv run skills/hubspot-audit/scripts/audit_portal.py --scope sales
+uv run ../hubspot-audit/scripts/audit_portal.py --scope sales
 ```
 
 Output: `reports/hubspot-sales-audit-{YYYY-MM-DD}.md` and a `.json` twin.

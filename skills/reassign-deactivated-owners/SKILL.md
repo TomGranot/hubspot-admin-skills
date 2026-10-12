@@ -23,11 +23,13 @@ When team members leave an organization, their HubSpot-owned contacts and compan
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/reassign-deactivated-owners/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Before | [`scripts/before.py`](./scripts/before.py) | `uv run skills/reassign-deactivated-owners/scripts/before.py` |
-| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run skills/reassign-deactivated-owners/scripts/execute.py` |
-| After | [`scripts/after.py`](./scripts/after.py) | `uv run skills/reassign-deactivated-owners/scripts/after.py` |
+| Before | [`scripts/before.py`](./scripts/before.py) | `uv run scripts/before.py` |
+| Execute | [`scripts/execute.py`](./scripts/execute.py) | `uv run scripts/execute.py` |
+| After | [`scripts/after.py`](./scripts/after.py) | `uv run scripts/after.py` |
 
 `before.py` lists deactivated owners and counts their records, exporting the CSV baseline. `execute.py` batch-reassigns to the configured target owner. `after.py` verifies zero records remain with deactivated owners.
 
@@ -512,5 +514,5 @@ HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
 No package install is needed — scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves dependencies automatically:
 
 ```bash
-uv run skills/reassign-deactivated-owners/scripts/before.py
+uv run scripts/before.py
 ```

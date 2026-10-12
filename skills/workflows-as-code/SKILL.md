@@ -24,10 +24,12 @@ Workflows are production automation, but most portals treat them like disposable
 
 ## Scripts
 
+Script paths are relative to this skill's directory. Run them from your project directory so `.env`, `data/`, and `reports/` resolve there: prefix each path with wherever this skill is installed (`skills/workflows-as-code/` in a clone of the repo).
+
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Export | [`scripts/export.py`](./scripts/export.py) | `uv run skills/workflows-as-code/scripts/export.py` |
-| Restore | [`scripts/restore.py`](./scripts/restore.py) | `uv run skills/workflows-as-code/scripts/restore.py <export-file.json>` |
+| Export | [`scripts/export.py`](./scripts/export.py) | `uv run scripts/export.py` |
+| Restore | [`scripts/restore.py`](./scripts/restore.py) | `uv run scripts/restore.py <export-file.json>` |
 
 `export.py` lists all flows via `GET /automation/v4/flows`, fetches each full definition via the batch read endpoint (`POST /automation/v4/flows/batch/read`, falling back to per-flow GETs), and writes one JSON file per workflow plus a manifest. `restore.py` recreates a workflow from an export file via `POST /automation/v4/flows` — **always disabled**, under a "(restored)" name, for review before enabling.
 
@@ -45,7 +47,7 @@ Nothing to prepare — the export is read-only. Note the current workflow count 
 ### Stage 3: Execute — Export
 
 ```bash
-uv run skills/workflows-as-code/scripts/export.py
+uv run scripts/export.py
 ```
 
 Output layout:
@@ -71,7 +73,7 @@ diff -u data/workflow-exports/2026-06-01/flow-12345.json \
 To recreate a deleted or broken workflow from an export:
 
 ```bash
-uv run skills/workflows-as-code/scripts/restore.py data/workflow-exports/2026-06-01/flow-12345.json
+uv run scripts/restore.py data/workflow-exports/2026-06-01/flow-12345.json
 ```
 
 The script strips server-assigned fields (`id`, `revisionId`, timestamps), renames the flow with a "(restored)" suffix to avoid name collisions, and creates it **disabled**. Review it in the UI, verify enrollment criteria and actions against the original, then rename and enable.

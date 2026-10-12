@@ -1,5 +1,54 @@
 # Changelog
 
+## 2.0.0 — 2026-10-12
+
+Two audiences on one engine, and a full pass over everything HubSpot and Claude Code changed since 1.2.
+
+### Marketing and sales audits (37 → 40 skills)
+
+- **`hubspot-audit`** is now one engine with three scopes. `scripts/audit_portal.py --scope full|marketing|sales` tags every dimension as shared, marketing, or sales. The shared dimensions (database size, owner health, company data, duplicates) run under every scope, so the scoped reports agree on what they have in common.
+- **`hubspot-sales-audit`** (new, audit-planning): pipeline configuration, deal data quality, pipeline hygiene and velocity, sales ownership and handoff, activity and follow-up.
+- **`hubspot-marketing-audit`** (new, audit-planning): deliverability, contact completeness, engagement, and list, workflow, and form health.
+- Every finding names its fix skill, and the report opens with a generated, prioritized prescription. A JSON twin is written beside the markdown.
+- Unreadable objects (missing scope, hub not purchased) report `n/a` and grade `?` instead of a false zero.
+- Workflows, forms, and deactivated owners are fully paginated. Pacing stays under the Search API limit of 5 requests per second.
+- **`hubspot-implementation-plan`** reads any of the three reports, plans only what the report measured, and gains a sales pipeline track.
+
+**Breaking:** the full report's section numbering and layout changed, and `audit_portal.py` now requires `HUBSPOT_ACCESS_TOKEN` at startup rather than failing on first request. Report filenames for the full scope are unchanged.
+
+### Connections
+
+- **`connect-hubspot-agent-cli`** (new, audit-planning): HubSpot's Agent CLI (public beta, June 2026), the direct connection for Claude Code. Install, user versus service key mode, command surface, safe-use rules.
+- **`connect-hubspot-mcp`** rewritten. HubSpot's remote MCP server has no dynamic client registration, so the previous `claude mcp add` command could not authenticate. Setup now goes through an MCP connector. The skill lists the server's tools with their documented limits and states what it cannot do: delete or archive, workflows, property updates.
+
+### HubSpot platform changes
+
+- **Service keys replace private apps.** HubSpot disables creating legacy private apps on 2026-10-26 (2026-09-28 for new accounts). Prerequisites across all skills now ask for a service key; existing private app tokens still work.
+- **API versions.** Current date-based version is `2026-09`. v4 support ends 2027-03-30. v1–v3 are unsupported since 2026-09-15, with enforcement in September 2027. `audit-api-usage` is rewritten around the two cutoffs and treats legacy private apps as their own migration item.
+- **Rate limits** corrected from a flat 100 per 10 seconds to the per-tier figures (100 Free/Starter, 190 Professional/Enterprise, per app), plus the Search API's separate 5 per second.
+- **Workflows API is beta.** 1.1 described the v4 Automation API as stable. HubSpot documents it as beta, with its reference at `/automation/v4/2027-03-beta/flows`. The workflow skills now say so, and document that `PUT` requires the current `revisionId`, drops omitted fields, and that deleted workflows are not restorable through the API.
+- **`build-lead-scoring`** documents the beta Lead Scoring API (`/marketing/lead-scoring/2027-03-beta/scores`).
+
+### Claude Code plugin conventions
+
+- **Script paths are relative to each skill** (`scripts/before.py`, `../hubspot-audit/scripts/audit_portal.py`). The previous repo-relative paths did not exist when the skills were installed as a plugin.
+- Plugin manifest gains author, homepage, repository, license, and keywords. `claude plugin validate .` is a documented pre-PR step.
+
+### Tests
+
+- New offline test suite for the audit engine (`tests/`), run in CI on every pull request. A fake HubSpot answers every request with synthetic counts: no token, no portal.
+
+### Site
+
+- Homepage presents the three audits. Three new problem pages. Platform facts corrected throughout.
+
+### Known gaps
+
+- **Script endpoints still target `/crm/v3/`, `/marketing/v3/`, and `/automation/v4/`.** Migration to date-based paths is deferred to per-skill changes verified through `/sandbox-self-test`, because HubSpot states that not every v3 contract carries over and `2026-09` rejects writes that omit admin-required properties.
+- **The new sales dimensions have not been run against a live portal.** They are covered by the offline suite and degrade to `n/a` when a property or object is unreadable. Run `/sandbox-self-test` and a sales-scoped audit on a developer test account before relying on them.
+- **The Claude Code MCP setup steps are derived, not published.** HubSpot documents the connector flow but not Claude Code specifically.
+- **Sales-side fix skills are thin.** Most sales findings route to `cleanup-deals`, which has no scripts yet.
+
 ## 1.2.0 — 2026-07-12
 
 Self-testing release: the toolkit can now prove itself against a disposable portal you bring.

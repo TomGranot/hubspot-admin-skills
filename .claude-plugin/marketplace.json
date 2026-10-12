@@ -1,13 +1,13 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "hubspot-admin-skills",
-  "description": "37 Claude Code skills for auditing, cleaning, enriching, and automating HubSpot CRM — API-first, safety-obsessed",
+  "description": "40 Claude Code skills for auditing, cleaning, enriching, and automating HubSpot CRM, for marketing ops and sales ops",
   "owner": {
     "name": "Tom Granot",
     "email": "tom@granot.io"
   },
   "metadata": {
-    "version": "1.2.0"
+    "version": "2.0.0"
   },
   "plugins": [
     {

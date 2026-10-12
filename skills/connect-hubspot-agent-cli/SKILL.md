@@ -107,14 +107,12 @@ This is the same variable this repo's scripts read from `.env`. If it is exporte
 Run a read and confirm the output matches the portal:
 
 ```bash
-hubspot objects search --type contacts --limit 3 --format table
+hubspot owners list --format table
 ```
 
-Then exercise a dry run on something harmless to see the guard rails before you need them:
+The owner names should be people the user recognizes. If they are not, you are in the wrong account: stop and sign in again.
 
-```bash
-hubspot properties list --type contacts --format table
-```
+Before the first real write, run that command with `--dry-run` and read the preview together with the user, so the guard rails are familiar before they are needed.
 
 ## Command Surface
 

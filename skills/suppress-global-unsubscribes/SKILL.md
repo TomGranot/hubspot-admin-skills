@@ -16,7 +16,7 @@ Contacts who have globally unsubscribed cannot legally be sent marketing emails 
 
 ## Prerequisites
 
-- A HubSpot private app access token with `crm.objects.contacts.read` and `crm.lists.read`/`crm.lists.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.contacts.read` and `crm.lists.read`/`crm.lists.write` scopes
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin or Marketing Hub Admin permissions for the manual UI suppression step

@@ -16,7 +16,7 @@ Duplicate company records fragment contacts, deals, and engagement history acros
 
 ## Prerequisites
 
-- A HubSpot private app access token with `crm.objects.companies.read` scope
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.companies.read` scope
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - Super Admin permissions for merging in the HubSpot UI

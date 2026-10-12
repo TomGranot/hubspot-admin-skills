@@ -19,7 +19,7 @@ Marketing contacts without an owner are a blind spot. They receive campaigns but
 ## Prerequisites
 
 - Phase 1 hygiene and earlier Phase 3 enrichment processes completed
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact read/write and owners read scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact read/write and owners read scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts with permission to bulk edit owner assignments
 - **Approval from team leads before bulk assignment.** This is a business decision, not just a technical one. Get sign-off on the assignment strategy before proceeding.
@@ -136,7 +136,7 @@ For the catch-all strategy, this is fully scripted: set `HUBSPOT_TARGET_OWNER_ID
 - Get owner IDs from the Owners API: `GET /crm/v3/owners?limit=100`
 - To find a specific owner by email: iterate through owners and match on `email`
 - Batch update accepts up to 100 records per call
-- Rate limit: 100 requests per 10 seconds
+- Rate limit: 100 requests per 10 seconds per app on Free/Starter, 190 on Professional/Enterprise. The Search API has its own cap of 5 requests per second.
 
 ## After
 

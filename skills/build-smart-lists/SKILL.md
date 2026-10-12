@@ -19,7 +19,7 @@ Without predefined lists, every email campaign requires building filters from sc
 ## Prerequisites
 
 - Super Admin or Marketing Hub Admin permissions
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.lists.read` and `crm.lists.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.lists.read` and `crm.lists.write` scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - ICP Tier property created and workflows processed (create-icp-tiers skill) — the script assumes the property name `company_segment` with values like `tier_1_primary_icp`; adjust its configuration block if yours differ
 - Lead scoring model created (build-lead-scoring skill) is recommended but not required

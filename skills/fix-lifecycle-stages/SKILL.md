@@ -19,7 +19,7 @@ Records without a lifecycle stage are invisible in pipeline reports, excluded fr
 ## Prerequisites
 
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact and company read/write scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts and Companies with bulk edit permissions
 - Access to Automation > Workflows

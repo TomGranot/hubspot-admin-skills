@@ -14,7 +14,7 @@ Remove or archive unused custom properties. Property bloat slows down forms, con
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.schemas.*.read` and `crm.schemas.*.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.schemas.*.read` and `crm.schemas.*.write` scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 
 ## Step-by-Step Instructions

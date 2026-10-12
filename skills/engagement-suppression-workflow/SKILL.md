@@ -23,7 +23,7 @@ This preserves deliverability scores while maximizing the recoverable audience.
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A re-engagement email campaign or sequence ready to send
 - A custom dropdown property to track suppression status (default: `engagement_flag` — the execute script creates it if missing)
@@ -84,7 +84,9 @@ TRIGGER: Last engagement date > [sunset window] ago
 
 ### Option A: Create via the v4 Automation API (primary)
 
-The stable v4 Automation API supports creating workflows programmatically. Instead of one workflow with an if/then branch, the script decomposes the design into **two linear workflows** — which the API expresses cleanly and which are easier to reason about:
+**API status:** HubSpot documents the Workflows API as **beta** and subject to change. Its current reference is the date-based beta path `/automation/v4/2027-03-beta/flows`; this skill's scripts still call the unversioned `/automation/v4/flows` path, which v4's end of support on March 30, 2027 also covers. Creating workflows disabled and reviewing them in the UI is what makes a beta API acceptable here. If a script's create call starts failing, the manual UI build below is the fallback.
+
+The v4 Automation API supports creating workflows programmatically. Instead of one workflow with an if/then branch, the script decomposes the design into **two linear workflows** — which the API expresses cleanly and which are easier to reason about:
 
 1. **Tier 1 — Flag for Re-engagement**: enrollment = last open older than the sunset window (or never) AND email known AND not globally unsubscribed AND flag unknown. Action: set `engagement_flag` = "re-engagement sent".
 2. **Tier 2 — Suppress Non-responders**: enrollment = flag = "re-engagement sent" AND still no open/click after sunset + re-engagement windows. Actions: set flag = "suppressed", set marketing contact status to non-marketing.

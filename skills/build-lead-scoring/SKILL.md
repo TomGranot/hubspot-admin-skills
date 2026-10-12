@@ -34,7 +34,7 @@ The **Lead Scoring tool** (Marketing > Lead Scoring) supports:
 - Scoring for **contacts, companies, and deals**
 - Up to 5 total scores per portal
 
-**Scores are API-readable.** Configuring scoring rules is still UI-only — there is no scoring configuration API — but each score you create auto-generates CRM properties (the score value and a threshold property). Those properties are readable and filterable through the CRM Search API like any other property, which is what the After stage and the `/lifecycle-progression-workflow` scripts rely on. Find the internal property names under Settings > Properties after creating each score.
+**Scores are API-readable, and configuration now has a beta API.** HubSpot's Lead Scoring API (`/marketing/lead-scoring/2027-03-beta/scores`, scopes `marketing.lead_scoring.read` and `marketing.lead_scoring.write`, Marketing or Sales Hub Professional and above) can create a score as a draft, overwrite the draft, publish, deactivate, clone, and delete, for contacts and companies. It is beta and subject to change, a `PUT` replaces the whole draft, and its reference does not cover decay settings. This skill therefore still builds the model in the UI, where every option is visible, and treats the API as a way to back up or clone a finished score. Each score you create auto-generates CRM properties (the score value and a threshold property). Those properties are readable and filterable through the CRM Search API like any other property, which is what the After stage and the `/lifecycle-progression-workflow` scripts rely on. Find the internal property names under Settings > Properties after creating each score.
 
 ## Interview: Gather Requirements
 
@@ -218,7 +218,7 @@ print(f"Contacts with Fit Score >= 50: {resp.json()['total']}")
 ## Key Technical Learnings
 
 - **The legacy "HubSpot Score" property is gone (retired August 2025).** Anything still referencing `hubspotscore` runs on frozen data. Repoint it to the new score properties.
-- **Score properties are API-readable, configuration is not.** Use the Search API to verify distributions and drive automation off score properties; build and tune the rules in the UI.
+- **Score properties are API-readable; configuration has a beta API.** Use the Search API to verify distributions and drive automation off score properties. Build and tune rules in the UI, and use `GET /marketing/lead-scoring/2027-03-beta/scores/{scoreId}` to snapshot a published configuration before changing it. A draft must be published before it evaluates any records.
 - **Two separate scores are better than one.** Fit and Engagement serve different purposes: Fit tells you WHO to talk to (company and persona match), Engagement tells you WHEN to talk to them (behavioral recency). Combining into one number obscures both signals.
 - **Score decay is a major improvement.** Enable it on engagement criteria so scores naturally decrease over time. Without decay, a contact who clicked one email two years ago looks the same as one who clicked yesterday.
 - **Allow 4-6 hours for recalculation.** Do not panic if scores show 0 immediately after creation. The new tool processes asynchronously across the entire database.

@@ -16,7 +16,7 @@ A weekly manual review process for contacts flagged with 3+ bounces. The bounce 
 
 - Bounce monitoring workflow active (run `/bounce-monitoring-workflow` first)
 - `email_health_flag` custom property exists on contacts
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) for scripted pre-filtering
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) for scripted pre-filtering
 
 ## Step-by-Step Instructions
 

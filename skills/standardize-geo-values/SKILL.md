@@ -19,7 +19,7 @@ Inconsistent geo values break geographic segmentation. A list filtering for "Uni
 ## Prerequisites
 
 - Phase 1 hygiene processes completed (invalid/deleted contacts removed first)
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with contact and company read/write scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with contact and company read/write scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Access to Contacts and Companies views with bulk edit permissions
 - **Key constraint:** If your CRM integrates with another system (e.g., Salesforce, marketing automation), agree on the standard format (full names vs. ISO codes) with that system's admin BEFORE standardizing. Mismatched formats between synced systems will cause ongoing data conflicts.
@@ -145,7 +145,7 @@ STATE_MAPPING = {
 **API notes:**
 - Search API caps at 10,000 results per query. Unlikely to hit this for geo variants, but segment if needed.
 - Batch update accepts up to 100 records per call.
-- Rate limit: 100 requests per 10 seconds.
+- Rate limit: 100 requests per 10 seconds per app on Free/Starter, 190 on Professional/Enterprise. The Search API has its own cap of 5 requests per second.
 
 ### Method 2: Manual Bulk Edit in HubSpot UI
 

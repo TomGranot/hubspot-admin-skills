@@ -102,7 +102,7 @@ Every script:
    uv run skills/<skill-name>/scripts/before.py
    ```
 
-2. **Authenticates via `HUBSPOT_ACCESS_TOKEN`** from a `.env` file at the repo root (fall back to the script's skill directory):
+2. **Authenticates via `HUBSPOT_ACCESS_TOKEN`** from a `.env` file at the repo root (fall back to the script's skill directory). The token is a **service key** (Settings > Integrations > Service Keys). Tokens from existing legacy private apps still work, but HubSpot disabled creating new private apps on October 26, 2026, so never instruct a user to create one:
 
    ```python
    from dotenv import load_dotenv
@@ -126,7 +126,7 @@ SKILL.md files should reference their scripts in a `## Scripts` table (stage →
 
 The repo tests itself against a **bring-your-own developer sandbox** — see `skills/sandbox-self-test/`. Before opening a PR:
 
-1. Create a free developer test account (HubSpot Settings > Testing > Developer test accounts) and put a private-app token from it in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
+1. Create a free developer test account (HubSpot Settings > Testing > Developer test accounts) and put a service key from it in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
 2. Run the cycle: `preflight.py` → `seed.py` → `run_suite.py` → `teardown.py` (each under `skills/sandbox-self-test/scripts/`, via `uv run`). The suite automatically smoke-tests every skill that ships a `scripts/before.py` — including yours.
 3. **If your skill mutates data**, extend the harness with your case:
    - add a fixture row to the matrix in `seed.py` (marked: `SELFTEST` name prefix, `@selftest.hubspot-admin-skills.invalid` email domain, or `[SELFTEST]` object-name prefix — teardown finds objects only by these markers),
@@ -137,12 +137,15 @@ The suite refuses to run against anything that is not a `DEVELOPER_TEST` or `SAN
 
 ## API Version Policy
 
-- Scripts target the REST versions that are stable and supported today: `/crm/v3/`, `/automation/v4/`, `/marketing/v3/`.
-- HubSpot moved to date-based API versioning (`/YYYY-MM/`, currently `2026-03`) in March 2026; legacy v1–v4 APIs are supported until **March 30, 2027**. This repo will migrate to date-based paths in a future major version — new skills should not add dependencies on v1/v2 legacy endpoints.
+- Existing scripts target `/crm/v3/`, `/automation/v4/`, and `/marketing/v3/`. These work today and are on borrowed time.
+- HubSpot moved to date-based API versioning in March 2026 (`/YYYY-MM/`, currently `2026-09`, for example `/crm/objects/2026-09/contacts`). **v4 support ends March 30, 2027. v1-v3 have been unsupported since September 15, 2026, with enforcement in September 2027.**
+- **New scripts target the current date-based version.** Do not add new dependencies on v1-v4 paths.
+- **Existing scripts migrate one skill at a time, and only with a sandbox run.** HubSpot states that many v3 contracts carry over unchanged but not all, and `2026-09` rejects writes that omit admin-required properties. A path rewrite that has not been run through `/sandbox-self-test` is not a migration. Put the version in a single `API_VERSION` constant in the script's Configuration block.
+- Beta APIs (`2027-03-beta`: workflows, lead scoring, forms) may change without notice. A skill may use one when no stable alternative exists, and must say so in its Technical Gotchas.
 - When a skill works around an API limitation ("read-only via API", "UI only"), cite it in a **Key Constraint** or **Technical Gotchas** section with enough context that future contributors can re-verify it.
 
 ## Content Rules
 
 - **Company-agnostic, always.** No customer data, API keys, portal IDs, or proprietary references.
 - Authoritative practitioner voice: explain *why* before *how*. No emojis.
-- External products (enrichment providers, AI assistants) are options, never requirements — the default path must work with a HubSpot private app token alone, except where the skill's entire purpose is the external integration.
+- External products (enrichment providers, AI assistants) are options, never requirements — the default path must work with a HubSpot service key alone, except where the skill's entire purpose is the external integration.

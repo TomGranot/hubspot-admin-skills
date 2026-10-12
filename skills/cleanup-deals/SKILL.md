@@ -14,7 +14,7 @@ Standardize deal data to make pipeline reporting accurate. Test deals, missing a
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with `crm.objects.deals.read` and `crm.objects.deals.write` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.deals.read` and `crm.objects.deals.write` scopes
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Knowledge of which deal pipelines are active and which are synced from Salesforce
 

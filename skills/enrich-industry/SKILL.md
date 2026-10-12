@@ -19,7 +19,7 @@ Without industry on contact records, you cannot segment email campaigns by verti
 ## Prerequisites
 
 - HubSpot Marketing Hub Professional or Sales Hub Professional (for Workflows)
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) for the scripted stages
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) for the scripted stages
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Company name enrichment (enrich-company-name skill) should be completed first, as it may trigger new company associations
 - Access to Settings > Properties to verify/create the contact Industry property

@@ -23,7 +23,7 @@ Protect your email sender reputation with automated bounce detection and suppres
 ## Prerequisites
 
 - HubSpot Marketing Professional or Enterprise plan
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope (for the API path)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope (for the API path)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - A custom contact property for review flagging (default: `email_health_flag` — the execute script creates it if missing)
 - Admin email or Slack channel for hard bounce alerts
@@ -41,6 +41,8 @@ Protect your email sender reputation with automated bounce detection and suppres
 ## Building the Workflow: Two Options
 
 ### Option A: Create via the v4 Automation API (primary)
+
+**API status:** HubSpot documents the Workflows API as **beta** and subject to change. Its current reference is the date-based beta path `/automation/v4/2027-03-beta/flows`; this skill's scripts still call the unversioned `/automation/v4/flows` path, which v4's end of support on March 30, 2027 also covers. Creating workflows disabled and reviewing them in the UI is what makes a beta API acceptable here. If a script's create call starts failing, the manual UI build below is the fallback.
 
 Instead of one workflow with three nested branches, the script decomposes the design into **three linear workflows** — the same coverage, cleanly expressible via the API and independently tunable:
 

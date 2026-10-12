@@ -14,7 +14,7 @@ A structured quarterly audit that catches data drift before it becomes a crisis.
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`)
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works)
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Previous quarter's report (for trend comparison) — optional on first run
 

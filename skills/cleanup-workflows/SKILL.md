@@ -14,7 +14,7 @@ Audit HubSpot workflows to remove dead weight. Unused workflows clutter the auto
 
 ## Prerequisites
 
-- A HubSpot private app access token (`HUBSPOT_ACCESS_TOKEN` in `.env`) with the `automation` scope
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with the `automation` scope
 - Python 3.10+ with [`uv`](https://github.com/astral-sh/uv)
 - Note: The Automation API may return 403 on some plan tiers. If so, audit manually in HubSpot UI under Automation > Workflows.
 - Strongly recommended: run `/workflows-as-code` first to export a JSON backup of every workflow — deleted workflows cannot be restored, but an export lets you recreate them via the API.

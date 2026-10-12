@@ -16,7 +16,7 @@ When team members leave an organization, their HubSpot-owned contacts and compan
 
 ## Prerequisites
 
-- A HubSpot private app access token with `crm.objects.contacts.read`, `crm.objects.contacts.write`, `crm.objects.companies.read`, `crm.objects.companies.write`, and `crm.objects.owners.read` scopes
+- A HubSpot service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; an existing legacy private app token also works) with `crm.objects.contacts.read`, `crm.objects.contacts.write`, `crm.objects.companies.read`, `crm.objects.companies.write`, and `crm.objects.owners.read` scopes
 - Python 3.10+ with `uv` for package management
 - A `.env` file containing `HUBSPOT_ACCESS_TOKEN`
 - A decision from team leadership on the reassignment strategy (see Plan stage)
@@ -490,7 +490,7 @@ for o in deactivated_owners:
 
 5. **Deactivated users may not appear in UI filter dropdowns.** Some HubSpot UI versions hide deactivated users from the Contact Owner filter. Use the API approach instead.
 
-6. **Rate limiting**: Use `time.sleep(0.5)` between batch update calls and `time.sleep(0.2)` between search pagination calls. The private app rate limit is approximately 100 requests per 10 seconds.
+6. **Rate limiting**: Use `time.sleep(0.5)` between batch update calls and `time.sleep(0.2)` between search pagination calls. The burst limit is 100 requests per 10 seconds per app on Free/Starter and 190 on Professional/Enterprise; the Search API has its own cap of 5 requests per second.
 
 7. **Handle unassigned contacts separately.** Contacts with no owner at all (`hubspot_owner_id NOT_HAS_PROPERTY`) are a separate population from deactivated-owner contacts. They require a different strategic decision.
 

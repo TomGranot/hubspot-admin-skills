@@ -42,7 +42,7 @@ def sandbox_headers():
             "HUBSPOT_SANDBOX_ACCESS_TOKEN is not set.\n"
             "The self-test suite never reads HUBSPOT_ACCESS_TOKEN. Create a free\n"
             "developer test account (Settings > Testing > Developer test accounts),\n"
-            "create a private app inside it, and put its token in .env as\n"
+            "create a service key inside it, and put its token in .env as\n"
             "HUBSPOT_SANDBOX_ACCESS_TOKEN."
         )
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -117,7 +117,7 @@ def main():
 
     print()
     if failures:
-        print("NO-GO. Grant the missing scopes to the sandbox private app:")
+        print("NO-GO. Grant the missing scopes to the sandbox service key:")
         print("  crm.objects.contacts.read/write, crm.objects.companies.read/write,")
         print("  crm.objects.owners.read, crm.lists.read/write, automation")
         print(f"  (failed probes: {', '.join(failures)})")

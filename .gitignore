@@ -15,3 +15,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local skill installs (this repo is the source, not a consumer)
+.claude/
+skills-lock.json

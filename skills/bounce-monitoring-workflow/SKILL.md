@@ -42,6 +42,8 @@ Protect your email sender reputation with automated bounce detection and suppres
 
 ### Option A: Create via the v4 Automation API (primary)
 
+**API status:** HubSpot documents the Workflows API as **beta** and subject to change. Its current reference is the date-based beta path `/automation/v4/2027-03-beta/flows`; this skill's scripts still call the unversioned `/automation/v4/flows` path, which v4's end of support on March 30, 2027 also covers. Creating workflows disabled and reviewing them in the UI is what makes a beta API acceptable here. If a script's create call starts failing, the manual UI build below is the fallback.
+
 Instead of one workflow with three nested branches, the script decomposes the design into **three linear workflows** — the same coverage, cleanly expressible via the API and independently tunable:
 
 1. **Hard Bounce Suppression**: enrollment = `hs_email_hard_bounce_reason_enum` is known. Actions: set `email_health_flag`, set marketing contact status to non-marketing.

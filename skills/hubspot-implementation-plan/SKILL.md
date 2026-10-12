@@ -77,7 +77,7 @@ Build the targeting infrastructure.
 | Build smart lists for segments | Always (after scoring) | `/build-smart-lists` | Fully scriptable (Lists API) | 2-3 hrs |
 | Create segment lists for campaigns | Always (after smart lists) | `/create-segment-lists` | Fully scriptable | 1-2 hrs |
 
-**Key constraint:** Configuring lead scoring rules is still UI-only (the post-2025 scoring tool has no configuration API), but each score generates CRM properties that ARE readable and filterable via API. Build the scoring model manually based on the ICP tier data from the previous step; verify score distributions via the Search API.
+**Key constraint:** Build lead scoring rules in the UI. A beta Lead Scoring API now exists (`/marketing/lead-scoring/2027-03-beta/scores`) and is useful for snapshotting or cloning a finished score, but it is subject to change and does not document decay. Each score generates CRM properties that ARE readable and filterable via API. Build the scoring model manually based on the ICP tier data from the previous step; verify score distributions via the Search API.
 
 #### Phase 4: Automation (Week 6-8)
 
@@ -91,7 +91,7 @@ Set up ongoing automated hygiene.
 | Bounce monitoring workflow | Deliverability grade C or worse | `/bounce-monitoring-workflow` | Hybrid (API + UI review) | 1 hr |
 | Export workflows as versioned JSON | After any workflow build | `/workflows-as-code` | Fully scriptable | 30 min |
 
-**Key update:** The v4 Automation API is stable and supports creating, updating, and batch-reading workflows for contacts, companies, deals, and tickets, with all action types (the v3 workflows API is now legacy). The workflow skills are **API-first**: each ships before/execute/after scripts that create the workflows via `POST /automation/v4/flows` — always disabled, so a human reviews them in the UI before enabling. Two options per workflow:
+**Key update:** The v4 Automation API (documented by HubSpot as beta, and subject to change) supports creating, updating, and batch-reading workflows for contacts, companies, deals, and tickets, with all action types (the v3 workflows API is now legacy). The workflow skills are **API-first**: each ships before/execute/after scripts that create the workflows via `POST /automation/v4/flows` — always disabled, so a human reviews them in the UI before enabling. Two options per workflow:
 
 1. **v4 Automation API (primary)** -- Run each skill's scripts, then complete the short UI review. Notes: flows touching sensitive-data properties require the corresponding sensitive-data scopes; a few action types (copy-from-associated-object, internal notifications) have undocumented API field shapes and are added in the UI during review.
 
@@ -159,7 +159,7 @@ Include this section in every plan:
 
 1. **`hs_marketable_status` is read-only via API** — This is the single biggest blocker. Any task that needs to suppress or unsuppress a contact as a marketing contact cannot do so directly via API. Workaround: set a custom flag property via API, then trigger a HubSpot workflow on that flag to change marketing status.
 
-2. **Workflows are created via the stable v4 Automation API, always disabled** — Scripts create every workflow with `isEnabled: false`; a human reviews it in the UI before enabling. UI-only leftovers: copy-from-associated-object actions and notification recipients (undocumented API field shapes). The v3 workflows API is legacy — do not build new integrations on it.
+2. **Workflows are created via the v4 Automation API (beta), always disabled** — Scripts create every workflow with `isEnabled: false`; a human reviews it in the UI before enabling. UI-only leftovers: copy-from-associated-object actions and notification recipients (undocumented API field shapes). The v3 workflows API is legacy — do not build new integrations on it.
 
 3. **Lifecycle stage is forward-only** — HubSpot prevents setting a contact to an earlier lifecycle stage. To fix this, clear the property first (set to empty string via API), then set the desired stage in a second API call.
 

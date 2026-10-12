@@ -44,6 +44,8 @@ Automate the contact journey through the sales funnel with four progression work
 
 ### Option A: Create via the v4 Automation API (primary)
 
+**API status:** HubSpot documents the Workflows API as **beta** and subject to change. Its current reference is the date-based beta path `/automation/v4/2027-03-beta/flows`; this skill's scripts still call the unversioned `/automation/v4/flows` path, which v4's end of support on March 30, 2027 also covers. Creating workflows disabled and reviewing them in the UI is what makes a beta API acceptable here. If a script's create call starts failing, the manual UI build below is the fallback.
+
 All four progression workflows are linear (filter-based AND trigger → set lifecycle stage), which the v4 API expresses directly. The script encodes:
 
 | Workflow | Enrollment (AND) | Action |

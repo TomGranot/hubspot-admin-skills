@@ -88,8 +88,10 @@ The script strips server-assigned fields (`id`, `revisionId`, timestamps), renam
 
 ## Technical Gotchas
 
-1. **Updating in place requires the current `revisionId`.** `PUT /automation/v4/{flowId}` must include the flow's latest `revisionId` and `type` — a stale revision is rejected. The restore script sidesteps this by creating a new flow instead of updating.
-2. **Some actions round-trip imperfectly.** Actions whose field shapes are undocumented (e.g., copy-from-associated-object, notification recipients) export fine but may be rejected on re-create in a different portal. The restore script reports per-action errors; add rejected actions in the UI.
-3. **v3 workflow IDs are not v4 flow IDs.** If you have old tooling built on `/automation/v3/workflows`, the v4 API provides workflowId → flowId mapping endpoints for migration. New tooling should use v4 exclusively — v3 is legacy.
-4. **Sensitive-data scopes.** Flows that read or set sensitive properties require the corresponding sensitive-data scopes on your service key, or reads will fail.
-5. **Exports may contain internal data.** Workflow names, property names, list IDs, and notification text are all in the JSON. Treat exports like configuration secrets — keep them in a private repo.
+1. **The Workflows API is beta.** HubSpot documents it as subject to change, with the current reference at `/automation/v4/2027-03-beta/flows`. The scripts here call the unversioned `/automation/v4/flows` path, which is also covered by v4's end of support on March 30, 2027. Versioned exports are your insurance against exactly this kind of change: keep taking them.
+2. **Updating in place requires the current `revisionId`, and drops what you omit.** `PUT` must include the flow's latest `revisionId` and `type`; a stale revision is rejected. Any field left out of the body is removed from the workflow, so omitting an action deletes it. The restore script sidesteps both by creating a new flow instead of updating.
+3. **Deleted workflows are not restorable through the API.** HubSpot Support can sometimes recover one. An export taken beforehand is the only restore path you control.
+4. **Some actions round-trip imperfectly.** Actions whose field shapes are undocumented (e.g., copy-from-associated-object, notification recipients) export fine but may be rejected on re-create in a different portal. The restore script reports per-action errors; add rejected actions in the UI.
+5. **v3 workflow IDs are not v4 flow IDs.** If you have old tooling built on `/automation/v3/workflows`, the v4 API provides workflowId → flowId mapping endpoints for migration. New tooling should use v4 exclusively — v3 is legacy.
+6. **Sensitive-data scopes.** Reading workflows that use sensitive properties requires the matching `.sensitive.read` scope for that record type on your service key; creating or deleting them requires `.sensitive.write`.
+7. **Exports may contain internal data.** Workflow names, property names, list IDs, and notification text are all in the JSON. Treat exports like configuration secrets — keep them in a private repo.

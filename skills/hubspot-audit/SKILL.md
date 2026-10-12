@@ -1,161 +1,99 @@
 ---
 name: hubspot-audit
-description: "Run a comprehensive HubSpot CRM database audit. Analyzes contacts, companies, deals, engagement, data quality, and deliverability. Use when starting a CRM cleanup, onboarding a new client, or performing quarterly health checks."
+description: "Run a full, read-only HubSpot portal audit covering both the marketing and sales sides: database, deliverability, engagement, owners, pipelines, deal quality, and follow-up. Grades each dimension and prescribes the skills that fix what it finds. Use when starting a CRM cleanup, onboarding a new portal, or running a quarterly health check."
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.1"
+  version: "2.0"
   category: audit-planning
 ---
 
-# HubSpot CRM Database Audit
+# HubSpot Portal Audit
 
-Run a full diagnostic audit of a HubSpot CRM portal. This skill collects metrics across eight dimensions, grades each one, and produces a prioritized report with actionable recommendations.
+Run a full diagnostic audit of a HubSpot portal. One read-only script collects the metrics, grades each dimension, and writes a report that opens with a prioritized list of skills to run.
+
+## One Engine, Three Lenses
+
+The audit is a single engine (`scripts/audit_portal.py`) with a `--scope` flag. Every dimension is tagged **shared**, **marketing**, or **sales**:
+
+| Scope | Runs | Report | Entry point |
+|-------|------|--------|-------------|
+| `full` (default) | shared + marketing + sales | `reports/hubspot-audit-{date}.md` | this skill |
+| `marketing` | shared + marketing | `reports/hubspot-marketing-audit-{date}.md` | `/hubspot-marketing-audit` |
+| `sales` | shared + sales | `reports/hubspot-sales-audit-{date}.md` | `/hubspot-sales-audit` |
+
+The shared dimensions run under every scope, so a marketing audit and a sales audit of the same portal agree on the numbers they have in common. Use this skill when you own the whole portal; hand a team the scoped audit when they only own one side.
 
 ## Setup
 
-1. **Get the API token.** Check `.env` for `HUBSPOT_ACCESS_TOKEN`. If it is not set, ask the user to provide their HubSpot private app access token and store it in `.env`:
+1. **Get the API token.** Check `.env` for `HUBSPOT_ACCESS_TOKEN`. If it is not set, ask the user for a read-scoped HubSpot access token and store it in `.env`:
    ```
    HUBSPOT_ACCESS_TOKEN=pat-na1-xxxxxxxx
    ```
 
-2. **No package install needed.** Scripts carry PEP 723 inline metadata and run with [`uv`](https://github.com/astral-sh/uv), which resolves `requests` and `python-dotenv` automatically:
+2. **Run the audit.** The script carries PEP 723 inline metadata and runs with [`uv`](https://github.com/astral-sh/uv), which resolves its dependencies automatically:
    ```bash
-   uv run skills/hubspot-audit/scripts/audit_portal.py
+   uv run skills/hubspot-audit/scripts/audit_portal.py              # full
+   uv run skills/hubspot-audit/scripts/audit_portal.py --scope marketing
+   uv run skills/hubspot-audit/scripts/audit_portal.py --scope sales
    ```
 
-3. **Create the output directory** if it does not exist:
-   ```bash
-   mkdir -p reports
-   ```
+The script creates `reports/` if needed and writes a markdown report plus a JSON twin (same name, `.json`) for other skills to read.
 
 ## Audit Dimensions
 
-Run queries for each of the following eight dimensions. Collect exact counts for every metric listed.
+### Shared (every scope)
 
-### 1. Database Size
-- Total contacts
-- Total companies
-- Total deals
-- Marketing contacts vs non-marketing contacts (if Marketing Hub is active)
+| Dimension | What it measures | Graded on |
+|-----------|------------------|-----------|
+| Database Size | Total contacts, companies, deals | not graded |
+| Owner Health | Unowned contacts and companies; records still owned by deactivated owners | unowned + orphaned contacts |
+| Company Data Completeness | Companies missing domain, industry, country | missing domain |
+| Duplicates | Flagged for `/merge-duplicate-companies` (exact scans need full pagination) | not graded |
 
-### 2. Email Deliverability
-- Hard bounced contacts (`hs_email_hard_bounce_reason_enum` is not empty)
-- Soft bounced contacts (`hs_email_bounce` > 0 AND no hard bounce)
-- Global unsubscribes (`hs_is_unworked` or `hs_email_optout` = true)
-- Never-emailed contacts (no `hs_email_last_send_date`)
-- Invalid email format (regex check on `email` property)
-- Contacts with 3+ bounces
+### Marketing
 
-### 3. Data Completeness
-- Missing `email`
-- Missing `company` (contact-level)
-- Missing `industry` (contact-level)
-- Missing `country` and/or `state`
-- Missing `lifecyclestage`
-- Missing `hubspot_owner_id`
-- Missing `jobtitle`
-- Companies missing `domain`
-- Companies missing `industry`
-- Companies missing `city` / `state` / `country`
+| Dimension | What it measures | Graded on |
+|-----------|------------------|-----------|
+| Email Deliverability | Marketing contacts, hard bounces, global unsubscribes, 3+ bounces, never emailed | hard bounces + unsubscribes |
+| Contact Data Completeness | Contacts missing email, lifecycle stage, company, industry, country, job title | missing lifecycle stage |
+| Engagement Health | Opened in 90 days, never opened, last open over a year ago, current customers at the wrong lifecycle stage | never opened |
+| List, Workflow & Form Health | Total lists, workflows (active vs inactive), forms | not graded |
 
-### 4. Engagement Health
-- Last activity distribution: active in last 30 days, 31-90 days, 91-180 days, 181-365 days, 365+ days, never engaged
-- Contacts who opened an email in the last 90 days (`hs_email_last_open_date`)
-- Contacts who never opened any email
-- Contacts with zero page views
-- Contacts with zero form submissions
-- Current-customer consistency: contacts where `hs_current_customer` = true but lifecycle stage is not Customer (the `hs_current_customer` system property is read-only, set by HubSpot, and available since June 2026)
+### Sales
 
-Note: aggregate *per-email* open/click rates are not derivable from contact properties — they come from the marketing email statistics API (v3, Marketing Hub plans) or the email health dashboard in the UI. The per-contact last-open/last-click properties above are the right audit signal at the database level.
+| Dimension | What it measures | Graded on |
+|-----------|------------------|-----------|
+| Pipeline Configuration | Pipelines, deals per pipeline, empty pipelines, pipelines with more than 10 open stages | empty + bloated pipelines |
+| Deal Data Quality | Open deals missing amount, close date, owner, or an associated contact; closed-lost deals with no loss reason | missing amount + close date |
+| Pipeline Hygiene & Velocity | Open deals with no activity in 60+ days, close dates in the past, no next activity; 90-day win rate | stale + past-due deals |
+| Sales Ownership & Handoff | Open deals owned by deactivated owners; SQL/Opportunity contacts with no owner; Opportunity contacts with no deal | orphaned deals + unowned sales-stage contacts |
+| Activity & Follow-up | Open and overdue tasks; leads and unowned leads | overdue tasks |
 
-### 5. Duplicate Analysis
-- Duplicate email addresses (exact match)
-- Companies sharing the same `domain`
-- Companies with very similar names (fuzzy — note: API cannot do fuzzy matching natively; count exact duplicates on `name` and flag for manual review)
-
-### 6. Owner Health
-- Deactivated owners who still have assigned contacts
-- Deactivated owners who still have assigned companies
-- Deactivated owners who still have assigned deals
-- Contacts with no owner
-- Companies with no owner
-
-### 7. List & Workflow Health
-- Total active lists vs static lists
-- Lists with zero members
-- Workflows currently active
-- Workflows that have not enrolled anyone in 90+ days
-- Forms with zero submissions
-- Forms with submissions in last 30 days
-
-### 8. Deal Pipeline Health
-- Deals without `amount`
-- Deals without `closedate`
-- Deals in each pipeline stage
-- Stale deals (no activity in 60+ days, still open)
-- Average deal age by stage
+Thresholds (stale-deal window, win-rate window, stage limit) are in the `# --- Configuration ---` block at the top of the script.
 
 ## API Technical Notes
 
-These details are critical for getting accurate results:
-
-- **Null checks**: Use the `NOT_HAS_PROPERTY` filter operator to find contacts where a property has never been set. HubSpot stores "never happened" as null (property absent), not as 0 or empty string.
-  ```python
-  {
-      "filterGroups": [{
-          "filters": [{
-              "propertyName": "hs_email_last_send_date",
-              "operator": "NOT_HAS_PROPERTY"
-          }]
-      }]
-  }
-  ```
-
-- **Search API pagination limit**: The Search API returns a maximum of 10,000 results per query. If you expect more than 10K, segment queries by another property (e.g., `createdate` ranges, lifecycle stage, or first letter of email) and sum the results.
-
-- **Deactivated owners**: The Owners API does not return deactivated owners by default. Pass `archived=true`:
-  ```python
-  resp = requests.get(f"{BASE}/crm/v3/owners", headers=HEADERS,
-                      params={"limit": 100, "archived": "true"})
-  ```
-
-- **Rate limiting**: Private apps are limited to 100 requests per 10 seconds. Add a small delay between batch calls or use exponential backoff on 429 responses.
-
-- **Engagement timestamps**: Use `hs_last_sales_activity_timestamp` and `notes_last_contacted` for activity dating. `hs_email_last_open_date` and `hs_email_last_click_date` are useful for email engagement specifically.
-
-- **Marketing contact status**: The property `hs_marketable_status` indicates whether a contact is set as a marketing contact. This property is **read-only via API**.
+- **Null checks**: use the `NOT_HAS_PROPERTY` operator to find records where a property has never been set. HubSpot stores "never happened" as an absent property, not as 0 or an empty string.
+- **Counting**: the script counts with the Search API's `total`, which is exact even past the 10,000-result paging cap. Paging through more than 10,000 *records* requires segmenting the query.
+- **Search limits**: 5 requests per second, 5 filter groups per query, 6 filters per group. The script paces itself under the rate limit.
+- **n/a is not zero**: when the token cannot read an object (missing scope, or the hub is not purchased), the row shows `n/a` and the dimension grades `?`. Fix the scope and re-run rather than reading it as clean.
+- **Deactivated owners**: the Owners API only returns them with `archived=true`.
+- **Open deals**: filtered with `hs_is_closed = false`, which works across every pipeline regardless of stage names.
+- **Marketing contact status**: `hs_marketable_status` is readable and filterable but **read-only via API**.
+- **Not available by API**: per-email open/click rates come from the marketing email statistics API or the UI; forecast accuracy and time-in-stage come from the UI's forecast and pipeline reports.
 
 ## Scripts
 
 | Stage | Script | Run with |
 |-------|--------|----------|
-| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run skills/hubspot-audit/scripts/audit_portal.py` |
+| Audit (read-only) | [`scripts/audit_portal.py`](./scripts/audit_portal.py) | `uv run skills/hubspot-audit/scripts/audit_portal.py [--scope full\|marketing\|sales]` |
 
-## Script Structure
+If a portal needs a check the script does not cover, add a dimension function with the right tag rather than writing a separate one-off script. The offline tests in `tests/test_audit_portal.py` run against a fake API and need no portal.
 
-This skill ships [`scripts/audit_portal.py`](./scripts/audit_portal.py), which:
-
-1. Loads `HUBSPOT_ACCESS_TOKEN` from `.env`
-2. Calls the REST endpoints directly with `requests`:
-   ```python
-   TOKEN = os.environ["HUBSPOT_ACCESS_TOKEN"]
-   BASE = "https://api.hubapi.com"
-   HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
-   ```
-3. Runs each dimension's queries sequentially (respecting rate limits)
-4. Collects all results into a structured dict
-5. Computes letter grades per dimension (see grading rubric below)
-6. Renders the markdown report
-7. Saves to `reports/hubspot-audit-{YYYY-MM-DD}.md`
-
-If a dimension needs portal-specific queries beyond what the script covers, extend it with the same house style rather than writing a separate one-off script.
-
-**MCP note:** if HubSpot's MCP server is connected (see `/connect-hubspot-mcp`), use it for spot-checks while auditing — opening sample records behind a suspicious count is faster than writing one-off queries. The audit's counting queries themselves should stay in the script for reproducibility.
+**MCP note:** if HubSpot's MCP server is connected (see `/connect-hubspot-mcp`), use it for spot-checks while auditing: opening sample records behind a suspicious count is faster than writing one-off queries. The counting queries themselves stay in the script for reproducibility.
 
 ## Grading Rubric
-
-Assign a letter grade to each dimension based on severity:
 
 | Grade | Meaning | Criteria |
 |-------|---------|----------|
@@ -164,160 +102,64 @@ Assign a letter grade to each dimension based on severity:
 | C | Needs attention | 15-30% of records affected |
 | D | Significant problems | 30-50% of records affected |
 | F | Critical | > 50% of records affected |
+| ? | Unknown | The metric could not be read |
 
-For dimensions without a simple percentage (e.g., Owner Health), use judgment based on the number of affected records and business impact.
+The script grades each dimension on the metric named in the tables above. Treat the grade as a starting point: a portal with 40 open deals and 3 stale ones is in a different place than one with 4,000 and 300, even though both grade B.
 
-## Output Format
-
-Save the report to `reports/hubspot-audit-{YYYY-MM-DD}.md` with this structure:
+## Report Structure
 
 ```markdown
 # HubSpot CRM Audit Report
 
 **Date:** YYYY-MM-DD
-**Portal ID:** [portal-id]
+**Scope:** full
 
 ## Executive Summary
 
-| Dimension | Grade | Key Finding |
-|-----------|-------|-------------|
-| Database Size | B | ~XX,000 contacts, XX,000 companies |
-| Email Deliverability | D | XX% hard bounced, XX% globally unsubscribed |
-| Data Completeness | F | XX% missing email, XX% missing industry |
-| Engagement Health | D | XX% never engaged, XX% inactive 12+ months |
-| Duplicate Analysis | C | ~X,XXX duplicate company domains |
-| Owner Health | F | X deactivated owners with XX,XXX assigned contacts |
-| List & Workflow Health | B | XX unused lists, X stale workflows |
-| Deal Pipeline Health | C | XX% deals missing amount, XX stale deals |
+| Dimension | Lens | Grade |
+|---|---|---|
+| Owner Health | shared | C |
+| Email Deliverability | marketing | D |
+| Deal Data Quality | sales | B |
 
-**Overall Grade: X**
+## Prescription
 
-## Priority Recommendations
+| # | Skill | Why | Records | Priority |
+|---|---|---|---|---|
+| 1 | `/delete-no-email-contacts` | Contacts missing email | X,XXX | P0 |
+| 2 | `/suppress-hard-bounced` | Hard bounced | X,XXX | P0 |
 
-1. **[CRITICAL] Delete contacts with no email** — XX,XXX contacts with no email address
-   are unbillable dead weight. Run `/delete-no-email-contacts`.
-   *Effort: 1 hour | Fully scriptable*
-
-2. **[CRITICAL] Suppress hard bounced contacts** — XX,XXX hard bounces are destroying
-   sender reputation. Run `/suppress-hard-bounced`.
-   *Effort: 1 hour | Hybrid (API + workflow)*
-
-3. **[HIGH] Reassign deactivated owner contacts** — XX,XXX contacts assigned to
-   X deactivated users. Run `/reassign-deactivated-owners`.
-   *Effort: 2 hours | Fully scriptable*
-
-4. ...continue ranked by impact...
-
----
-
-## Detailed Findings
-
-### 1. Database Size
-
-| Metric | Count | % of Total |
-|--------|-------|------------|
-| Total Contacts | XX,XXX | — |
-| Total Companies | XX,XXX | — |
-| Total Deals | X,XXX | — |
-| Marketing Contacts | XX,XXX | XX% |
-
-### 2. Email Deliverability
-
-| Metric | Count | % of Contacts |
-|--------|-------|---------------|
-| Hard Bounced | X,XXX | XX% |
-| Soft Bounced | X,XXX | XX% |
-| Global Unsubscribes | X,XXX | XX% |
-| Never Emailed | XX,XXX | XX% |
-| Invalid Email Format | XXX | X% |
-
-...continue for all 8 dimensions...
-
----
-
-## Next Steps
-
-Run `/hubspot-implementation-plan` to generate a phased cleanup plan based on these findings.
+## 1. Database Size
+...one section per dimension, each a Metric | Count | % table...
 ```
 
 ## Skill Prescription
 
-After generating the audit report, **prescribe a specific ordered list of skills the user should run**. Do not just present findings — tell the user exactly what to do next.
+The script builds the prescription itself: every metric with a non-zero count that maps to a fix skill becomes a row, each skill appears once, and rows are ordered by priority (P0 first), then by record count.
 
-### Step 1: Map Findings to Skills
+After the script finishes:
 
-For each audit finding that scored C or worse, map it to the appropriate skill. Use this category-ordered lookup:
+### Step 1: Read the Report
 
-**Database Hygiene** (run first — billing and deliverability impact):
-| Finding | Skill | Priority |
-|---------|-------|----------|
-| Contacts missing email | `/delete-no-email-contacts` | P0 |
-| Hard bounced contacts | `/suppress-hard-bounced` | P0 |
-| Global unsubscribes | `/suppress-global-unsubscribes` | P0 |
-| Ghost/never-engaged contacts | `/suppress-ghost-contacts` | P1 |
-| Duplicate companies | `/merge-duplicate-companies` | P1 |
-| Deactivated owners with contacts | `/reassign-deactivated-owners` | P1 |
-
-**Data Enrichment** (run second — data quality):
-| Finding | Skill | Priority |
-|---------|-------|----------|
-| Missing company name | `/enrich-company-name` | P1 |
-| Missing industry | `/enrich-industry` | P1 |
-| Inconsistent geo data | `/standardize-geo-values` | P2 |
-| Missing geo data | `/backfill-geo-data` | P2 |
-| Missing/wrong lifecycle stage | `/fix-lifecycle-stages` | P1 |
-| Unowned marketing contacts | `/assign-unowned-contacts` | P1 |
-
-**Segmentation & Scoring** (run third — targeting):
-| Finding | Skill | Priority |
-|---------|-------|----------|
-| No ICP classification | `/create-icp-tiers` | P2 |
-| No lead scoring | `/build-lead-scoring` | P2 |
-| No segment lists | `/build-smart-lists` | P2 |
-
-**Automation Workflows** (run fourth — prevention):
-| Finding | Skill | Priority |
-|---------|-------|----------|
-| No new-contact hygiene | `/new-contact-hygiene-workflow` | P2 |
-| High disengagement rate | `/engagement-suppression-workflow` | P2 |
-| No lifecycle automation | `/lifecycle-progression-workflow` | P3 |
-| No bounce monitoring | `/bounce-monitoring-workflow` | P2 |
-
-**Ongoing Maintenance** (run last — sustainability):
-| Finding | Skill | Priority |
-|---------|-------|----------|
-| Unused lists | `/cleanup-lists` | P3 |
-| Unused forms | `/cleanup-forms` | P3 |
-| Stale workflows | `/cleanup-workflows` | P3 |
-| Dashboard clutter | `/cleanup-dashboards` | P3 |
-| Deal pipeline issues | `/cleanup-deals` | P3 |
-| Unused properties | `/cleanup-properties` | P3 |
+Read the generated markdown report. Do not re-derive counts by hand; the report and its JSON twin are the source of truth.
 
 ### Step 2: Present the Ordered Prescription
 
-After the audit report, present a **numbered action list** — not just findings. Format like this:
+Present the prescription as a numbered action list grouped by urgency, with the real counts:
 
 ```markdown
 ## Your Cleanup Prescription
 
-Based on the audit, here are the skills you should run, in order:
+### Immediate (P0)
+1. `/delete-no-email-contacts`: X,XXX contacts with no email are inflating your bill
+2. `/reassign-deactivated-owners`: XX open deals belong to people who have left
 
-### Immediate (this week)
-1. `/delete-no-email-contacts` — X,XXX contacts with no email are inflating your bill
-2. `/suppress-hard-bounced` — X,XXX hard bounces are hurting deliverability
-3. `/suppress-global-unsubscribes` — X,XXX unsubscribes still counting as marketing contacts
-
-### Next (weeks 2-3)
-4. `/reassign-deactivated-owners` — X deactivated users still own X,XXX contacts
-5. `/enrich-company-name` — XX% of contacts missing company name
-6. `/fix-lifecycle-stages` — X,XXX contacts in invalid lifecycle stages
-...
-
-### Later (weeks 4-6)
-7. `/create-icp-tiers` — No ICP classification exists yet
-8. `/build-lead-scoring` — No scoring model in place
+### Next (P1)
+3. `/cleanup-deals`: XXX open deals have no amount or close date
 ...
 ```
+
+Add judgment the script cannot: which findings share a root cause, which are expected for this business, and what order respects dependencies (enrichment before scoring, ownership before routing).
 
 ### Step 3: Handle Missing Skills
 
@@ -340,7 +182,7 @@ If the audit reveals a problem that **no existing skill covers**, do the followi
 End with:
 ```
 Ready to start? Run `/hubspot-implementation-plan` to generate a full phased plan,
-or jump straight to the first skill: `/delete-no-email-contacts`.
+or jump straight to the first skill in your prescription.
 ```
 
 ## After Running

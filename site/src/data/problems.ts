@@ -294,15 +294,15 @@ export const PROBLEMS: Problem[] = [
     slug: 'hubspot-new-contacts-arrive-dirty',
     title: 'New contacts arrive with missing owners, stages, and bad data',
     description:
-      'Cleanup is pointless if tomorrow’s contacts arrive dirty. How to build a new-contact hygiene workflow — via the v4 Automation API — that screens every new record.',
+      'Cleanup is pointless if tomorrow’s contacts arrive dirty. How to build a new-contact hygiene workflow through HubSpot’s Workflows API that screens every new record.',
     intro:
-      'A one-time cleanup decays immediately unless creation-time hygiene exists. This skill creates the screening workflow programmatically (v4 Automation API, created disabled for review): default lifecycle stage, data checks, and owner assignment for every new contact.',
+      'A one-time cleanup decays immediately unless creation-time hygiene exists. This skill creates the screening workflow programmatically (Workflows API, created disabled for review): default lifecycle stage, data checks, and owner assignment for every new contact.',
     skill: 'new-contact-hygiene-workflow',
     faqs: [
       {
         question: 'Can HubSpot workflows be created via the API now?',
         answer:
-          'Yes. The v4 Automation API (stable — the old “beta” caveats are outdated) supports creating, updating, and deleting workflows. The skills always create workflows disabled so you review them in the UI before enabling.',
+          'Yes, with a caveat. HubSpot’s Workflows API supports creating, updating, and deleting workflows, and HubSpot still documents it as beta and subject to change. That is why the skills always create workflows disabled: you review each one in the UI before enabling it, and a manual build path is documented as the fallback.',
       },
     ],
   },
@@ -347,9 +347,9 @@ export const PROBLEMS: Problem[] = [
     slug: 'hubspot-audit-where-to-start',
     title: 'Our HubSpot portal is a mess and we do not know where to start',
     description:
-      'Duplicates, bounces, missing data, dead workflows — but which problem first? Run a graded, eight-dimension portal audit that maps every finding to a fix.',
+      'Duplicates, bounces, missing data, stale deals: which problem first? Run a graded, read-only portal audit that maps every finding to a fix.',
     intro:
-      'You cannot prioritize what you have not measured. The audit runs read-only API queries across eight dimensions — size, deliverability, completeness, engagement, duplicates, owners, lists and workflows, pipeline — grades each A–F, and prescribes the exact skill to run for every finding.',
+      'You cannot prioritize what you have not measured. The audit runs read-only API queries across the marketing side (deliverability, completeness, engagement, lists and workflows) and the sales side (pipeline configuration, deal quality, stale deals, ownership, follow-up), grades each dimension A–F, and prescribes the exact skill to run for every finding.',
     skill: 'hubspot-audit',
     faqs: [
       {
@@ -365,18 +365,96 @@ export const PROBLEMS: Problem[] = [
     ],
   },
   {
-    slug: 'hubspot-api-versions-2027-deadline',
-    title: 'HubSpot is retiring v1–v4 APIs — is our stack ready for March 2027?',
+    slug: 'hubspot-pipeline-forecast-not-trusted',
+    title: 'Nobody trusts the pipeline, so nobody trusts the forecast',
     description:
-      'HubSpot moved to date-based API versioning; legacy v1–v4 endpoints lose support March 30, 2027. How to inventory every integration that needs migrating.',
+      'Open deals with no amount, close dates in the past, owners who left. How to measure how much of a HubSpot pipeline is fiction, and what to fix first.',
     intro:
-      'Every private app, integration, and script calling /crm/v3/ or older has a deadline: March 30, 2027. This skill inventories your portal’s API surface — private apps, connected apps, webhooks — and flags everything on legacy versions with a migration checklist to the date-based releases.',
+      'A forecast is a sum over deal records. When open deals are missing amounts, carry close dates that have already passed, or belong to people who no longer work here, the number is wrong before anyone applies judgment to it. The sales audit counts each of those, grades the pipeline, and names the skill that fixes each finding.',
+    skill: 'hubspot-sales-audit',
+    faqs: [
+      {
+        question: 'What makes a HubSpot pipeline unreliable?',
+        answer:
+          'Usually five things: open deals with no amount, open deals whose close date has passed, deals with no logged activity for months, deals owned by deactivated users, and closed-lost deals with no reason recorded. All five are countable through the API.',
+      },
+      {
+        question: 'Does the sales audit change any deals?',
+        answer:
+          'No. It only searches and counts. Fixing deals needs the people who own them, so the cleanup skills produce review lists rather than bulk-closing anything.',
+      },
+      {
+        question: 'Will it match the numbers marketing sees?',
+        answer:
+          'Yes for everything the two share. The marketing and sales audits run on the same engine, and the shared dimensions (owners, company data, duplicates) are computed by the same code under either scope.',
+      },
+    ],
+  },
+  {
+    slug: 'hubspot-marketing-database-health-check',
+    title: 'We pay for contacts we cannot email',
+    description:
+      'Bounced, unsubscribed, and never-engaged contacts still count toward the bill and drag on deliverability. How to measure the dead weight in a HubSpot marketing database.',
+    intro:
+      'Marketing pays for contacts by the tier and earns deliverability by the send. Contacts that have hard bounced, unsubscribed, or never opened anything cost money on one side and sender reputation on the other. The marketing audit counts them, grades deliverability, completeness and engagement, and orders the cleanup.',
+    skill: 'hubspot-marketing-audit',
+    faqs: [
+      {
+        question: 'Which contacts are safe to stop paying for?',
+        answer:
+          'Start with hard-bounced and globally unsubscribed contacts: you cannot or must not email them, so marketing status buys nothing. Never-engaged contacts come next, after a re-engagement attempt.',
+      },
+      {
+        question: 'Can open rates be trusted for this?',
+        answer:
+          'Less than they used to be. Apple Mail Privacy Protection records opens that no person made. When deciding who to sunset, weigh clicks more heavily than opens.',
+      },
+    ],
+  },
+  {
+    slug: 'connect-claude-code-to-hubspot',
+    title: 'What is the right way to connect Claude Code to HubSpot?',
+    description:
+      'HubSpot now offers a remote MCP server, an Agent CLI, and service keys for REST. What each one can and cannot do, and which to use for CRM administration.',
+    intro:
+      'There are three first-party ways in, and they overlap less than they appear to. The MCP server is for conversational lookups and cannot delete records or touch workflows. The Agent CLI (beta) does bulk writes, deletes and workflow changes from the terminal. A service key drives REST scripts, which are the right tool for anything repeatable or destructive at scale.',
+    skill: 'connect-hubspot-agent-cli',
+    faqs: [
+      {
+        question: 'Can the HubSpot MCP server delete contacts?',
+        answer:
+          'No. The remote MCP server has no delete or archive tool, and no workflow tools. Use a scripted skill or the Agent CLI for those.',
+      },
+      {
+        question: 'Why does claude mcp add fail to authenticate with HubSpot?',
+        answer:
+          'HubSpot’s MCP server does not support dynamic client registration. Create an MCP connector in HubSpot first, then pass its client ID, secret and a fixed callback port to claude mcp add. The connect-hubspot-mcp skill has the steps.',
+      },
+      {
+        question: 'Is the HubSpot Agent CLI safe for bulk changes?',
+        answer:
+          'It is beta, and it has fewer guard rails than a purpose-built script: no before-state export and no abort threshold. Use its dry-run mode every time, export the affected records first, and prefer a scripted skill when one exists.',
+      },
+    ],
+  },
+  {
+    slug: 'hubspot-api-versions-2027-deadline',
+    title: 'HubSpot is retiring v1–v4 APIs and private apps. Is our stack ready for 2027?',
+    description:
+      'HubSpot moved to date-based API versioning. v4 loses support March 30, 2027; v1–v3 are already unsupported, enforced September 2027. How to inventory every integration that needs migrating.',
+    intro:
+      'Two clocks are running. Anything calling a v4 endpoint has until March 30, 2027. Anything on v1–v3 is already unsupported, with enforcement in September 2027, which is also the deadline for moving legacy private apps to service keys. This skill inventories your portal’s API surface and flags everything on a legacy version or a legacy app, with a migration checklist.',
     skill: 'audit-api-usage',
     faqs: [
       {
+        question: 'Can I still create a HubSpot private app?',
+        answer:
+          'Not after October 26, 2026. Accounts created on or after September 28, 2026 never had the option. Existing private apps keep working and must migrate by September 2027. New internal integrations use a service key, created under Settings > Integrations > Service Keys.',
+      },
+      {
         question: 'What replaced HubSpot’s v3 and v4 API versions?',
         answer:
-          'Date-based versions (like 2026-03) released twice a year with an 18-month support window. Legacy v1–v4 endpoints remain supported until March 30, 2027.',
+          'Date-based versions (currently 2026-09), released every March and September with at least 18 months of support each. v4 endpoints are supported until March 30, 2027. v1–v3 have been unsupported since September 2026 and are enforced from September 2027.',
       },
     ],
   },

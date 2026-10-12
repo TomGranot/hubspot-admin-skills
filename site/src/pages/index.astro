@@ -49,8 +49,8 @@ const metadata = {
     </Fragment>
 
     <Fragment slot="subtitle">
-      Duplicate companies, hard bounces still marked marketable, a third of your contacts missing a lifecycle stage.
-      You know the backlog. These {skills.length} open-source skills work through it: each one audits first, exports a
+      Duplicate companies, hard bounces still marked marketable, open deals with close dates from last quarter. You
+      know the backlog. These {skills.length} open-source skills work through it: each one audits first, exports a
       CSV baseline, makes the change, and shows you the before/after.
     </Fragment>
 
@@ -68,7 +68,7 @@ const metadata = {
       {
         title: 'Step 1: <span class="font-medium">Audit</span>',
         description:
-          'Run <code>/hubspot-audit</code>. Read-only API queries across eight dimensions: contacts, deliverability, duplicates, owners, lifecycle, lists, workflows, pipeline. Every finding gets a grade and the name of the skill that fixes it.',
+          'Run <code>/hubspot-audit</code> for the whole portal, or <code>/hubspot-marketing-audit</code> or <code>/hubspot-sales-audit</code> for one side of it. All three are read-only and run on the same engine. Every finding gets a grade and the name of the skill that fixes it.',
         icon: 'tabler:report-search',
       },
       {
@@ -95,6 +95,36 @@ const metadata = {
       <SafetyPipeline />
     </Fragment>
   </Steps>
+
+  <Features
+    id="audits"
+    title="One portal, two teams, the same numbers"
+    subtitle="Marketing ops and sales ops share a database and rarely share an audit. Here both run on one engine. The foundation (owners, company data, duplicates) is computed by the same code under either scope, so the two reports cannot disagree about it."
+    columns={3}
+    items={[
+      {
+        title: 'Marketing audit',
+        description:
+          'Deliverability, contact completeness, engagement, lifecycle consistency, and list, workflow and form sprawl. Answers: who can we still reach, and what are we paying for that we cannot?',
+        icon: 'tabler:mail',
+        callToAction: { text: 'Read the marketing audit', href: '/skills/hubspot-marketing-audit' },
+      },
+      {
+        title: 'Sales audit',
+        description:
+          'Pipeline configuration, deal data quality, stale and past-due deals, ownership and handoff gaps, overdue follow-up. Answers: can anyone trust what the pipeline says?',
+        icon: 'tabler:chart-bar',
+        callToAction: { text: 'Read the sales audit', href: '/skills/hubspot-sales-audit' },
+      },
+      {
+        title: 'Full audit',
+        description:
+          'Both lenses in one report, for the admin who owns the whole portal. Opens with a single prioritized list of skills to run.',
+        icon: 'tabler:report-search',
+        callToAction: { text: 'Read the full audit', href: '/skills/hubspot-audit' },
+      },
+    ]}
+  />
 
   <section id="watch" class="px-4 sm:px-6 mx-auto max-w-4xl py-12 lg:py-16 scroll-mt-24">
     <div class="text-center mb-8">
@@ -181,12 +211,17 @@ const metadata = {
       {
         title: 'Where does my CRM data go?',
         description:
-          'Nowhere. There is no SaaS here. The skills are markdown instructions plus Python scripts that run on your machine, calling the HubSpot API with your own private app token. CSV exports stay in a local, gitignored folder.',
+          'Nowhere. There is no SaaS here. The skills are markdown instructions plus Python scripts that run on your machine, calling the HubSpot API with your own service key. CSV exports stay in a local, gitignored folder.',
       },
       {
         title: 'What do I need?',
         description:
-          'Claude Code, a HubSpot private app token, and Python 3.10+ with uv for the scripted skills. Workflow skills need Marketing Professional or higher; the audit and hygiene skills work on any tier.',
+          'Claude Code, a HubSpot service key, and Python 3.10+ with uv for the scripted skills. A token from an existing private app still works, but HubSpot stops allowing new private apps on October 26, 2026. Workflow skills need Marketing Professional or higher; the audits and hygiene skills work on any tier.',
+      },
+      {
+        title: 'Does this replace the HubSpot MCP server or the Agent CLI?',
+        description:
+          'No, it uses them. The MCP server is for looking things up in conversation and cannot delete or touch workflows. HubSpot’s Agent CLI (beta) handles one-off bulk jobs from the terminal. The scripted skills are for work you repeat or cannot afford to get wrong: they export first and stop at a threshold. Two skills cover connecting each.',
       },
       {
         title: "What if the audit finds something no skill covers?",

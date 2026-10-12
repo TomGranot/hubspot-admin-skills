@@ -17,9 +17,9 @@ export const CATEGORIES = [
   {
     slug: 'audit-planning',
     title: 'Audit & Planning',
-    description: 'Portal assessment, connectivity, and implementation planning.',
+    description: 'Marketing, sales, and full-portal audits, connections, and planning.',
     intro:
-      'Start here: grade the state of your portal, plan the cleanup in dependency order, wire up connections, and verify the toolkit against a sandbox before trusting it with production.',
+      'Start here: audit the marketing side, the sales side, or the whole portal on one shared engine. Then plan the cleanup in dependency order, connect Claude through MCP or the Agent CLI, and verify the toolkit against a sandbox before trusting it with production.',
     icon: 'tabler:report-search',
   },
   {
@@ -51,7 +51,7 @@ export const CATEGORIES = [
     title: 'Automation Workflows',
     description: 'HubSpot workflows for ongoing hygiene.',
     intro:
-      'Prevention instead of cleanup: workflows — created via the v4 Automation API, always disabled for review — that keep new data clean, progress lifecycles, and suppress disengagement automatically.',
+      'Prevention instead of cleanup: workflows that keep new data clean, progress lifecycles, and suppress disengagement automatically. They are created through HubSpot’s Workflows API (beta), always disabled, so you review each one before it runs.',
     icon: 'tabler:settings-automation',
   },
   {

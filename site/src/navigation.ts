@@ -52,6 +52,8 @@ export const footerData = {
       links: [
         { text: 'Common HubSpot problems', href: getPermalink('/problems') },
         { text: 'Run a portal audit', href: getPermalink('/skills/hubspot-audit') },
+        { text: 'Audit the marketing side', href: getPermalink('/skills/hubspot-marketing-audit') },
+        { text: 'Audit the sales pipeline', href: getPermalink('/skills/hubspot-sales-audit') },
         { text: 'Get a cleanup plan', href: getPermalink('/skills/hubspot-implementation-plan') },
         { text: 'Weekly maintenance', href: getPermalink('/skills/weekly-cleanup-routine') },
       ],

@@ -12,7 +12,7 @@ const agentPrompt = `Install the HubSpot Admin Skills plugin and audit my HubSpo
 
 1. Run: ${MARKETPLACE_ADD_COMMAND}
 2. Run: ${PLUGIN_INSTALL_COMMAND}
-3. I'll provide a HubSpot private app token as HUBSPOT_ACCESS_TOKEN (in .env).
+3. I'll provide a HubSpot service key as HUBSPOT_ACCESS_TOKEN (in .env).
 4. Run /hubspot-audit and walk me through the findings.
 
 Skill catalog (machine-readable): https://hubspot.granot.io/api/skills.json
@@ -46,8 +46,9 @@ const metadata = {
         <a href="https://claude.com/claude-code" class="text-primary hover:underline">Claude Code</a> installed and configured
       </li>
       <li>
-        A HubSpot account with a <strong>private app token</strong> — create one under Settings → Integrations → Private Apps,
-        with CRM read/write scopes for the objects you want to manage
+        A HubSpot account with a <strong>service key</strong>: create one under Settings → Integrations → Service Keys,
+        with CRM read/write scopes for the objects you want to manage. A token from an existing private app works too;
+        HubSpot stops allowing new private apps on October 26, 2026
       </li>
       <li>
         Python 3.10+ with <a href="https://github.com/astral-sh/uv" class="text-primary hover:underline">uv</a> for the scripted

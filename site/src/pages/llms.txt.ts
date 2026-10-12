@@ -33,7 +33,7 @@ ${MARKETPLACE_ADD_COMMAND}
 ${PLUGIN_INSTALL_COMMAND}
 \`\`\`
 
-Requirements: a HubSpot private app token (HUBSPOT_ACCESS_TOKEN in .env), Python 3.10+ with uv for scripted skills.
+Requirements: a HubSpot service key, or an existing legacy private app token (HUBSPOT_ACCESS_TOKEN in .env), Python 3.10+ with uv for scripted skills.
 
 Machine-readable catalog: ${abs('/api/skills.json')}
 All skills in one fetch: ${abs('/llms-full.txt')}

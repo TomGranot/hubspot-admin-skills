@@ -4,10 +4,10 @@
   <img src="./assets/hero.png" alt="CRM Autopilot — HubSpot Admin Skills" width="100%" />
 </p>
 
-**37 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM**
+**40 Claude Code skills for auditing, cleaning, enriching, and automating your HubSpot CRM, for marketing ops and sales ops alike**
 
 [![Website](https://img.shields.io/badge/site-hubspot.granot.io-ff7a59)](https://hubspot.granot.io)
-[![Skills](https://img.shields.io/badge/skills-37-blue)](./skills/)
+[![Skills](https://img.shields.io/badge/skills-40-blue)](./skills/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)](https://claude.com/claude-code)
 
@@ -17,6 +17,18 @@ Built by [Tom Granot](https://consume.granot.io) — from deep experience with e
 
 ---
 
+## What's New in 2.0
+
+- **Marketing and sales audits on one engine.** `/hubspot-marketing-audit` and `/hubspot-sales-audit` join `/hubspot-audit`. All three run the same read-only script with a `--scope` flag. Dimensions are tagged shared, marketing, or sales, and the shared ones run under every scope, so the two teams' reports agree on the numbers they have in common. The sales lens is new: pipeline configuration, deal data quality, stale and past-due deals, ownership and handoff, overdue follow-up.
+- **The report prescribes.** Every finding names the skill that fixes it, the report opens with a prioritized list, and a JSON twin sits beside the markdown for `/hubspot-implementation-plan` to read.
+- **Service keys, not private apps.** HubSpot disables creating legacy private apps on October 26, 2026. Every skill now asks for a service key and notes that an existing private app token still works.
+- **A third connection path.** New `/connect-hubspot-agent-cli` covers HubSpot's Agent CLI (beta), the direct connection for Claude Code: bulk JSONL writes, deletes, property and workflow management. `/connect-hubspot-mcp` is rewritten around how the MCP server actually authenticates, and what it cannot do.
+- **Corrected platform facts.** The Workflows API is beta, not stable. There are two API cutoffs, not one. Rate limits depend on tier. The beta Lead Scoring API is documented.
+- **Works as an installed plugin.** Script paths are relative to each skill, so commands resolve the same way from the plugin cache as from a clone.
+- **Offline tests.** The audit engine has a test suite that runs against a fake HubSpot in CI: no token, no portal.
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full list.
+
 ## What's New in 1.2
 
 - **Self-testing, BYO sandbox.** New `/sandbox-self-test` verifies the whole toolkit against a free, disposable HubSpot developer test account you bring: seeded fixtures, read-path smokes for every scripted skill, end-to-end destructive and enrichment cases (mock provider — zero credits), list + v4 workflow round-trips, a graded report, and marker-scoped teardown. Production is locked out in code (account-type gate, fails closed, no override). Optional manual-dispatch CI workflow included.
@@ -25,30 +37,31 @@ Built by [Tom Granot](https://consume.granot.io) — from deep experience with e
 
 HubSpot's platform moved fast in 2026, and this release moves with it:
 
-- **Workflows are now API-first.** HubSpot's v4 Automation API is stable (v3 is legacy), so the four workflow-builder skills now *create* their workflows via scripts — always disabled, for review in the UI before enabling — instead of walking you through 40 clicks. Nested branch designs are decomposed into small linear flows the API expresses cleanly.
+- **Workflows are API-first.** The four workflow-builder skills *create* their workflows via scripts through HubSpot's Workflows API (always disabled, for review in the UI before enabling) instead of walking you through 40 clicks. Nested branch designs are decomposed into small linear flows the API expresses cleanly. (1.1 called this API stable; HubSpot documents it as beta. Corrected in 2.0.)
 - **New `/workflows-as-code`** — export every workflow to versioned JSON, diff exports, restore from backup. HubSpot has no workflow recycle bin; now you have one.
 - **Official MCP support.** HubSpot's remote MCP server went GA in April 2026; `/connect-hubspot-mcp` wires it into Claude Code for conversational spot-checks alongside the bulk scripts.
 - **New `/waterfall-enrich-contacts`** — external enrichment with pluggable provider adapters (FullEnrich waterfall by default; Apollo, Hunter, Dropcontact included; bring your own), cost caps, and a no-overwrite safety model.
-- **New `/audit-api-usage`** — HubSpot switched to date-based API versioning (`2026-03`) and legacy v1–v4 endpoints lose support on March 30, 2027. This skill finds everything in your stack that needs migrating.
+- **New `/audit-api-usage`**: HubSpot switched to date-based API versioning and is retiring v1–v4. This skill finds everything in your stack that needs migrating.
 - **Lead scoring refreshed** for the post-2025 scoring tool (Fit + Engagement scores, decay, API-readable score properties), plus repo-wide consistency fixes — one env var, one Python house style, scripts linked from every skill. See [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
 ## Connecting to HubSpot
 
-The skills use two complementary connection paths:
+The skills use three complementary connection paths:
 
-1. **Private app token + scripts (the default).** Every scripted skill runs plain-Python `requests` against HubSpot's REST APIs using a private app token (`HUBSPOT_ACCESS_TOKEN` in `.env`). This is the path for bulk operations — it gives you pagination, rate-limit handling, abort thresholds, and CSV audit trails.
-2. **HubSpot's official MCP server (optional, interactive).** Connect Claude Code to `mcp.hubspot.com` via OAuth for conversational reads and spot-checks — "show me 5 contacts this cleanup touched" — without writing a script. Run `/connect-hubspot-mcp` to set it up and to see the full division of labor.
+1. **Service key + scripts (the default).** Every scripted skill runs plain-Python `requests` against HubSpot's REST APIs using a service key (`HUBSPOT_ACCESS_TOKEN` in `.env`; a token from an existing legacy private app also works). This is the path for anything repeatable or destructive at scale: pagination, rate-limit handling, abort thresholds, and CSV audit trails.
+2. **HubSpot's remote MCP server (optional, interactive).** Connect Claude to `mcp.hubspot.com` for conversational reads and spot-checks ("show me 5 contacts this cleanup touched") without writing a script. It cannot delete records or touch workflows. Run `/connect-hubspot-mcp` to set it up.
+3. **HubSpot's Agent CLI (optional, beta).** The direct connection for Claude Code: bulk JSONL writes, deletes, property and workflow management from the terminal, with dry runs. Use it for one-off administrative jobs no scripted skill covers. Run `/connect-hubspot-agent-cli`.
 
-Audits, hygiene, enrichment, and segmentation run on scripts; use MCP alongside them for verification and triage.
+Rule of thumb: MCP to look, scripts to change at scale, the CLI for the long tail.
 
 ## Self-Testing (Bring Your Own Sandbox)
 
 Before trusting any of this with production, make the toolkit prove itself on a disposable portal:
 
 1. Create a free **developer test account** (HubSpot Settings > Testing > Developer test accounts — every account gets up to 10, no plan required).
-2. Create a private app inside it and put its token in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
+2. Create a service key inside it and put its token in `.env` as `HUBSPOT_SANDBOX_ACCESS_TOKEN`.
 3. Run `/sandbox-self-test`.
 
 The suite seeds synthetic fixtures (one defect per testable skill), smoke-tests every scripted skill's read path, runs destructive and enrichment cases end-to-end (enrichment uses a mock provider — no credits), round-trips a list and a v4 workflow, writes a PASS/FAIL/SKIP report to `reports/`, and tears everything down. It **hard-refuses to run against anything that isn't a `DEVELOPER_TEST` or `SANDBOX` portal** — the account-type check is enforced in every script, fails closed, and has no override. An opt-in GitHub Actions workflow (manual dispatch only) ships at `skills/sandbox-self-test/ci/` — copy it into `.github/workflows/` to run the suite in CI.
@@ -74,6 +87,8 @@ Or clone directly: `git clone https://github.com/TomGranot/hubspot-admin-skills.
 ```
 
 This scans your entire HubSpot portal — contacts, companies, deals, engagement, deliverability, data quality, duplicates, owners, lists, workflows — and produces a graded report. Each finding gets a severity rating (A-F) and is mapped to the specific skill that fixes it.
+
+Own only one side of the portal? Run `/hubspot-marketing-audit` or `/hubspot-sales-audit` instead. Same engine, same shared numbers, scoped to what your team can act on.
 
 ### 3. Get your cleanup plan
 
@@ -104,14 +119,17 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 ## Skills Reference
 
-### Audit & Planning (5)
+### Audit & Planning (8)
 
 | Skill | Description |
 |-------|-------------|
-| [`hubspot-audit`](https://hubspot.granot.io/skills/hubspot-audit) | Run a comprehensive audit of your HubSpot portal — contacts, companies, deals, properties, lists, workflows, and forms |
-| [`hubspot-implementation-plan`](https://hubspot.granot.io/skills/hubspot-implementation-plan) | Generate a phased implementation plan from audit findings with prioritized action items |
-| [`connect-hubspot-mcp`](https://hubspot.granot.io/skills/connect-hubspot-mcp) | Connect Claude Code to HubSpot's official remote MCP server for conversational CRM reads and spot-checks |
-| [`audit-api-usage`](https://hubspot.granot.io/skills/audit-api-usage) | Find every integration calling legacy v1–v4 HubSpot endpoints before the March 2027 end of support |
+| [`hubspot-audit`](https://hubspot.granot.io/skills/hubspot-audit) | Full read-only portal audit across the marketing and sales sides, graded, with a prioritized prescription of skills to run |
+| [`hubspot-marketing-audit`](https://hubspot.granot.io/skills/hubspot-marketing-audit) | The marketing lens: deliverability, contact completeness, engagement, lifecycle consistency, and list, workflow, and form sprawl |
+| [`hubspot-sales-audit`](https://hubspot.granot.io/skills/hubspot-sales-audit) | The sales lens: pipeline configuration, deal data quality, stale and past-due deals, ownership and handoff gaps, overdue follow-up |
+| [`hubspot-implementation-plan`](https://hubspot.granot.io/skills/hubspot-implementation-plan) | Generate a phased plan from a full, marketing, or sales audit report, with dependencies and effort estimates |
+| [`connect-hubspot-mcp`](https://hubspot.granot.io/skills/connect-hubspot-mcp) | Connect Claude to HubSpot's remote MCP server for conversational lookups and spot-checks |
+| [`connect-hubspot-agent-cli`](https://hubspot.granot.io/skills/connect-hubspot-agent-cli) | Connect Claude Code to HubSpot's Agent CLI (beta) for bulk and administrative work from the terminal |
+| [`audit-api-usage`](https://hubspot.granot.io/skills/audit-api-usage) | Find every integration on legacy v1–v4 endpoints or a legacy private app before HubSpot's 2027 cutoffs |
 | [`sandbox-self-test`](https://hubspot.granot.io/skills/sandbox-self-test) | Verify the whole toolkit against a disposable developer sandbox you bring — seed, test, report, tear down; production-locked |
 
 ### Database Hygiene (6)
@@ -146,7 +164,7 @@ Once clean, use `/weekly-cleanup-routine` (5 min/week) and `/quarterly-database-
 
 ### Automation Workflows (5)
 
-All four builders create their workflows via the stable v4 Automation API (always disabled, for UI review before enabling), with a manual UI path as fallback.
+All four builders create their workflows via HubSpot's Workflows API, which is still beta (always disabled, for UI review before enabling), with a manual UI path as fallback.
 
 | Skill | Description |
 |-------|-------------|
@@ -178,16 +196,16 @@ All four builders create their workflows via the stable v4 Automation API (alway
 ## Prerequisites
 
 - **Claude Code** installed and configured
-- **HubSpot account** with a private app token in `.env` as `HUBSPOT_ACCESS_TOKEN`. Typical scopes across the skill set: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.deals.read/write`, `crm.objects.owners.read`, `crm.schemas.*` (property management), `crm.lists.read/write`, `automation` (workflow skills), `forms` — grant per skill as documented in each SKILL.md
+- **HubSpot account** with a service key in `.env` as `HUBSPOT_ACCESS_TOKEN` (Settings > Integrations > Service Keys; a token from an existing legacy private app also works). Typical scopes across the skill set: `crm.objects.contacts.read/write`, `crm.objects.companies.read/write`, `crm.objects.deals.read/write`, `crm.objects.owners.read`, `crm.schemas.*` (property management), `crm.lists.read/write`, `automation` (workflow skills), `forms` — grant per skill as documented in each SKILL.md
 - **Python 3.10+** with [uv](https://github.com/astral-sh/uv) — scripts carry inline metadata and run with `uv run`, no project setup
 - HubSpot **Marketing Professional** plan or higher (for workflow-based skills)
-- Optional: HubSpot's **MCP server** connection for conversational spot-checks (`/connect-hubspot-mcp`)
+- Optional: HubSpot's **MCP server** for conversational spot-checks (`/connect-hubspot-mcp`) and **Agent CLI** for one-off bulk jobs (`/connect-hubspot-agent-cli`)
 - Optional: an **enrichment provider** API key (FullEnrich, Apollo, Hunter, Dropcontact, or your own) for `/waterfall-enrich-contacts`
 - Optional: a free **developer test account** with its token in `HUBSPOT_SANDBOX_ACCESS_TOKEN` for `/sandbox-self-test`
 
 ### API versioning
 
-Scripts target HubSpot's stable REST versions: `/crm/v3/`, `/automation/v4/`, `/marketing/v3/` — all supported until **March 30, 2027**. HubSpot's current recommended target is the date-based `2026-03` release; this repo will migrate in a future major version, and `/audit-api-usage` helps you migrate everything else in your stack.
+Scripts target `/crm/v3/`, `/automation/v4/`, and `/marketing/v3/`. These work today. HubSpot's current date-based version is `2026-09`; v4 support ends **March 30, 2027**, and v1–v3 have been unsupported since September 2026 with enforcement in **September 2027**. The scripts migrate to date-based paths one skill at a time, each verified through `/sandbox-self-test`, because not every v3 contract carries over unchanged. `/audit-api-usage` helps you migrate everything else in your stack.
 
 ---
 
@@ -235,7 +253,7 @@ hubspot-admin-skills/
     │   │   └── sandbox-self-test.yml   (opt-in workflow — copy to .github/workflows/)
     │   └── scripts/
     │       └── preflight.py / seed.py / run_suite.py / teardown.py
-    ├── ...                        (37 skills total, 21 with scripts)
+    ├── ...                        (40 skills total, 21 with scripts)
     └── backfill-geo-data/
         └── SKILL.md
 ```

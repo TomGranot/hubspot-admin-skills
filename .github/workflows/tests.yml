@@ -1,0 +1,15 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  offline:
+    # Offline only: a fake HubSpot answers every request. No token, no portal.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --with pytest --with requests --with python-dotenv pytest tests/ -q

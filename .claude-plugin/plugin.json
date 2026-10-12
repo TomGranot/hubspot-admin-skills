@@ -1,5 +1,21 @@
 {
   "name": "hubspot-admin",
   "description": "Complete HubSpot CRM administration toolkit — audit, clean, enrich, segment, automate, and maintain your database",
-  "version": "1.2.0"
+  "version": "1.2.0",
+  "author": {
+    "name": "Tom Granot",
+    "url": "https://granot.io"
+  },
+  "homepage": "https://hubspot.granot.io",
+  "repository": "https://github.com/TomGranot/hubspot-admin-skills",
+  "license": "MIT",
+  "keywords": [
+    "hubspot",
+    "crm",
+    "revops",
+    "marketing-ops",
+    "sales-ops",
+    "data-hygiene",
+    "audit"
+  ]
 }

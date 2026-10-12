@@ -15,6 +15,8 @@
 
 Built by [Tom Granot](https://consume.granot.io) — from deep experience with enterprise HubSpot CRM administration.
 
+[![Watch the video](./assets/video-thumbnail.png)](https://www.youtube.com/watch?v=ZUIprPSbYO4)
+
 ---
 
 ## What's New in 2.0

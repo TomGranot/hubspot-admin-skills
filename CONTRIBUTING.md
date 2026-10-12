@@ -11,8 +11,9 @@ The `hubspot-audit` skill detects issues that no existing skill covers and offer
 1. **Fork**: `gh repo fork TomGranot/hubspot-admin-skills --clone`
 2. **Branch**: `git checkout -b skill/your-skill-name`
 3. **Create**: Add `skills/<your-skill>/SKILL.md` following the spec below
-4. **Test**: Run `/sandbox-self-test` against a free developer test account (see "Testing Your Skill" below)
-5. **PR**: `gh pr create --repo TomGranot/hubspot-admin-skills`
+4. **Validate**: `claude plugin validate .` checks the manifests and every skill's frontmatter
+5. **Test**: Run `/sandbox-self-test` against a free developer test account (see "Testing Your Skill" below)
+6. **PR**: `gh pr create --repo TomGranot/hubspot-admin-skills`
 
 ## Skill Anatomy
 
@@ -99,8 +100,10 @@ Every script:
    ```
 
    ```bash
-   uv run skills/<skill-name>/scripts/before.py
+   uv run scripts/before.py
    ```
+
+   **Write script paths relative to the skill's own directory**, as above, never as `skills/<skill-name>/scripts/...`. Most users install these skills as a plugin, so their working directory is their own project and a repo-relative path does not exist there. For a sibling skill's script use `../other-skill/scripts/x.py`. Put the standard path note under your `## Scripts` heading (copy it from any scripted skill). Scripts are still *run from* the user's project directory, which is where `.env`, `data/`, and `reports/` live.
 
 2. **Authenticates via `HUBSPOT_ACCESS_TOKEN`** from a `.env` file at the repo root (fall back to the script's skill directory). The token is a **service key** (Settings > Integrations > Service Keys). Tokens from existing legacy private apps still work, but HubSpot disabled creating new private apps on October 26, 2026, so never instruct a user to create one:
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### `cleanup-deals` gets scripted stages
+
+The sales audit routes most of its findings to `cleanup-deals`, which until now was instructions only.
+
+- **`scripts/before.py`** (read-only) exports one CSV per finding: open deals past their close date, open deals with no logged activity in N days (`--stale-days`, default 60), open deals missing amount or close date, closed-lost deals with no loss reason, and likely test deals. Salesforce-synced deals are skipped and counted.
+- **`scripts/execute.py`** is deliberately conservative. By default it creates one review task per deal owner listing their flagged deals; it never closes deals or edits deal properties. With `--delete-from-csv` it deletes only test deals a person marked `yes` in the reviewed CSV, refusing Salesforce-synced and closed-won deals. Abort thresholds, a CSV written before any write, and typed confirmation in both modes.
+- **`scripts/after.py`** re-counts every finding and prints a before/after comparison.
+- These are the first scripts to target the date-based API version `2026-09`. They are covered by an offline suite (`tests/test_cleanup_deals.py`) and **have not been run against a live portal**.
+
 ## 2.0.0 — 2026-10-12
 
 Two audiences on one engine, and a full pass over everything HubSpot and Claude Code changed since 1.2.

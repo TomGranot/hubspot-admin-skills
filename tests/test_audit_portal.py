@@ -139,6 +139,30 @@ def test_unreadable_objects_report_na_not_zero(monkeypatch):
     assert d.grade == "?" and d.notes
 
 
+def test_unreadable_owners_report_na_not_zero(monkeypatch):
+    """A token without crm.objects.owners.read must not turn into a clean bill
+    of health: the deactivated-owner rows are n/a, and no fix is prescribed."""
+    fake = FakeHubSpot()
+    real = fake.request
+
+    def request(method, url, **kw):
+        if url.removeprefix(audit.BASE) == "/crm/v3/owners":
+            return FakeResponse(403)
+        return real(method, url, **kw)
+
+    monkeypatch.setattr(audit.requests, "request", request)
+    monkeypatch.setattr(audit, "QUERY_DELAY", 0)
+    dims = audit.run("sales")
+    owners = next(d for d in dims if d.key == "owner_health")
+    sales = next(d for d in dims if d.key == "sales_ownership")
+    na = [r for d in (owners, sales) for r in d.rows if "deactivated" in r["metric"].lower()]
+    assert len(na) == 3 and all(r["value"] is None for r in na)
+    assert any("crm.objects.owners.read" in n for n in owners.notes)
+    assert "reassign-deactivated-owners" not in [r["skill"] for r in audit.prescription(dims)]
+    # Still graded on what could be read (unowned contacts), not blanked out.
+    assert owners.grade != "—"
+
+
 def test_main_writes_markdown_and_json(portal, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HUBSPOT_ACCESS_TOKEN", "test-token-not-real")

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Unreadable owners report `n/a`, not `0`
+
+- When the token lacks `crm.objects.owners.read`, `audit_portal.py` treated the 403 on `GET /crm/v3/owners?archived=true` as an empty list and printed `0` for "Deactivated owners still owning contacts", "Contacts owned by deactivated owners" and "Open deals owned by deactivated owners". That was a false clean, against the audit's own "n/a is not zero" rule. The three rows now read `n/a` with a note naming the missing scope, `reassign-deactivated-owners` is not prescribed, and Owner Health is still graded on the rows that could be read. Covered by a new offline test.
+
 ### `cleanup-deals` gets scripted stages
 
 The sales audit routes most of its findings to `cleanup-deals`, which until now was instructions only.

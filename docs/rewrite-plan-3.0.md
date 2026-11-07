@@ -1,7 +1,7 @@
 # HubSpot Admin Skills 3.0: Rewrite and Expansion Plan
 
 **Status:** proposal, 2026-11-07
-**Scope:** the audit engine, the skill catalog, the script layer, the platform migration, and the quality bar that gates all of it
+**Scope:** the audit engine, the skill catalog, the script layer, the platform migration, the quality bar that gates all of it, and the website that presents it
 
 ---
 
@@ -352,10 +352,10 @@ Each phase ends in a releasable state. Effort is engineering time for one person
 | **3. Sales expansion** | Section 3.3 checks; sequences, activity capture, time-in-stage, stage calibration, stale tasks, quotes; `set-stage-required-properties`; golden seeds | 3 weeks | 1 (parallel with 2) |
 | **4. Service and platform lenses** | Sections 3.4 and 3.6; entry-point skills; users/seats, validation rules, integrations; `audit-api-usage` folded in | 2 weeks | 1 |
 | **5. Migration and writes** | Every script on `2026-09` through `client.py`; validation preflight in every `execute.py`; Agent CLI backend; sandbox gate in the library | 2 weeks | 1 (can start during 2-3) |
-| **6. Plan generator, docs, site** | Generated implementation plan; README, CONTRIBUTING (check authoring guide), CHANGELOG; categories, problem pages for the new skills; `skills.json` schema bump | 1.5 weeks | 2-5 |
+| **6. Plan generator, docs, site** | Generated implementation plan; README, CONTRIBUTING (check authoring guide), CHANGELOG; the website update in section 11 | 2.5 weeks | 2-5 |
 | **7. Live validation and release** | Three-portal validation (7.3), fixes, 3.0.0 tag | 1.5 weeks | all |
 
-Total: roughly 17 weeks sequential, about 11-12 with phases 2 and 3 in parallel. Commerce lens deferred to 3.1 unless a user asks.
+Total: roughly 18 weeks sequential, about 12-13 with phases 2 and 3 in parallel. Commerce lens deferred to 3.1 unless a user asks.
 
 Suggested cut if the timeline must shrink: ship 3.0 with phases 0, 1, 2, 3, 5, 7 (the two complaints that cost the most trust are duplicates and the thin grading, both in phase 1) and release service/platform as 3.1.
 
@@ -381,6 +381,56 @@ Suggested cut if the timeline must shrink: ship 3.0 with phases 0, 1, 2, 3, 5, 7
 6. Benchmarks table: include with sources, or leave relative language only? (Recommend include, clearly labeled.)
 
 ---
+
+## 11. Website update (hubspot.granot.io)
+
+The site reads `skills/*/SKILL.md` at build time, so most of the catalog change flows through on its own. What does not: the story the homepage tells, the hand-maintained problem index, the diagrams, the agent endpoints' prose, and several platform facts that are already stale. Audit of the current site against this plan:
+
+### 11.1 What is already wrong today
+
+| Where | Problem |
+|---|---|
+| `site/src/pages/api/skills.json.ts` | `requirements.hubspot` still says "Private app token". Should say service key (existing private app tokens still work). |
+| `site/src/data/problems.ts` | 24 problem pages cover 23 skills. None of the `cleanup-*` maintenance skills, `create-segment-lists`, `review-bounced-contacts`, `backfill-geo-data`, `enrich-industry`, `assign-unowned-contacts`, `quarterly-database-cleanup`, `lifecycle-progression-workflow`, `bounce-monitoring-workflow`, or `hubspot-implementation-plan` have one. The problem index is the SEO surface, and the long tail it was built for is exactly these. |
+| Homepage hero, `AuditReport.astro` | The diagram shows the 2.0 artifact: a dimension name, a letter grade, a skill. After 3.0 that is the thing we are replacing. |
+| Homepage copy | "Every finding gets a grade and the name of the skill that fixes it" is the 2.0 promise that drew the "results are not good enough" feedback. |
+| `docs/seo-site-plan.md` | Says 33 problem pages planned; 24 exist. Also predates the three-audit structure. |
+
+### 11.2 Changes that ship with 3.0
+
+**Structure**
+
+- `categories.ts` gains `service-hub` and `platform-governance`; moved skills get their new slug in frontmatter (the content schema enforces it at build). Netlify `_redirects` entries from old category URLs to new ones; skill URLs do not change.
+- New top-level page `/audit` (or `/lenses`): what each of the six lenses checks, as a rendered table generated from the check catalog. The catalog lives in code (`lib/hubspot_admin/checks/*`), so the build reads a generated `checks.json` committed by a repo script, never a hand-copied list. This is the page that answers "is X covered?" before someone installs.
+- Per-skill pages gain three blocks: "Audit checks that prescribe this skill" (from `checks.json`), "Prevents recurrence via" (the prevention field), and "Scripts: stages shipped" already exists, extend with "tested in sandbox: yes/no" from the self-test registry.
+- Problem index: one problem page per new skill and per currently uncovered skill (about 35 new pages), written in the same format, with FAQ structured data. Add a `problems/` sub-index per lens so the index does not become one 60-item wall.
+
+**Homepage**
+
+- New hero diagram: one finding card as 3.0 renders it (count, share, trend arrow, severity, three sample records, root cause line, fix). Replace `AuditReport.astro`; keep `SafetyPipeline.astro` and `AgentSurfaces.astro`, update the latter to show the Agent CLI as a backend rather than a sidebar.
+- Copy rewritten around evidence: "every finding shows you the records, why they got that way, and what stops it recurring". Stats row gets "checks run" (from `checks.json`), "lenses", "skills", "scripted skills".
+- Add a "What changed in HubSpot in 2026 and what it means for your portal" section linking to the platform lens page: service keys, 2026-09 write validation, v4 cutoff, Agent CLI. This is both useful and the most searched set of terms this year.
+
+**Agent surface**
+
+- `skills.json`: bump to `schema_version: 2`; per skill add `lens`, `checks` (ids that prescribe it), `prevention`, `sandbox_tested`, `api_version`; top-level `checks` array; fix the requirements text. Keep `/api/skills.json` path; add `/api/checks.json`.
+- `llms.txt` and `llms-full.txt`: group by lens, add the checks section, add the "could not check" vocabulary so agents interpret `no_api` rows correctly.
+- Raw script endpoint already serves nested helpers; make sure it also serves `lib/hubspot_admin/*` (or point agents at the GitHub raw URL for the library) so a fetched script is runnable.
+
+**Honesty surfaces**
+
+- A `/coverage` page that lists checks by status on a reference Professional portal: ran, needs scope, needs hub, no API. Generated from the golden-sandbox run report. Publishing this is the public answer to "the checks are not complete enough", and it keeps us honest about what the API cannot see.
+- The changelog page (new, rendered from `CHANGELOG.md`) so the "known gaps" sections 2.0 started writing are visible without opening GitHub.
+
+**Housekeeping**
+
+- Update `docs/seo-site-plan.md` to the 3.0 structure or fold it into this document.
+- OG image generator: new template per lens.
+- Rebuild `videoSchema()` only if a new walkthrough video is recorded; otherwise drop the 2.0 video from the hero and keep it on `/install`.
+
+### 11.3 Sequencing
+
+Site work is phase 6 but two items should land earlier: the stale `skills.json` requirements string and the missing problem pages for existing skills are independent of the engine and can ship this month on `main`. The lens page, finding-card diagram, and `checks.json` wait for phase 1's check model to settle. Effort: about one week for the data and structure, half a week for copy and diagrams, included in the phase 6 estimate.
 
 ## Appendix A: 2.0 engine inventory (what exists today)
 

@@ -4,7 +4,7 @@ description: "Audit the sales side of a HubSpot portal: pipeline configuration, 
 license: MIT
 metadata:
   author: tomgranot
-  version: "1.0"
+  version: "1.1"
   category: audit-planning
 ---
 
@@ -36,13 +36,14 @@ The audit runs on any HubSpot tier with deals. The leads object needs Sales Hub;
 
 ## Run It
 
-The engine lives in the `hubspot-audit` skill, one directory over from this one. Run it from your project directory so `.env` and `reports/` resolve there (in a clone of the repo the path is `skills/hubspot-audit/scripts/audit_portal.py`).
+The engine lives in the `hubspot-audit` skill, one directory over from this one. Run it from your project directory so `.env` and `reports/` resolve there (in a clone of the repo the path is `skills/hubspot-audit/scripts/audit.py`).
 
 ```bash
-uv run ../hubspot-audit/scripts/audit_portal.py --scope sales
+uv run ../hubspot-audit/scripts/audit.py --scope sales
+uv run ../hubspot-audit/scripts/audit.py --scope sales --no-scan   # faster; duplicates report as skipped
 ```
 
-Output: `reports/hubspot-sales-audit-{YYYY-MM-DD}.md` and a `.json` twin.
+Output: `reports/hubspot-sales-audit-{YYYY-MM-DD}.md`, a `.json` twin (`schema_version: 3`), and `reports/history/` for the next run's diff. Every finding carries sample records, a breakdown, root causes, the fix, and the prevention; see `/hubspot-audit` for how grades work (a section grades on its worst finding and cannot grade A while a check was skipped).
 
 ## What It Measures
 

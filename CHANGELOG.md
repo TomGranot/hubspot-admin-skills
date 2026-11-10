@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### The audit engine, rewritten (3.0 alpha)
+
+Feedback on 2.0 was that the checks were thin, large parts of marketing and sales were not covered, and the grades and recommendations were not trustworthy (issue #1: a Contact Completeness grade of A on a portal missing company on most contacts, and duplicates that were "flagged, not counted"). The rewrite plan is in `docs/rewrite-plan-3.0.md`; this is its first phase.
+
+- **Shared library** at `lib/hubspot_admin/`: client (service key, pacing, retry, the `warnings` array from `2026-09`), search helpers, a **record scan that gets past the Search API's 10,000-result cap** by splitting on createdate and caches to `data/cache/`, the check model, the report renderer, a CSV log, and the sandbox gate. Scripts import it relative to their own location, so it works from the plugin cache.
+- **`hubspot-audit` runs on declarative checks** (`lib/hubspot_admin/checks/`): 59 checks across the shared, marketing, and sales lenses, up from 45 metrics. Every finding carries sample records deep-linked into the portal, a breakdown (record source, owner, pipeline, lifecycle stage), a root cause stated only when one breakdown value explains at least 40% of the finding, the fix skill or UI steps, and the prevention.
+- **Duplicates are counted**: contacts by normalized email (case, plus-addressing, gmail dots), phone, and name + company; companies by normalized domain and by name within a country. The biggest groups are the evidence.
+- **New checks**: invalid email syntax, free-mail share, contacts with no company whose domain matches an existing company, owner load imbalance, contacts created in 90 days by source, marketing contacts never emailed, globally unsubscribed contacts still marketable, lifecycle funnel distribution, deal amount outliers, test-named workflows among the inactive ones.
+- **Grading uses every signal.** Contact completeness is one graded check per property. A section grades on its worst finding and cannot grade A while any of its checks was skipped. Severity bands on the weighted share with materiality caps (fewer than 3 records is never above low, fewer than 10 never above medium, fewer than 50 never above high) and nice-to-have fields never grade critical.
+- **Coverage is reported**: the report ends with every skipped check, why (scope, hub, UI-only, flag, error), and how to get it.
+- **History**: each run is saved under `reports/history/` and the next run of the same scope reports new, resolved, and moved findings and grade changes.
+- `scripts/audit.py` replaces `scripts/audit_portal.py` (kept as a forwarding shim). `--scope` accepts a comma-separated list. New flags: `--no-scan`, `--scan-cap`, `--stale-days`, `--sample`, `--cache-ttl`, `--out`.
+- **JSON schema version 3**: `sections[].findings[]` replaces `dimensions[].rows[]`; `/hubspot-implementation-plan` documents both.
+- **Tests**: `tests/fake_hubspot.py` evaluates Search API filters over a synthetic portal with planted defects (duplicates, invalid emails, deactivated owners, stale and past-due deals, overdue tasks, and more), and `tests/test_audit_engine.py` asserts the engine finds each with the planted count, grades on more than one signal, scans past the 10k cap, reports coverage honestly, and renders both report formats. 65 tests, offline.
+- The site's agent manifest no longer tells agents to use a private app token.
+
+**Not yet done from the plan:** the service, platform, and commerce lenses; marketing email performance, sequences, activity capture, and the other new checks in sections 3.2-3.3 of the plan; scripts for the prose-only skills; migrating the skill scripts off `/crm/v3/`. **None of this has run against a live portal yet**; run `/sandbox-self-test` and a full audit on a developer test account before relying on the new numbers.
+
 ### `cleanup-deals` gets scripted stages
 
 The sales audit routes most of its findings to `cleanup-deals`, which until now was instructions only.

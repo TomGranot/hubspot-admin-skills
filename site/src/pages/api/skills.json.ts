@@ -28,7 +28,7 @@ export const GET: APIRoute = async () => {
       plugin_install: PLUGIN_INSTALL_COMMAND,
     },
     requirements: {
-      hubspot: 'Private app token (HUBSPOT_ACCESS_TOKEN in .env) with CRM scopes; Marketing Professional+ for workflow skills',
+      hubspot: 'Service key (HUBSPOT_ACCESS_TOKEN in .env; an existing legacy private app token also works) with CRM read scopes, plus write scopes for the skills that change data; Marketing Professional+ for workflow skills',
       python: 'Python 3.10+ with uv, for scripted skills',
     },
     endpoints: {

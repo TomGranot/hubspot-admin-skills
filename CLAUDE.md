@@ -5,6 +5,8 @@ This is a Claude Code skills marketplace plugin for HubSpot CRM administration.
 ## Conventions
 
 - Each skill lives in `skills/<skill-name>/SKILL.md`; skills with scripted stages ship `scripts/before.py`, `scripts/execute.py`, `scripts/after.py`
+- Shared code lives in `lib/hubspot_admin/` (client, search and record scan, check model, report renderer, CSV log, sandbox gate). Scripts import it with a `sys.path.insert` relative to `__file__` (see `skills/hubspot-audit/scripts/audit.py`), which works from a clone and from the plugin cache. Every endpoint path is defined once in `lib/hubspot_admin/paths.py`
+- Audit checks are functions under `lib/hubspot_admin/checks/<lens>.py` registered with `@check`; each returns a `Finding` with evidence, breakdown, root causes, fix, and prevention. New checks plant their defect in `tests/fake_hubspot.py` and assert the count in `tests/test_audit_engine.py`
 - Skills follow the Agent Skills Specification: context, prerequisites, step-by-step instructions, verification checks, and rollback guidance
 - Skills that change portal state follow the **Plan → Before → Execute → After** pattern with a required **Rollback** section, an abort threshold, a CSV audit trail, and explicit user confirmation before mutating anything
 - The repo is organized by CRM lifecycle phase: audit, hygiene, enrichment, segmentation, automation, and ongoing maintenance

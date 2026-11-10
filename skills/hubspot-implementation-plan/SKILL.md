@@ -4,7 +4,7 @@ description: "Generate a phased implementation plan from a HubSpot audit report.
 license: MIT
 metadata:
   author: tomgranot
-  version: "2.0"
+  version: "2.1"
   category: audit-planning
 ---
 
@@ -29,10 +29,12 @@ Find the most recent audit report. The audit engine writes one of three names de
 | marketing | `reports/hubspot-marketing-audit-*.md` |
 | sales | `reports/hubspot-sales-audit-*.md` |
 
-Each has a `.json` twin with the same data in structured form: `dimensions` (grade, rows with count, percentage, and fix skill) and `prescription` (the ordered skill list). Prefer the JSON for counts and the markdown for context. Extract:
-- Letter grades per dimension, and each dimension's lens (shared, marketing, sales)
-- Exact counts for each metric
+Each has a `.json` twin (`schema_version: 3`) with the same data in structured form: `sections` (lens, grade, coverage, and `findings`, each with `check`, `count`, `denominator`, `share`, `severity`, `evidence`, `breakdown`, `root_causes`, `fix`, `fix_steps`, `prevention`, `coverage`), `prescription` (the ordered skill list with the finding that triggered each), `coverage` (which checks were skipped and why), and `changes` (new, resolved, and moved findings since the previous run, when there is one). Reports from the 2.0 engine (`dimensions` instead of `sections`) can still be planned from, but have no evidence or coverage. Prefer the JSON for counts and the markdown for context. Extract:
+- Letter grades per section, and each section's lens (shared, marketing, sales)
+- Exact counts and severities for each finding, and the root causes the audit tested
 - The Prescription table
+- The skipped checks: plan a scope fix or a manual check for each, do not treat them as clean
+- The changes since the last run: resolved findings drop out of the plan, new ones go in
 
 If multiple reports exist, use the most recent by date in the filename. If a marketing report and a sales report share a date, plan from both: their shared dimensions are identical, so merge them rather than double-counting.
 

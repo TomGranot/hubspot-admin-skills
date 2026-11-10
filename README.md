@@ -230,7 +230,7 @@ hubspot-admin-skills/
     ├── hubspot-audit/
     │   ├── SKILL.md
     │   └── scripts/
-    │       └── audit_portal.py
+    │       └── audit.py
     ├── hubspot-implementation-plan/
     │   └── SKILL.md
     ├── delete-no-email-contacts/

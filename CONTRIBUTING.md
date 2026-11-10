@@ -138,9 +138,49 @@ The repo tests itself against a **bring-your-own developer sandbox** — see `sk
 
 The suite refuses to run against anything that is not a `DEVELOPER_TEST` or `SANDBOX` portal. Do not weaken that gate in a PR; it will not be merged.
 
+## The Shared Library and Audit Checks
+
+Common code lives in `lib/hubspot_admin/`: `Client` (service-key auth, pacing, retry, versioned paths from `paths.py`), `search` (filter builders, exact counts, samples, a record scan that segments past the 10,000-result cap, a JSONL cache), `findings` (the check model and grading), `context` (evidence, breakdowns, scans shared across checks), `report` (markdown, JSON, history diff), `csvlog`, and `sandbox` (the account-type gate). A script reaches it with one line relative to its own location:
+
+```python
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "lib"))
+from hubspot_admin import Client
+```
+
+Prefer the library over copying `api()`, `count()`, and pagination into a new script. New endpoint paths go in `paths.py`, nowhere else.
+
+### Writing an audit check
+
+A check is a function registered with `@check` in `lib/hubspot_admin/checks/<lens>.py`. It receives a `Context` and the `Check` and returns a `Finding`:
+
+```python
+@check("deal.no_contact", "Open deals with no associated contact", SEC_DEAL, "sales",
+       fix="cleanup-deals", weight=1.0,
+       impact="No buyer on record: sequences, meetings, and attribution have nothing to attach to.",
+       prevention="Require a contact association on deal creation.")
+def deals_without_contact(ctx, c):
+    groups = [[OPEN, f_missing("num_associated_contacts")], [OPEN, f_eq("num_associated_contacts", "0")]]
+    n = ctx.count("deals", *groups)
+    f = Finding(c.id, c.title, c.section, c.lens, count=n, denominator=open_deals(ctx))
+    if n:
+        f.evidence = ctx.sample("deals", groups, ["dealname", "amount", "pipeline"])
+        f.breakdown = ctx.breakdown("deals", groups, "pipeline", pipeline_ids, "pipeline")
+    return f
+```
+
+Rules:
+
+- **A count of `None` means unreadable**, never zero. Return a `Finding` with `coverage=Coverage.NO_SCOPE` (or `NO_HUB`, `NO_API`, `DISABLED`) and a note that says what to do about it. The report lists it under "What this audit could not check" and the section cannot grade A.
+- **Evidence and breakdown on every non-zero finding** that has records behind it. State a root cause only when the data supports it (`ctx.dominant` returns the top breakdown value when it explains at least 40% of the finding).
+- **Weight** scales the share before severity banding. 1.0 for a real defect, 2-3 for things that cost money or deals today, under 1 for nice-to-have fields (those never grade critical). `graded=False` for context metrics.
+- **Set `scored=True`** and `f.severity` yourself only when the share is not the right measure (owner load imbalance scores the excess over an even split).
+- **Thresholds** are options or constants, printed in the finding's `threshold` so the reader sees what was assumed.
+- **Plant the defect** in `tests/fake_hubspot.py` (`synthetic_portal` and `PLANTED`) and add a row to the parametrized test in `tests/test_audit_engine.py`. A check that cannot be shown to find its own defect does not ship.
+- A check must not write. The fake HubSpot raises on any non-GET call that is not a search.
+
 ## API Version Policy
 
-- Existing scripts target `/crm/v3/`, `/automation/v4/`, and `/marketing/v3/`. These work today and are on borrowed time.
+- Existing skill scripts target `/crm/v3/`, `/automation/v4/`, and `/marketing/v3/`. These work today and are on borrowed time. The audit engine's CRM object reads and searches are on `2026-09`; its remaining legacy paths are listed in `lib/hubspot_admin/paths.py` with the reason.
 - HubSpot moved to date-based API versioning in March 2026 (`/YYYY-MM/`, currently `2026-09`, for example `/crm/objects/2026-09/contacts`). **v4 support ends March 30, 2027. v1-v3 have been unsupported since September 15, 2026, with enforcement in September 2027.**
 - **New scripts target the current date-based version.** Do not add new dependencies on v1-v4 paths.
 - **Existing scripts migrate one skill at a time, and only with a sandbox run.** HubSpot states that many v3 contracts carry over unchanged but not all, and `2026-09` rejects writes that omit admin-required properties. A path rewrite that has not been run through `/sandbox-self-test` is not a migration. Put the version in a single `API_VERSION` constant in the script's Configuration block.

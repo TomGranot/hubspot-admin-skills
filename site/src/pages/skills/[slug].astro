@@ -8,6 +8,8 @@ import StructuredData from '~/components/StructuredData.astro';
 import Button from '~/components/ui/Button.astro';
 
 import { getProblemsForSkill } from '~/data/problems';
+import { SKILL_SEO } from '~/data/skillSeo';
+import { getGuides, guidePath } from '~/lib/guides';
 import {
   getSkills,
   getRelatedSkills,
@@ -32,6 +34,18 @@ const { Content } = await render(skill.entry);
 
 const related = await getRelatedSkills(skill);
 const problems = getProblemsForSkill(skill.slug);
+const guides = (await getGuides()).filter((g) => g.skills.some((s) => s.slug === skill.slug));
+const seo = SKILL_SEO[skill.slug];
+// Built as one string so no template whitespace lands before commas or the period.
+const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const guideLinks =
+  guides
+    .map(
+      (g) =>
+        `<a href="${guidePath(g.slug)}" class="text-primary hover:underline font-medium">${escapeHtml(g.heading.split(/[:,]/)[0])}</a>`
+    )
+    .join(', ')
+    .replace(/, (?=[^,]*$)/, ' and ') + '.';
 
 const schema = [
   skillArticleSchema(skill),
@@ -45,8 +59,8 @@ const schema = [
 ].filter(Boolean) as object[];
 
 const metadata = {
-  title: skill.title,
-  description: skill.description,
+  title: seo?.title ?? skill.title,
+  description: seo?.description ?? skill.description,
   openGraph: {
     type: 'article',
     images: [{ url: `/og/skills/${skill.slug}.png`, width: 1200, height: 630 }],
@@ -73,6 +87,14 @@ const metadata = {
       {skill.title}
     </h1>
     <p class="mt-4 text-xl text-muted">{skill.description}</p>
+
+    {
+      guides.length > 0 && (
+        <p class="mt-4 text-base text-muted">
+          Doing this by hand, or deciding whether you need it? Read the <Fragment set:html={guideLinks} />
+        </p>
+      )
+    }
 
     <div class="flex flex-wrap items-center gap-2 mt-5 text-sm">
       <a

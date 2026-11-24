@@ -1,0 +1,52 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import HeroText from '~/components/widgets/HeroText.astro';
+import StructuredData from '~/components/StructuredData.astro';
+
+import { getGuides, guidePath } from '~/lib/guides';
+import { breadcrumbSchema } from '~/lib/structuredData';
+
+const guides = await getGuides();
+
+const metadata = {
+  title: 'HubSpot Admin Guides: Audits, Hygiene, Enrichment',
+  ignoreTitleTemplate: true,
+  description:
+    'Practical HubSpot admin guides: an audit checklist, an implementation plan template, data hygiene, enrichment and routine maintenance. Manual steps first, scripts second.',
+  openGraph: {
+    images: [{ url: '/og/pages/guides.png', width: 1200, height: 630 }],
+  },
+};
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData
+      schema={breadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: 'Guides', path: '/guides' },
+      ])}
+    />
+  </Fragment>
+
+  <HeroText
+    tagline="Guides"
+    title="HubSpot admin guides"
+    subtitle="Each guide works by hand in the HubSpot UI. If you would rather not click through it, the matching skill runs the same checks for you."
+  />
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-16">
+    <ul class="space-y-6">
+      {
+        guides.map((guide) => (
+          <li>
+            <a href={guidePath(guide.slug)} class="text-primary hover:underline font-medium text-lg">
+              {guide.heading}
+            </a>
+            <p class="text-muted mt-0.5">{guide.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Layout>

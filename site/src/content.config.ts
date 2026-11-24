@@ -22,6 +22,24 @@ const skillsCollection = defineCollection({
   }),
 });
 
+// Long-form guides that answer a search query in full (manual steps first,
+// the scripted skill second). Lives in the site, not in skills/, because a
+// guide is not a skill and must not be installed as one.
+const guidesCollection = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/guides' }),
+  schema: z.object({
+    // <title> tag, rendered without the site suffix: keep it to 60 characters.
+    title: z.string().min(1).max(60),
+    description: z.string().min(120).max(165),
+    heading: z.string().min(1),
+    updated: z.coerce.date(),
+    // Skill slugs shown as cards at the end of the guide. Validated at build time.
+    skills: z.array(z.string()).min(1),
+    order: z.number().int(),
+  }),
+});
+
 export const collections = {
   skills: skillsCollection,
+  guides: guidesCollection,
 };

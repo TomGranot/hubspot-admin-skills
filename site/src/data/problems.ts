@@ -318,12 +318,43 @@ export const PROBLEMS: Problem[] = [
       {
         question: 'Does HubSpot have a recycle bin for deleted workflows?',
         answer:
-          'No — a deleted workflow is unrecoverable. A scheduled JSON export is the only real safety net, which is why the cleanup-workflows skill requires an export before any deletion.',
+          'No — a deleted workflow is unrecoverable. A scheduled JSON export is the only real safety net, which is why the cleanup-workflows skill recommends an export before any deletion.',
       },
       {
         question: 'Can I restore a HubSpot workflow from an export?',
         answer:
           'Yes, with caveats: the skill recreates the workflow from its exported JSON via the v4 API, always disabled. A few UI-only action types may need manual re-adding; the restore report lists them.',
+      },
+    ],
+  },
+  {
+    slug: 'hubspot-workflows-keep-breaking',
+    title: 'Our HubSpot workflows keep breaking and nobody knows why',
+    description:
+      'Workflows fail when what they depend on changes: a deleted list, a retired property, a departed owner, an untracked edit. How to audit workflows and their dependencies.',
+    intro:
+      'A workflow rarely breaks on its own. Something it depends on changes: the list it enrolls from is deleted, a property it reads stops updating, the owner it routes to leaves, or someone edits it without a trace. The skill inventories every workflow via the v4 Automation API, flags the off, erroring and never-enrolled ones, and makes you check dependencies before anything is deleted.',
+    skill: 'cleanup-workflows',
+    faqs: [
+      {
+        question: 'What usually causes HubSpot workflows to break?',
+        answer:
+          'Dependencies. A list used as an enrollment trigger gets deleted, a property it reads was retired (the legacy HubSpot Score stopped updating on August 31, 2025), a copy-property action hits a dropdown value that does not match, or records route to a deactivated owner. Workflows edited through the API break too: a PUT without the full definition deletes every action it leaves out.',
+      },
+      {
+        question: 'How do I audit workflow dependencies in HubSpot?',
+        answer:
+          'For each workflow, ask three questions: does it feed another workflow (as an enrollment trigger or a go-to-workflow action), does it set properties other workflows read, and is it documented anywhere? The skill builds the inventory and puts these questions in front of you before any workflow is turned off or deleted.',
+      },
+      {
+        question: 'Can a broken or deleted workflow be restored?',
+        answer:
+          'Not from HubSpot itself — a deleted workflow cannot be restored, though HubSpot Support can sometimes recover one. A JSON export from the workflows-as-code skill is the restore path you control, which is why the cleanup recommends exporting before any deletion.',
+      },
+      {
+        question: 'Do we need a HubSpot partner to audit and fix our workflows?',
+        answer:
+          'Not for the audit. The inventory and dependency checks run in Claude Code against your own portal with a service key, and every change waits for your confirmation. A partner adds judgment about your business rules; deciding which workflows still matter is still your call.',
       },
     ],
   },
@@ -361,6 +392,32 @@ export const PROBLEMS: Problem[] = [
         question: 'How long does a HubSpot portal audit take?',
         answer:
           'The scripted audit typically runs in minutes even on six-figure databases; the Search API’s 10,000-result cap is handled by segmented queries.',
+      },
+    ],
+  },
+  {
+    slug: 'hubspot-reporting-numbers-dont-match',
+    title: 'Our HubSpot reports disagree and nobody trusts the dashboard numbers',
+    description:
+      'Two reports, two answers, and a dashboard nobody believes. Most HubSpot reporting problems are data gaps. How to find the records your reports silently skip.',
+    intro:
+      'A HubSpot report is a filter over records, so it inherits their gaps. Contacts with no lifecycle stage drop out of funnel reports, unowned contacts vanish from owner-based dashboards, duplicate companies split account revenue, and open deals with past close dates pad the forecast. The audit counts each of these read-only, grades it A–F, and names the skill that fixes it.',
+    skill: 'hubspot-audit',
+    faqs: [
+      {
+        question: 'Why do two HubSpot reports show different numbers for the same thing?',
+        answer:
+          'Usually because they filter on different properties, and the empty values fall differently. A funnel report on lifecycle stage skips every contact without one; an owner report skips every unowned contact. Count the records with an empty value on each property the two reports use — that is the first place to look.',
+      },
+      {
+        question: 'Why is my HubSpot dashboard not updating?',
+        answer:
+          'Check the property before the dashboard. Any report still built on the legacy HubSpot Score property has shown frozen data since HubSpot retired it on August 31, 2025. Fix or repoint the underlying report rather than building another dashboard — overlapping dashboards are their own problem, covered by the cleanup-dashboards skill.',
+      },
+      {
+        question: 'Is the audit safe to run while we are troubleshooting?',
+        answer:
+          'Yes. It only searches and counts, and writes a markdown report plus a JSON twin. Nothing in the portal changes until you run a fix skill and confirm it.',
       },
     ],
   },
@@ -459,6 +516,32 @@ export const PROBLEMS: Problem[] = [
     ],
   },
   {
+    slug: 'hubspot-429-rate-limit-errors',
+    title: 'Why do we keep getting HubSpot 429 rate limit errors?',
+    description:
+      'A 429 means a caller hit HubSpot’s burst limit, the Search API limit, or the account’s daily limit. The exact limits, and how to find the integration hitting them.',
+    intro:
+      'HubSpot returns 429 when a caller exceeds a rate limit: 100 requests per 10 seconds per app on Free and Starter, 190 on Professional and Enterprise, 5 per second on the CRM Search API, plus a daily limit shared by every app in the account. The skill inventories every integration calling your portal, so you can see which one is spending the budget.',
+    skill: 'audit-api-usage',
+    faqs: [
+      {
+        question: 'How do I tell which HubSpot rate limit I hit?',
+        answer:
+          'Read the 429 response body: its policyName says whether you hit the daily limit or the 10-second one. Normal responses also carry X-HubSpot-RateLimit-Max and X-HubSpot-RateLimit-Remaining headers, but Search API responses do not include them, so a script that leans on search has to pace itself.',
+      },
+      {
+        question: 'Why do I get 429s from the Search API when I am under the 10-second limit?',
+        answer:
+          'Search has its own cap of 5 requests per second. A loop that pages through search results without pausing hits it long before the general burst limit. Space search calls out (the skills wait 0.2 seconds between pages) and use batch endpoints, which take up to 100 records per call, for reads and updates.',
+      },
+      {
+        question: 'Another integration is using up our limit. How do we find it?',
+        answer:
+          'The burst limit is per app, but the daily limit is shared across every app in the account, so one noisy sync can starve the rest. The account-info API reports daily usage totals, and each legacy private app’s Logs page in Settings shows its actual requests. The skill walks both and lists every caller with an owner.',
+      },
+    ],
+  },
+  {
     slug: 'hubspot-test-changes-without-production-risk',
     title: 'How do we test CRM automation without risking production data?',
     description:
@@ -497,5 +580,4 @@ export const PROBLEMS: Problem[] = [
   },
 ];
 
-export const getProblemsForSkill = (skillSlug: string): Problem[] =>
-  PROBLEMS.filter((p) => p.skill === skillSlug);
+export const getProblemsForSkill = (skillSlug: string): Problem[] => PROBLEMS.filter((p) => p.skill === skillSlug);

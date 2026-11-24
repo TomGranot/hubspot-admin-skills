@@ -1,0 +1,38 @@
+---
+export interface Props {
+  /** Ancestors first; the last item is the current page. */
+  items: { name: string; href: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="Breadcrumbs" class="breadcrumbs text-sm text-muted mb-6">
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+    {
+      items.map((item, i) => (
+        <li>
+          <a
+            href={item.href}
+            aria-current={i === items.length - 1 ? 'page' : undefined}
+            class={
+              i === items.length - 1
+                ? 'text-default font-medium'
+                : 'hover:text-primary underline-offset-2 hover:underline'
+            }
+          >
+            {item.name}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  /* Decorative divider: the empty alt text keeps it out of the accessibility tree. */
+  .breadcrumbs li + li::before {
+    content: '/' / '';
+    margin-inline-end: 0.5rem;
+  }
+</style>

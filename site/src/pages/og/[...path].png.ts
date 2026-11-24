@@ -3,6 +3,7 @@ import sharp from 'sharp';
 
 import { CATEGORIES } from '~/data/categories';
 import { PROBLEMS } from '~/data/problems';
+import { getGuides } from '~/lib/guides';
 import { getSkills } from '~/lib/skills';
 
 // Build-time generated Open Graph images: /og/skills/<slug>.png and
@@ -17,6 +18,7 @@ interface OgProps {
 
 export async function getStaticPaths() {
   const skills = await getSkills();
+  const guides = await getGuides();
   const scriptedCount = skills.filter((s) => s.scriptFiles.length > 0).length;
 
   const pages: { path: string; props: OgProps }[] = [
@@ -35,6 +37,10 @@ export async function getStaticPaths() {
     {
       path: 'pages/problems',
       props: { title: "What's broken in your HubSpot portal?", kicker: 'Problem index' },
+    },
+    {
+      path: 'pages/guides',
+      props: { title: 'HubSpot admin guides', kicker: 'Guides' },
     },
     {
       path: 'pages/install',
@@ -63,6 +69,10 @@ export async function getStaticPaths() {
         kicker: skill.category.title,
         badge: skill.scriptFiles.length > 0 ? 'Python scripts included' : undefined,
       } satisfies OgProps,
+    })),
+    ...guides.map((guide) => ({
+      params: { path: `guides/${guide.slug}` },
+      props: { title: guide.heading, kicker: 'HubSpot admin guide' } satisfies OgProps,
     })),
     ...PROBLEMS.map((problem) => ({
       params: { path: `problems/${problem.slug}` },

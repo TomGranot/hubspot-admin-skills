@@ -221,7 +221,18 @@ def dim_owner_health(ctx):
     d.add("Companies with no owner", count("companies", [f_missing("hubspot_owner_id")]),
           ctx["companies"], "cleanup-lead-owners", 2)
 
-    archived = get_all("/crm/v3/owners", {"limit": 100, "archived": "true"}) or []
+    archived = get_all("/crm/v3/owners", {"limit": 100, "archived": "true"})
+    if archived is None:
+        # Owners endpoint unreadable (crm.objects.owners.read missing): report n/a,
+        # never a false zero, and let the sales dimension know.
+        ctx["archived_owners"] = None
+        d.add("Deactivated owners still owning contacts", None)
+        d.add("Contacts owned by deactivated owners", None, TC,
+              "reassign-deactivated-owners", 1)
+        d.notes.append("Owners unreadable: the token needs crm.objects.owners.read. "
+                       "Deactivated-owner rows are n/a, not clean.")
+        d.grade_on(unowned, None, total=TC)
+        return d
     ctx["archived_owners"] = archived[:MAX_OWNERS_CHECKED]
     orphaned, holders = 0, 0
     for o in ctx["archived_owners"]:
@@ -429,9 +440,14 @@ def dim_deal_velocity(ctx):
 def dim_sales_ownership(ctx):
     d = Dimension("sales_ownership", "Sales Ownership & Handoff", "sales")
     OD = ctx.get("open_deals", 0)
-    orphaned = 0
-    for o in ctx.get("archived_owners", []):
-        orphaned += count("deals", [OPEN_DEAL, f_eq("hubspot_owner_id", str(o["id"]))]) or 0
+    archived_owners = ctx.get("archived_owners", [])
+    if archived_owners is None:
+        orphaned = None
+        d.notes.append("Owners unreadable: open deals owned by deactivated owners is n/a.")
+    else:
+        orphaned = 0
+        for o in archived_owners:
+            orphaned += count("deals", [OPEN_DEAL, f_eq("hubspot_owner_id", str(o["id"]))]) or 0
     d.add("Open deals owned by deactivated owners", orphaned, OD,
           "reassign-deactivated-owners", 0)
 

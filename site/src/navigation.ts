@@ -17,16 +17,16 @@ export const headerData = {
       })),
     },
     {
+      text: 'Guides',
+      href: getPermalink('/guides'),
+    },
+    {
       text: 'Problems',
       href: getPermalink('/problems'),
     },
     {
       text: 'For Agents',
       href: getPermalink('/install#agents'),
-    },
-    {
-      text: 'Contributing',
-      href: getPermalink('/contributing'),
     },
   ],
   actions: [
@@ -51,6 +51,9 @@ export const footerData = {
       title: 'Solve a problem',
       links: [
         { text: 'Common HubSpot problems', href: getPermalink('/problems') },
+        { text: 'HubSpot audit checklist', href: getPermalink('/guides/hubspot-audit-checklist') },
+        { text: 'Data hygiene checklist', href: getPermalink('/guides/hubspot-data-hygiene-checklist') },
+        { text: 'Implementation plan template', href: getPermalink('/guides/hubspot-implementation-plan-template') },
         { text: 'Run a portal audit', href: getPermalink('/skills/hubspot-audit') },
         { text: 'Audit the marketing side', href: getPermalink('/skills/hubspot-marketing-audit') },
         { text: 'Audit the sales pipeline', href: getPermalink('/skills/hubspot-sales-audit') },

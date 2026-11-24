@@ -1,0 +1,106 @@
+---
+import { render } from 'astro:content';
+
+import Layout from '~/layouts/PageLayout.astro';
+import Breadcrumbs from '~/components/Breadcrumbs.astro';
+import SkillCard from '~/components/SkillCard.astro';
+import StructuredData from '~/components/StructuredData.astro';
+import Button from '~/components/ui/Button.astro';
+
+import { getGuides, guidePath, type Guide } from '~/lib/guides';
+import { MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
+import { breadcrumbSchema, guideArticleSchema } from '~/lib/structuredData';
+
+export async function getStaticPaths() {
+  const guides = await getGuides();
+  return guides.map((guide) => ({ params: { slug: guide.slug }, props: { guide, guides } }));
+}
+
+const { guide, guides } = Astro.props as { guide: Guide; guides: Guide[] };
+const { Content } = await render(guide.entry);
+const otherGuides = guides.filter((g) => g.slug !== guide.slug);
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Guides', path: '/guides' },
+  { name: guide.heading, path: guidePath(guide.slug) },
+];
+
+const metadata = {
+  title: guide.title,
+  ignoreTitleTemplate: true,
+  description: guide.description,
+  openGraph: {
+    type: 'article',
+    images: [{ url: `/og/guides/${guide.slug}.png`, width: 1200, height: 630 }],
+  },
+};
+
+const updated = guide.updated.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<Layout metadata={metadata}>
+  <Fragment slot="head">
+    <StructuredData schema={[guideArticleSchema(guide), breadcrumbSchema(crumbs)]} />
+  </Fragment>
+
+  <article class="px-4 py-12 sm:px-6 mx-auto lg:px-8 lg:py-16 max-w-3xl">
+    <Breadcrumbs items={crumbs.map((c) => ({ name: c.name, href: c.path }))} />
+
+    <h1 class="font-bold font-heading text-3xl md:text-4xl leading-tighter tracking-tighter dark:text-white">
+      {guide.heading}
+    </h1>
+    <p class="mt-3 text-sm text-muted">
+      By <a href="https://granot.io" class="hover:text-primary hover:underline">Tom Granot</a> · Updated
+      <time datetime={guide.updated.toISOString().slice(0, 10)}>{updated}</time>
+    </p>
+
+    <div
+      class="mt-8 prose prose-lg max-w-none dark:prose-invert prose-headings:font-heading prose-headings:tracking-tighter prose-headings:font-bold prose-a:text-primary prose-table:text-base prose-pre:text-sm prose-code:before:content-none prose-code:after:content-none"
+    >
+      <Content />
+    </div>
+
+    <div class="mt-12 rounded-lg border-2 border-primary p-5">
+      <p class="font-semibold dark:text-white mb-1">Run these checks with Claude Code</p>
+      <p class="text-sm text-muted mb-3">
+        Free and open source. Every skill exports a CSV baseline before it changes anything and asks before it writes.
+      </p>
+      <pre
+        class="text-sm overflow-x-auto bg-gray-50 dark:bg-slate-900 rounded p-3"><code>{MARKETPLACE_ADD_COMMAND}
+{PLUGIN_INSTALL_COMMAND}</code></pre>
+      <div class="mt-4">
+        <Button variant="primary" href="/install" text="Install the skills" />
+      </div>
+    </div>
+  </article>
+
+  <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-6xl pb-12">
+    <h2 class="text-2xl font-bold mb-5 dark:text-white">Skills used in this guide</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {guide.skills.map((skill) => <SkillCard skill={skill} />)}
+    </div>
+  </section>
+
+  {
+    otherGuides.length > 0 && (
+      <section class="px-4 sm:px-6 mx-auto lg:px-8 max-w-3xl pb-16">
+        <h2 class="text-lg font-bold mb-2 dark:text-white">More HubSpot admin guides</h2>
+        <ul class="space-y-1">
+          {otherGuides.map((g) => (
+            <li>
+              <a href={guidePath(g.slug)} class="text-primary hover:underline">
+                {g.heading}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Layout>

@@ -21,8 +21,9 @@ for (const problem of PROBLEMS) {
 }
 
 const metadata = {
-  title: 'Common HubSpot admin problems, solved',
-  description: `${PROBLEMS.length} common HubSpot CRM problems — duplicates, bounces, missing lifecycle stages, dirty data — each mapped to the open-source skill that fixes it.`,
+  title: `Problems with HubSpot: ${PROBLEMS.length} common issues and fixes`,
+  ignoreTitleTemplate: true,
+  description: `Problems with HubSpot, from messy data to broken workflows, bad reports and 429 errors. ${PROBLEMS.length} common issues, each mapped to the open-source skill that fixes it.`,
   openGraph: {
     images: [{ url: '/og/pages/problems.png', width: 1200, height: 630 }],
   },
@@ -41,7 +42,7 @@ const metadata = {
 
   <HeroText
     tagline="Problem index"
-    title="What's broken in your HubSpot portal?"
+    title="Problems with HubSpot, and the fix for each"
     subtitle="Every entry below is a problem HubSpot admins actually search for — mapped to the skill that fixes it, with the exact steps and scripts."
   />
 

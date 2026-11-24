@@ -4,12 +4,14 @@ import { SITE } from 'astrowind:config';
 
 import { CATEGORIES } from '~/data/categories';
 import { PROBLEMS } from '~/data/problems';
+import { getGuides } from '~/lib/guides';
 import { getSkills, GITHUB_REPO_URL, MARKETPLACE_ADD_COMMAND, PLUGIN_INSTALL_COMMAND } from '~/lib/skills';
 
 const abs = (path: string) => new URL(path, SITE.site).toString();
 
 export const GET: APIRoute = async () => {
   const skills = await getSkills();
+  const guides = await getGuides();
 
   const sections = CATEGORIES.map((category) => {
     const lines = skills
@@ -17,6 +19,10 @@ export const GET: APIRoute = async () => {
       .map((skill) => `- [${skill.slug}](${abs(`/skills/${skill.slug}.md`)}): ${skill.description}`);
     return `## ${category.title}\n\n${category.description}\n\n${lines.join('\n')}`;
   });
+
+  const guideLines = guides.map(
+    (guide) => `- [${guide.heading}](${abs(`/guides/${guide.slug}`)}): ${guide.description}`
+  );
 
   const problemLines = PROBLEMS.map(
     (problem) => `- [${problem.title}](${abs(`/problems/${problem.slug}`)}): solved by the ${problem.skill} skill`
@@ -41,6 +47,10 @@ Raw scripts: ${abs('/skills/<slug>/scripts/<file>.py')} (before/execute/after st
 Source repository: ${GITHUB_REPO_URL}
 
 ${sections.join('\n\n')}
+
+## Guides
+
+${guideLines.join('\n')}
 
 ## Common problems mapped to skills
 

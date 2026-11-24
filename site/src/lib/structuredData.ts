@@ -3,6 +3,8 @@ import { SITE } from 'astrowind:config';
 import type { Skill } from '~/lib/skills';
 import { GITHUB_REPO_URL, extractSection, skillGithubUrl, skillPath, scriptPath } from '~/lib/skills';
 import type { Problem } from '~/data/problems';
+import type { Guide } from '~/lib/guides';
+import { guidePath } from '~/lib/guides';
 
 const abs = (path: string) => new URL(path, SITE.site).toString();
 
@@ -126,4 +128,17 @@ export const problemFaqSchema = (problem: Problem) => ({
     name: faq.question,
     acceptedAnswer: { '@type': 'Answer', text: faq.answer },
   })),
+});
+
+export const guideArticleSchema = (guide: Guide) => ({
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: guide.heading,
+  description: guide.description,
+  url: abs(guidePath(guide.slug)),
+  image: abs(`/og/guides/${guide.slug}.png`),
+  dateModified: guide.updated.toISOString().slice(0, 10),
+  author: { '@type': 'Person', name: 'Tom Granot', url: 'https://granot.io' },
+  publisher: organizationSchema(),
+  about: 'HubSpot CRM administration',
 });
